@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: Request) {
     try {
@@ -46,8 +46,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Send Email via Resend if API key is present
-        if (process.env.RESEND_API_KEY) {
+        // Send Email via Resend if instance is available
+        if (resend) {
             try {
                 await resend.emails.send({
                     from: 'Figures Onboarding <onboarding@resend.dev>',

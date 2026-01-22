@@ -51,7 +51,7 @@ export async function POST(request: Request) {
             try {
                 await resend.emails.send({
                     from: 'Figures Onboarding <onboarding@resend.dev>',
-                    to: ['admin@figures.com'], // In a real app, this would be the business notification email
+                    to: ['joshua@tryfigures.com'], // Updated to user's requested email
                     subject: `New Onboarding: ${companyName || fullName || fullNamePassport}`,
                     html: `
                         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">

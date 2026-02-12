@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,14 @@ export default function OnboardPage() {
     const [onboardingType, setOnboardingType] = useState<"business" | "self-assessment" | "both" | null>(null);
     const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
     const [errorMessage, setErrorMessage] = useState("");
+    const submittingRef = useRef(false);
+
+    // Warm up API routes when form is shown so first Submit doesn't hang on "Compiling..."
+    useEffect(() => {
+        if (step !== 2) return;
+        fetch("/api/aml-check", { method: "GET" }).catch(() => {});
+        fetch("/api/upload", { method: "GET" }).catch(() => {});
+    }, [step]);
 
     // We'll keep a minimal initial data state if we want to pre-fill standard fields from Step 1 in the future, 
     // but for now the sub-forms handle their own state mostly.
@@ -46,10 +54,14 @@ export default function OnboardPage() {
     });
 
     const uploadFile = async (file: File) => {
-        const response = await fetch(`/api/upload?filename=${file.name}`, {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s for uploads
+        const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
             method: 'POST',
             body: file,
+            signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || "Failed to upload file");
@@ -59,6 +71,8 @@ export default function OnboardPage() {
     };
 
     const handleFinalSubmit = async (data: any) => {
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setLoading(true);
         setStatus("idle");
         setErrorMessage("");
@@ -74,14 +88,23 @@ export default function OnboardPage() {
                 submissionData.proofOfAddress = await uploadFile(data.proofOfAddress);
             }
 
-            // Call AML check and submission API
+            // Call AML check and submission API (with 30s timeout so it never hangs)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
             const res = await fetch("/api/aml-check", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...submissionData, onboardingType }),
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
 
-            const result = await res.json();
+            let result: { message?: string };
+            try {
+                result = await res.json();
+            } catch {
+                throw new Error("Invalid response from server. Please try again.");
+            }
 
             if (!res.ok) {
                 throw new Error(result.message || "Something went wrong");
@@ -91,9 +114,10 @@ export default function OnboardPage() {
             setStep(3); // Success Step
         } catch (error: any) {
             setStatus("error");
-            setErrorMessage(error.message);
+            setErrorMessage(error.name === "AbortError" ? "Request took too long. Please try again." : error.message);
         } finally {
             setLoading(false);
+            submittingRef.current = false;
         }
     };
 

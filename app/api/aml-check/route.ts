@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+import { createSubmission } from '@/lib/submission-store';
+import { signSubmissionId } from '@/lib/aml-signature';
+import { sendInternalEmail } from '@/lib/notifications';
 
 function escapeHtml(input: string): string {
     return input
@@ -143,7 +143,6 @@ export async function POST(request: Request) {
             registrationNumber,
             fullName,
             fullNamePassport,
-            email,
             photoId,
             proofOfAddress
         } = body;
@@ -177,47 +176,48 @@ export async function POST(request: Request) {
             );
         }
 
-        // Send Email via Resend if instance is available (with 10s timeout so API never hangs)
-        if (resend) {
-            try {
-                await Promise.race([
-                    resend.emails.send({
-                    from: 'Figures Onboarding <onboarding@resend.dev>',
-                    to: ['joshua@tryfigures.com'], // Updated to user's requested email
-                    subject: `New Onboarding: ${companyName || fullName || fullNamePassport}`,
-                    html: `
-                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                            <h2 style="color: #111;">New Onboarding Submission</h2>
-                            <p>A new ${onboardingType} onboarding request has been submitted.</p>
-                            
-                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                                ${renderRows(body as Record<string, unknown>)}
-                            </table>
+        const submission = await createSubmission(body as Record<string, unknown>);
+        const signature = signSubmissionId(submission.id);
+        const requestUrl = new URL(request.url);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${requestUrl.protocol}//${requestUrl.host}`;
+        const initiateUrl = `${appUrl}/api/firmcheck/initiate?submissionId=${encodeURIComponent(submission.id)}&sig=${signature}`;
 
-                            <h3 style="color: #111; margin-top: 30px;">Verification Documents</h3>
-                            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                ${photoId ? `<a href="${photoId}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px;">View Photo ID</a>` : ''}
-                                ${proofOfAddress ? `<a href="${proofOfAddress}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px;">View Proof of Address</a>` : ''}
-                            </div>
+        await sendInternalEmail(
+            `New Onboarding: ${companyName || fullName || fullNamePassport}`,
+            `
+            <div style="font-family: sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #111;">New Onboarding Submission</h2>
+                <p>A new ${onboardingType} onboarding request has been submitted.</p>
+                <p><strong>Submission ID:</strong> ${submission.id}</p>
+                
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    ${renderRows(body as Record<string, unknown>)}
+                </table>
 
-                            <p style="color: #666; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
-                                This is an automated notification from the Figures Onboarding System.
-                            </p>
-                        </div>
-                    `
-                    }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Email timeout")), 10000)),
-                ]);
-            } catch (emailError) {
-                console.error("Resend Error:", emailError);
-            }
-        }
+                <h3 style="color: #111; margin-top: 30px;">Verification Documents</h3>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    ${photoId ? `<a href="${photoId}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px;">View Photo ID</a>` : ''}
+                    ${proofOfAddress ? `<a href="${proofOfAddress}" style="display: inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px;">View Proof of Address</a>` : ''}
+                </div>
+
+                <h3 style="color: #111; margin-top: 30px;">Firmcheck AML</h3>
+                <p>After reviewing this submission, click the button below to start the paid Firmcheck AML flow.</p>
+                <a href="${initiateUrl}" style="display:inline-block; margin-top: 6px; background:#111; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">
+                    Initiate AML Check
+                </a>
+
+                <p style="color: #666; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+                    This is an automated notification from the Figures Onboarding System.
+                </p>
+            </div>
+            `
+        );
 
         return NextResponse.json(
-            { message: 'Verification successful', status: 'cleared' },
+            { message: 'Verification successful', status: 'cleared', submissionId: submission.id },
             { status: 200 }
         );
-    } catch (error) {
+    } catch {
         return NextResponse.json(
             { message: 'Internal Server Error' },
             { status: 500 }

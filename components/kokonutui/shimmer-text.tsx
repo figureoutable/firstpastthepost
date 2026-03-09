@@ -21,7 +21,7 @@ export default function ShimmerText({ text, className }: ShimmerTextProps) {
           backgroundPosition: ["200% center", "-200% center"],
         }}
         className={cn(
-          "bg-[length:200%_100%] bg-gradient-to-r from-white via-neutral-400 to-white bg-clip-text font-bold text-transparent",
+          "bg-[length:200%_100%] bg-gradient-to-r from-neutral-800 via-neutral-400 to-neutral-800 bg-clip-text font-bold text-transparent",
           className
         )}
         transition={{

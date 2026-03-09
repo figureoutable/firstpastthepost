@@ -15,7 +15,7 @@ export default function Home() {
           alt="Figures Logo"
           width={300}
           height={100}
-          className="h-auto w-auto invert"
+          className="h-auto w-auto"
           priority
         />
 
@@ -28,7 +28,7 @@ export default function Home() {
         </Link>
       </div>
 
-      <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-sm text-white/30">
+      <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-sm text-zinc-400">
         &copy; {new Date().getFullYear()} Figures. All rights reserved.
       </p>
     </BackgroundPaths>

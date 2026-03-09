@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const TILT_MAX = 9;
@@ -57,9 +57,9 @@ export function SpotlightCard({ item, onClick }: SpotlightCardProps) {
     <motion.div
       className={cn(
         "group relative flex flex-col gap-5 overflow-hidden rounded-2xl border p-8 cursor-pointer",
-        "border-white/[0.06] bg-white/[0.03] shadow-none",
+        "border-zinc-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         "transition-[border-color] duration-300",
-        "hover:border-white/[0.14]"
+        "hover:border-zinc-300"
       )}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -92,7 +92,7 @@ export function SpotlightCard({ item, onClick }: SpotlightCardProps) {
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-[55%] -translate-x-full -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.045] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[280%]"
+        className="pointer-events-none absolute inset-y-0 left-0 w-[55%] -translate-x-full -skew-x-12 bg-gradient-to-r from-transparent via-black/[0.03] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[280%]"
       />
 
       <div
@@ -106,10 +106,10 @@ export function SpotlightCard({ item, onClick }: SpotlightCardProps) {
       </div>
 
       <div className="relative z-10 flex flex-col gap-2">
-        <h3 className="font-semibold text-lg text-white tracking-tight">
+        <h3 className="font-semibold text-lg text-zinc-900 tracking-tight">
           {item.title}
         </h3>
-        <p className="text-sm text-white/40 leading-relaxed">
+        <p className="text-sm text-zinc-500 leading-relaxed">
           {item.description}
         </p>
       </div>

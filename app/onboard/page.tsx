@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Building2, User, Layers, ShieldCheck } from "lucide-react";
 import { SpotlightCard, type SpotlightItem } from "@/components/kokonutui/spotlight-card";
-import GradientButton from "@/components/kokonutui/gradient-button";
 import ShimmerText from "@/components/kokonutui/shimmer-text";
 import { BusinessForm } from "@/components/onboarding/business-form";
 import { SelfAssessmentForm } from "@/components/onboarding/self-assessment-form";
@@ -15,19 +14,19 @@ const SERVICE_OPTIONS: SpotlightItem[] = [
         icon: Building2,
         title: "Business",
         description: "Limited Company accounts, corporation tax, VAT, and payroll services.",
-        color: "#60a5fa",
+        color: "#3b82f6",
     },
     {
         icon: User,
         title: "Self Assessment",
         description: "Personal tax returns for sole traders, freelancers, and individuals.",
-        color: "#a78bfa",
+        color: "#8b5cf6",
     },
     {
         icon: Layers,
         title: "Both",
         description: "Combined Limited Company and Self Assessment tax services.",
-        color: "#34d399",
+        color: "#10b981",
     },
 ];
 
@@ -138,10 +137,10 @@ export default function OnboardPage() {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-gray-50/50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
             <div className="pointer-events-none absolute inset-0">
-                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px]" />
+                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-100/60 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-100/60 rounded-full blur-[120px]" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -159,7 +158,7 @@ export default function OnboardPage() {
                                 text="Select your service"
                                 className="text-3xl sm:text-4xl tracking-tight"
                             />
-                            <p className="text-white/40 mt-3 text-sm">
+                            <p className="text-zinc-500 mt-3 text-sm">
                                 Choose the service that best fits your needs.
                             </p>
                         </div>
@@ -180,7 +179,7 @@ export default function OnboardPage() {
                         </div>
 
                         <div className="flex justify-center mt-8">
-                            <span className="flex items-center gap-1 text-xs text-white/20">
+                            <span className="flex items-center gap-1 text-xs text-zinc-400">
                                 <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
                             </span>
                         </div>
@@ -196,20 +195,20 @@ export default function OnboardPage() {
                         transition={{ duration: 0.4 }}
                         className="w-full max-w-3xl z-10"
                     >
-                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-6 sm:p-10">
+                        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm p-6 sm:p-10">
                             <div className="mb-6">
-                                <h2 className="text-xl font-semibold text-white tracking-tight">
+                                <h2 className="text-xl font-semibold text-zinc-900 tracking-tight">
                                     {onboardingType === 'business' ? 'Business Onboarding' :
                                      onboardingType === 'self-assessment' ? 'Self Assessment' :
                                      'Combined Onboarding'}
                                 </h2>
-                                <p className="text-white/40 text-sm mt-1">
+                                <p className="text-zinc-500 text-sm mt-1">
                                     Please provide the details requested below.
                                 </p>
                             </div>
 
                             {status === "error" && (
-                                <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg flex items-center gap-2 text-sm">
+                                <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg flex items-center gap-2 text-sm">
                                     <AlertCircle className="w-4 h-4 shrink-0" />
                                     {errorMessage}
                                 </div>
@@ -244,7 +243,7 @@ export default function OnboardPage() {
                         </div>
 
                         <div className="flex justify-center mt-6">
-                            <span className="flex items-center gap-1 text-xs text-white/20">
+                            <span className="flex items-center gap-1 text-xs text-zinc-400">
                                 <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
                             </span>
                         </div>
@@ -260,19 +259,19 @@ export default function OnboardPage() {
                         transition={{ duration: 0.5 }}
                         className="w-full max-w-lg z-10"
                     >
-                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-10 text-center">
-                            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+                        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm p-10 text-center">
+                            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                             </div>
 
-                            <h2 className="text-2xl font-semibold text-white mb-3">All Set!</h2>
-                            <p className="text-white/40 text-sm max-w-sm mx-auto">
+                            <h2 className="text-2xl font-semibold text-zinc-900 mb-3">All Set!</h2>
+                            <p className="text-zinc-500 text-sm max-w-sm mx-auto">
                                 We have securely received your details and our team is now performing the final administrative reviews to set up your account.
                             </p>
                         </div>
 
                         <div className="flex justify-center mt-6">
-                            <span className="flex items-center gap-1 text-xs text-white/20">
+                            <span className="flex items-center gap-1 text-xs text-zinc-400">
                                 <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
                             </span>
                         </div>

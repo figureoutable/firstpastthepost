@@ -119,7 +119,7 @@ const FloatingPaths = memo(function FloatingPaths({
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <svg
-        className="h-full w-full text-white/40"
+        className="h-full w-full text-slate-950/40"
         fill="none"
         preserveAspectRatio="xMidYMid slice"
         viewBox="-2400 -800 4800 1600"
@@ -215,7 +215,7 @@ export default memo(function BackgroundPaths({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-neutral-950">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-white">
       <div className="absolute inset-0">
         <FloatingPaths position={1} />
       </div>

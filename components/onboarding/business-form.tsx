@@ -8,23 +8,45 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
-import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import GradientButton from "@/components/kokonutui/gradient-button";
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 space-y-4">
+            <h3 className="text-base font-semibold text-white/90 tracking-tight">{title}</h3>
+            {children}
+        </div>
+    );
+}
+
+function StepIndicator({ current, total }: { current: number; total: number }) {
+    return (
+        <div className="flex items-center gap-2 mb-8">
+            {Array.from({ length: total }, (_, i) => (
+                <div key={i} className="flex items-center gap-2 flex-1">
+                    <div className={`h-1 w-full rounded-full transition-all duration-500 ${
+                        i < current ? "bg-purple-500" : i === current ? "bg-purple-500/50" : "bg-white/[0.06]"
+                    }`} />
+                </div>
+            ))}
+            <span className="text-[11px] text-white/30 ml-1 tabular-nums whitespace-nowrap">
+                {current + 1}/{total}
+            </span>
+        </div>
+    );
+}
 
 export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: any) {
     const [step, setStep] = useState(1);
 
-    // Helper to update specific fields
     const updateField = (field: string, value: any) => {
         updateData({ ...data, [field]: value });
     };
 
-    // Step validation (basic)
-    const canIsNext = () => {
+    const canGoNext = () => {
         if (step === 1) {
-            // Check basics. Note: allowing fuzzy validation for now to ease testing, but 'required' fields should be populated.
-            // Strict: return data.companyName && data.registrationNumber && data.utrNumber && data.companyAuthCode && data.photoId && data.proofOfAddress;
             return data.companyName
                 && (data.registrationNumber || "").length === 8
                 && (data.utrNumber || "").length === 10
@@ -39,27 +61,9 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
     const nextStep = () => setStep(s => s + 1);
     const prevStep = () => setStep(s => s - 1);
 
-    // Calculate progress: Step 1 = 33%, Step 2 = 66%, Step 3 = 100%
-    const progress = step === 1 ? 33 : step === 2 ? 66 : 100;
-
     return (
         <div className="space-y-6">
-            {/* Progress Bar - Content Width */}
-            {/* Progress Bar - Content Width */}
-            {/* Progress Bar - Content Width */}
-            <div className="mt-1 mb-6">
-                <Progress
-                    value={progress}
-                    className="h-4 w-full rounded-none bg-neutral-200 dark:bg-neutral-700"
-                    indicatorClassName="bg-black dark:bg-white"
-                    segmented
-                />
-                <div className="flex justify-end mt-1">
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                        {progress}%
-                    </span>
-                </div>
-            </div>
+            <StepIndicator current={step - 1} total={3} />
 
             <AnimatePresence mode="wait">
                 <motion.div
@@ -68,15 +72,14 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-[76px]"
+                    className="space-y-5"
                 >
                     {step === 1 && (
-                        <div className="space-y-[76px]">
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Tax & Corporate Identifiers</h3>
+                        <>
+                            <Section title="Tax & Corporate Identifiers">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="companyName">Company Name *</Label>
+                                        <Label htmlFor="companyName" className="text-white/60 text-sm">Company Name *</Label>
                                         <Input
                                             id="companyName"
                                             placeholder="Figures Accounting Ltd"
@@ -85,7 +88,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="companyNumber">Company Number *</Label>
+                                        <Label htmlFor="companyNumber" className="text-white/60 text-sm">Company Number *</Label>
                                         <Input
                                             id="companyNumber"
                                             placeholder="12345678"
@@ -94,10 +97,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             value={data.registrationNumber || ""}
                                             onChange={(e) => updateField("registrationNumber", e.target.value.replace(/\D/g, ""))}
                                         />
-                                        <p className="text-xs text-muted-foreground">Must be exactly 8 digits</p>
+                                        <p className="text-xs text-white/25">Exactly 8 digits</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="utrNumber">Business UTR *</Label>
+                                        <Label htmlFor="utrNumber" className="text-white/60 text-sm">Business UTR *</Label>
                                         <Input
                                             id="utrNumber"
                                             placeholder="1234567890"
@@ -106,10 +109,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             value={data.utrNumber || ""}
                                             onChange={(e) => updateField("utrNumber", e.target.value.replace(/\D/g, ""))}
                                         />
-                                        <p className="text-xs text-muted-foreground">Must be exactly 10 digits</p>
+                                        <p className="text-xs text-white/25">Exactly 10 digits</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="authCode">Auth Code *</Label>
+                                        <Label htmlFor="authCode" className="text-white/60 text-sm">Auth Code *</Label>
                                         <Input
                                             id="authCode"
                                             placeholder="ABC123"
@@ -118,16 +121,15 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             value={data.companyAuthCode || ""}
                                             onChange={(e) => updateField("companyAuthCode", e.target.value.toUpperCase())}
                                         />
-                                        <p className="text-xs text-muted-foreground">Must be exactly 6 characters</p>
+                                        <p className="text-xs text-white/25">Exactly 6 characters</p>
                                     </div>
                                 </div>
-                            </div>
+                            </Section>
 
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-semibold border-b border-border/50 pb-2">2. Payroll & VAT</h3>
-                                <div className="space-y-4">
-                                    <div className="space-y-6">
-                                        <Label>Do you have an existing PAYE scheme?</Label>
+                            <Section title="Payroll & VAT">
+                                <div className="space-y-5">
+                                    <div className="space-y-3">
+                                        <Label className="text-white/60 text-sm">Do you have an existing PAYE scheme?</Label>
                                         <RadioGroup
                                             value={data.hasPaye || "no"}
                                             onValueChange={(val) => updateField("hasPaye", val)}
@@ -135,19 +137,23 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="yes" id="paye-yes" />
-                                                <Label htmlFor="paye-yes">Yes</Label>
+                                                <Label htmlFor="paye-yes" className="text-sm">Yes</Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="no" id="paye-no" />
-                                                <Label htmlFor="paye-no">No</Label>
+                                                <Label htmlFor="paye-no" className="text-sm">No</Label>
                                             </div>
                                         </RadioGroup>
                                     </div>
 
                                     {data.hasPaye === "yes" && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-primary/20">
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-purple-500/20"
+                                        >
                                             <div className="space-y-2">
-                                                <Label htmlFor="accountsOfficeRef">Accounts Office Ref</Label>
+                                                <Label htmlFor="accountsOfficeRef" className="text-white/60 text-sm">Accounts Office Ref</Label>
                                                 <Input
                                                     id="accountsOfficeRef"
                                                     placeholder="123PA01234567"
@@ -156,10 +162,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.accountsOfficeRef || ""}
                                                     onChange={(e) => updateField("accountsOfficeRef", e.target.value.toUpperCase())}
                                                 />
-                                                <p className="text-xs text-muted-foreground">13 characters</p>
+                                                <p className="text-xs text-white/25">13 characters</p>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="payeRef">PAYE Reference</Label>
+                                                <Label htmlFor="payeRef" className="text-white/60 text-sm">PAYE Reference</Label>
                                                 <Input
                                                     id="payeRef"
                                                     placeholder="123/AB45678"
@@ -168,14 +174,13 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.payeRef || ""}
                                                     onChange={(e) => updateField("payeRef", e.target.value.toUpperCase())}
                                                 />
-                                                <p className="text-xs text-muted-foreground">10–12 characters</p>
-                                                <p className="text-xs text-muted-foreground">Format: 123/AB45678</p>
+                                                <p className="text-xs text-white/25">10–12 characters</p>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     )}
 
-                                    <div className="space-y-6">
-                                        <Label>Are you VAT Registered?</Label>
+                                    <div className="space-y-3">
+                                        <Label className="text-white/60 text-sm">Are you VAT Registered?</Label>
                                         <RadioGroup
                                             value={data.isVatRegistered || "no"}
                                             onValueChange={(val) => updateField("isVatRegistered", val)}
@@ -183,19 +188,23 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="yes" id="vat-yes" />
-                                                <Label htmlFor="vat-yes">Yes</Label>
+                                                <Label htmlFor="vat-yes" className="text-sm">Yes</Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="no" id="vat-no" />
-                                                <Label htmlFor="vat-no">No</Label>
+                                                <Label htmlFor="vat-no" className="text-sm">No</Label>
                                             </div>
                                         </RadioGroup>
                                     </div>
 
                                     {data.isVatRegistered === "yes" && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-primary/20">
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-purple-500/20"
+                                        >
                                             <div className="space-y-2">
-                                                <Label htmlFor="vatNumber">VAT Number</Label>
+                                                <Label htmlFor="vatNumber" className="text-white/60 text-sm">VAT Number</Label>
                                                 <Input
                                                     id="vatNumber"
                                                     placeholder="123456789"
@@ -204,10 +213,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.vatNumber || ""}
                                                     onChange={(e) => updateField("vatNumber", e.target.value.replace(/\D/g, ""))}
                                                 />
-                                                <p className="text-xs text-muted-foreground">Must be exactly 9 digits</p>
+                                                <p className="text-xs text-white/25">Exactly 9 digits</p>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="vatRegDate">Registration Date</Label>
+                                                <Label htmlFor="vatRegDate" className="text-white/60 text-sm">Registration Date</Label>
                                                 <Input
                                                     id="vatRegDate"
                                                     type="date"
@@ -215,13 +224,12 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     onChange={(e) => updateField("vatRegDate", e.target.value)}
                                                 />
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     )}
                                 </div>
-                            </div>
+                            </Section>
 
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-semibold border-b border-border/50 pb-2">3. Document Uploads</h3>
+                            <Section title="Document Uploads">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <FileUpload
                                         label="Photo ID (Passport/License)"
@@ -238,28 +246,26 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         onChange={(file) => updateField("proofOfAddress", file)}
                                     />
                                 </div>
-                            </div>
-                        </div>
+                            </Section>
+                        </>
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-[76px]">
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Ownership & Roles</h3>
-                                <p className="text-sm text-muted-foreground mb-4">Please provide details for everyone with 25%+ ownership.</p>
+                        <>
+                            <Section title="Ownership & Roles">
+                                <p className="text-sm text-white/30">Please provide details for everyone with 25%+ ownership.</p>
 
-                                {/* List of Added Directors */}
-                                <div className="space-y-3 mb-6">
-                                    {(data.directors || []).map((director: any, index: number) => (
-                                        <div key={director.id} className="p-4 rounded-xl border border-border/50 bg-secondary/10 flex justify-between items-start animate-in fade-in slide-in-from-bottom-2">
+                                <div className="space-y-3">
+                                    {(data.directors || []).map((director: any) => (
+                                        <div key={director.id} className="p-4 rounded-lg border border-white/[0.06] bg-white/[0.02] flex justify-between items-start">
                                             <div>
-                                                <p className="font-semibold">{director.firstName} {director.lastName}</p>
-                                                <p className="text-sm text-muted-foreground">{director.role}</p>
+                                                <p className="font-medium text-white/90">{director.firstName} {director.lastName}</p>
+                                                <p className="text-sm text-white/40">{director.role}</p>
                                             </div>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                className="h-8 w-8 text-red-400 hover:bg-red-500/10"
                                                 onClick={() => {
                                                     const newDirectors = data.directors.filter((d: any) => d.id !== director.id);
                                                     updateField("directors", newDirectors);
@@ -271,25 +277,24 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                     ))}
                                 </div>
 
-                                {/* Add Director Form */}
                                 <DirectorEntryForm
                                     onAdd={(director) => {
                                         updateField("directors", [...(data.directors || []), { ...director, id: Date.now() }]);
                                     }}
                                 />
 
-                                <div className="space-y-2 pt-4 border-t border-border/50 mt-6">
-                                    <Label>Trading Address (if different from Registered Office)</Label>
+                                <div className="space-y-2 pt-4 border-t border-white/[0.06]">
+                                    <Label className="text-white/60 text-sm">Trading Address (if different from Registered Office)</Label>
                                     <Input
                                         placeholder="Leave blank if same"
                                         value={data.tradingAddress || ""}
                                         onChange={(e) => updateField("tradingAddress", e.target.value)}
                                     />
                                 </div>
-                            </div>
+                            </Section>
 
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-semibold border-b border-border/50 pb-2">2. Service Scope</h3>
+                            <Section title="Service Scope">
+                                <p className="text-sm text-white/30 mb-2">Select at least one service.</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {[
                                         "Company Accounts & Corp Tax",
@@ -310,137 +315,139 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     updateField("servicesRequired", updated);
                                                 }}
                                             />
-                                            <Label htmlFor={service} className="text-sm font-normal">{service}</Label>
+                                            <Label htmlFor={service} className="text-sm font-normal text-white/70 cursor-pointer">{service}</Label>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </Section>
 
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-semibold border-b border-border/50 pb-2">3. Business Nature</h3>
-                                <div className="space-y-6">
-                                    <Label htmlFor="businessNature">Nature of Business *</Label>
-                                    <Textarea
-                                        id="businessNature"
-                                        placeholder="Describe daily activities..."
-                                        value={data.natureOfBusiness || ""}
-                                        onChange={(e) => updateField("natureOfBusiness", e.target.value)}
-                                    />
+                            <Section title="Business Nature">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="businessNature" className="text-white/60 text-sm">Nature of Business *</Label>
+                                        <Textarea
+                                            id="businessNature"
+                                            placeholder="Describe daily activities..."
+                                            value={data.natureOfBusiness || ""}
+                                            onChange={(e) => updateField("natureOfBusiness", e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sourceOfFunds" className="text-white/60 text-sm">Main Source of Funds/Income *</Label>
+                                        <Input
+                                            id="sourceOfFunds"
+                                            placeholder="e.g. Sales, Contracts..."
+                                            value={data.sourceOfFunds || ""}
+                                            onChange={(e) => updateField("sourceOfFunds", e.target.value)}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="space-y-6">
-                                    <Label htmlFor="sourceOfFunds">Main Source of Funds/Income *</Label>
-                                    <Input
-                                        id="sourceOfFunds"
-                                        placeholder="e.g. Sales, Contracts..."
-                                        value={data.sourceOfFunds || ""}
-                                        onChange={(e) => updateField("sourceOfFunds", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                            </Section>
+                        </>
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-[76px]">
-                            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-6">
-                                <h3 className="font-semibold text-primary mb-2">Final Compliance Checks</h3>
-                                <p className="text-sm text-muted-foreground">Required for Anti-Money Laundering regulations.</p>
+                        <>
+                            <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4 mb-2">
+                                <h3 className="font-semibold text-purple-300 text-sm mb-1">Final Compliance Checks</h3>
+                                <p className="text-xs text-white/40">Required for Anti-Money Laundering regulations.</p>
                             </div>
 
-                            <div className="space-y-6">
+                            <Section title="AML Questions">
                                 <div className="space-y-6">
-                                    <Label>Are you (or any owner) a Politically Exposed Person (PEP)?</Label>
-                                    <RadioGroup
-                                        value={data.isPep || "no"}
-                                        onValueChange={(val) => updateField("isPep", val)}
-                                        className="flex gap-6"
-                                    >
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pep-yes" /><Label htmlFor="pep-yes">Yes</Label></div>
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pep-no" /><Label htmlFor="pep-no">No</Label></div>
-                                    </RadioGroup>
-                                </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-white/60 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)?</Label>
+                                        <RadioGroup value={data.isPep || "no"} onValueChange={(val) => updateField("isPep", val)} className="flex gap-6">
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
+                                        </RadioGroup>
+                                    </div>
 
-                                <div className="space-y-6">
-                                    <Label>Do you trade with high-risk/sanctioned jurisdictions?</Label>
-                                    <RadioGroup
-                                        value={data.hasSanctions || "no"}
-                                        onValueChange={(val) => updateField("hasSanctions", val)}
-                                        className="flex gap-6"
-                                    >
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sanctions-yes" /><Label htmlFor="sanctions-yes">Yes</Label></div>
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sanctions-no" /><Label htmlFor="sanctions-no">No</Label></div>
-                                    </RadioGroup>
-                                </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-white/60 text-sm">Do you trade with high-risk/sanctioned jurisdictions?</Label>
+                                        <RadioGroup value={data.hasSanctions || "no"} onValueChange={(val) => updateField("hasSanctions", val)} className="flex gap-6">
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sanctions-yes" /><Label htmlFor="sanctions-yes" className="text-sm">Yes</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sanctions-no" /><Label htmlFor="sanctions-no" className="text-sm">No</Label></div>
+                                        </RadioGroup>
+                                    </div>
 
-                                <div className="space-y-6">
-                                    <Label>Does the company have complex ownership (holding companies)?</Label>
-                                    <RadioGroup
-                                        value={data.hasComplexStructure || "no"}
-                                        onValueChange={(val) => updateField("hasComplexStructure", val)}
-                                        className="flex gap-6"
-                                    >
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="complex-yes" /><Label htmlFor="complex-yes">Yes</Label></div>
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="complex-no" /><Label htmlFor="complex-no">No</Label></div>
-                                    </RadioGroup>
-                                    {data.hasComplexStructure === "yes" && (
-                                        <Textarea
-                                            placeholder="Describe structure..."
-                                            value={data.structureDescription || ""}
-                                            onChange={(e) => updateField("structureDescription", e.target.value)}
-                                        />
-                                    )}
-                                </div>
+                                    <div className="space-y-3">
+                                        <Label className="text-white/60 text-sm">Does the company have complex ownership (holding companies)?</Label>
+                                        <RadioGroup value={data.hasComplexStructure || "no"} onValueChange={(val) => updateField("hasComplexStructure", val)} className="flex gap-6">
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="complex-yes" /><Label htmlFor="complex-yes" className="text-sm">Yes</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="complex-no" /><Label htmlFor="complex-no" className="text-sm">No</Label></div>
+                                        </RadioGroup>
+                                        {data.hasComplexStructure === "yes" && (
+                                            <Textarea
+                                                placeholder="Describe structure..."
+                                                value={data.structureDescription || ""}
+                                                onChange={(e) => updateField("structureDescription", e.target.value)}
+                                            />
+                                        )}
+                                    </div>
 
-                                <div className="space-y-6">
-                                    <Label>Any bankruptcy/disqualification history?</Label>
-                                    <RadioGroup
-                                        value={data.hasBankruptcy || "no"}
-                                        onValueChange={(val) => updateField("hasBankruptcy", val)}
-                                        className="flex gap-6"
-                                    >
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes">Yes</Label></div>
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bankrupt-no" /><Label htmlFor="bankrupt-no">No</Label></div>
-                                    </RadioGroup>
-                                    {data.hasBankruptcy === "yes" && (
-                                        <Textarea
-                                            placeholder="Provide details..."
-                                            value={data.bankruptcyDescription || ""}
-                                            onChange={(e) => updateField("bankruptcyDescription", e.target.value)}
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="pt-10 pb-4 border-t border-border/50">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="confirm"
-                                            checked={data.confirmed}
-                                            onCheckedChange={(checked) => updateField("confirmed", checked)}
-                                        />
-                                        <Label htmlFor="confirm" className="text-sm font-normal leading-none cursor-pointer">
-                                            I confirm the information provided is accurate.
-                                        </Label>
+                                    <div className="space-y-3">
+                                        <Label className="text-white/60 text-sm">Any bankruptcy/disqualification history?</Label>
+                                        <RadioGroup value={data.hasBankruptcy || "no"} onValueChange={(val) => updateField("hasBankruptcy", val)} className="flex gap-6">
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
+                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
+                                        </RadioGroup>
+                                        {data.hasBankruptcy === "yes" && (
+                                            <Textarea
+                                                placeholder="Provide details..."
+                                                value={data.bankruptcyDescription || ""}
+                                                onChange={(e) => updateField("bankruptcyDescription", e.target.value)}
+                                            />
+                                        )}
                                     </div>
                                 </div>
+                            </Section>
+
+                            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                                <div className="flex items-center space-x-3">
+                                    <Checkbox
+                                        id="confirm"
+                                        checked={data.confirmed}
+                                        onCheckedChange={(checked) => updateField("confirmed", checked)}
+                                    />
+                                    <Label htmlFor="confirm" className="text-sm font-normal text-white/70 leading-tight cursor-pointer">
+                                        I confirm the information provided is accurate.
+                                    </Label>
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </motion.div>
             </AnimatePresence>
 
-            <div className="flex gap-4 pt-4 border-t border-border/50">
-                <Button variant="outline" onClick={step === 1 ? onBack : prevStep} disabled={loading} className="w-full">
+            <div className="flex gap-3 pt-6 border-t border-white/[0.06]">
+                <Button
+                    variant="outline"
+                    onClick={step === 1 ? onBack : prevStep}
+                    disabled={loading}
+                    className="flex-1 border-white/[0.08] bg-transparent text-white/60 hover:bg-white/[0.04] hover:text-white"
+                >
                     <ArrowLeft className="w-4 h-4 mr-2" /> {step === 1 ? "Back" : "Previous"}
                 </Button>
 
                 {step < 3 ? (
-                    <Button onClick={nextStep} disabled={!canIsNext()} className="w-full">
-                        Next <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    <GradientButton
+                        onClick={nextStep}
+                        disabled={!canGoNext()}
+                        className="flex-1"
+                        variant="purple"
+                    >
+                        <span className="flex items-center gap-2">Next <ArrowRight className="w-4 h-4" /></span>
+                    </GradientButton>
                 ) : (
-                    <Button onClick={() => onSubmit(data)} disabled={!data.confirmed || loading} className="w-full bg-green-600 hover:bg-green-700">
-                        {loading ? "Submitting..." : "Submit Application"}
-                    </Button>
+                    <GradientButton
+                        onClick={() => onSubmit(data)}
+                        disabled={!data.confirmed || loading}
+                        className="flex-1"
+                        variant="emerald"
+                    >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
+                    </GradientButton>
                 )}
             </div>
         </div>
@@ -458,11 +465,11 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
     };
 
     return (
-        <div className="p-4 rounded-xl border border-border/50 bg-secondary/5 space-y-4">
-            <h4 className="font-medium text-sm">Add New Director/Partner</h4>
+        <div className="p-4 rounded-lg border border-white/[0.06] bg-white/[0.01] space-y-4">
+            <h4 className="font-medium text-sm text-white/60">Add New Director/Partner</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>First Name</Label>
+                    <Label className="text-white/50 text-sm">First Name</Label>
                     <Input
                         value={director.firstName}
                         onChange={(e) => setDirector(d => ({ ...d, firstName: e.target.value }))}
@@ -470,7 +477,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label>Last Name</Label>
+                    <Label className="text-white/50 text-sm">Last Name</Label>
                     <Input
                         value={director.lastName}
                         onChange={(e) => setDirector(d => ({ ...d, lastName: e.target.value }))}
@@ -478,7 +485,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label>Role</Label>
+                    <Label className="text-white/50 text-sm">Role</Label>
                     <Input
                         value={director.role}
                         onChange={(e) => setDirector(d => ({ ...d, role: e.target.value }))}
@@ -486,7 +493,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label>Date of Birth</Label>
+                    <Label className="text-white/50 text-sm">Date of Birth</Label>
                     <Input
                         type="date"
                         value={director.dob}
@@ -494,7 +501,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                    <Label>Home Address</Label>
+                    <Label className="text-white/50 text-sm">Home Address</Label>
                     <Textarea
                         value={director.address}
                         onChange={(e) => setDirector(d => ({ ...d, address: e.target.value }))}
@@ -506,8 +513,8 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
             <Button
                 onClick={handleAdd}
                 disabled={!director.firstName || !director.lastName || !director.role}
-                className="w-full"
-                variant="secondary"
+                className="w-full border-white/[0.08] bg-transparent text-white/60 hover:bg-white/[0.04] hover:text-white"
+                variant="outline"
             >
                 <Plus className="w-4 h-4 mr-2" /> Save & Add Director
             </Button>

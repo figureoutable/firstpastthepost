@@ -94,10 +94,10 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    className="space-y-[76px]"
                 >
                     {step === 1 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Personal Tax Identifiers</h3>
                                 <div className="space-y-6">
@@ -148,7 +148,7 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Select All Income Types That Apply *</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -235,7 +235,7 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Compliance Questions</h3>
                                 <div className="space-y-8">

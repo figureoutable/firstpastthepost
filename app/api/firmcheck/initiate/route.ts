@@ -1,106 +1,53 @@
 import { NextResponse } from "next/server";
 import { verifySubmissionSignature } from "@/lib/aml-signature";
 import { getSubmission, saveSubmission, SubmissionRecord } from "@/lib/submission-store";
-import { createCompanyClient, createIndividualClient, triggerVerification } from "@/lib/firmcheck";
+import { createCompanyClient, createIndividualClient } from "@/lib/firmcheck";
 import { sendInternalEmail } from "@/lib/notifications";
-
-function normalize(value: unknown): string {
-    if (typeof value !== "string") return "";
-    return value.trim().toLowerCase();
-}
-
-function dedupeKey(person: { fullName?: string; email?: string; dob?: string; address?: string }): string {
-    return [
-        normalize(person.fullName),
-        normalize(person.email),
-        normalize(person.dob),
-        normalize(person.address),
-    ].join("|");
-}
 
 async function runFirmcheckInitiation(record: SubmissionRecord): Promise<SubmissionRecord> {
     const payload = record.payload;
     const onboardingType = String(payload.onboardingType || "");
     const email = typeof payload.email === "string" ? payload.email : undefined;
     const clientIds = new Set<string>(record.firmcheck?.clientIds || []);
-    const verificationIds = new Set<string>(record.firmcheck?.verificationIds || []);
-    const seenIndividuals = new Map<string, string>();
 
-    // Company client creation for business and combined submissions.
+    // Company: use CRN to create client. Firmcheck auto-pulls directors/PSCs
+    // from Companies House as related parties — no need to create them separately.
     if (onboardingType === "business" || onboardingType === "both") {
         const crn = typeof payload.registrationNumber === "string" ? payload.registrationNumber : "";
         if (!crn) {
             throw new Error("Missing company registration number for company onboarding");
         }
-        const companyName = typeof payload.companyName === "string" ? payload.companyName : undefined;
-        const company = await createCompanyClient(crn, companyName);
+        const company = await createCompanyClient(crn);
         clientIds.add(company.clientId);
     }
 
-    const maybeCreateIndividual = async (person: {
-        fullName?: string;
-        email?: string;
-        dob?: string;
-        address?: string;
-    }) => {
-        const key = dedupeKey(person);
-        if (!key || key === "|||") return;
-
-        let clientId = seenIndividuals.get(key);
-        if (!clientId) {
-            const created = await createIndividualClient({
-                fullName: person.fullName || "Unknown",
-                email: person.email || email,
-                dob: person.dob,
-                residentialAddress: person.address,
-            });
-            clientId = created.clientId;
-            seenIndividuals.set(key, clientId);
-            clientIds.add(clientId);
-        }
-
-        const verification = await triggerVerification(clientId);
-        verificationIds.add(verification.verificationId);
-    };
-
-    // Individual tax client creation.
+    // Individual: create for self-assessment (the person filing taxes).
+    // For "both", this is the individual alongside the company.
     if (onboardingType === "self-assessment" || onboardingType === "both") {
-        await maybeCreateIndividual({
-            fullName: typeof payload.fullNamePassport === "string" ? payload.fullNamePassport : undefined,
-            email,
-            // Some workflows do not currently collect DOB. API call still runs with available fields.
-            dob: typeof payload.dob === "string" ? payload.dob : undefined,
-            address: typeof payload.homeAddress === "string" ? payload.homeAddress : typeof payload.tradingAddress === "string" ? payload.tradingAddress : undefined,
-        });
+        const fullName = typeof payload.fullNamePassport === "string" ? payload.fullNamePassport : undefined;
+        if (fullName) {
+            const individual = await createIndividualClient({
+                fullName,
+                email,
+                dob: typeof payload.dob === "string" ? payload.dob : undefined,
+                residentialAddress: typeof payload.homeAddress === "string" ? payload.homeAddress : undefined,
+            });
+            clientIds.add(individual.clientId);
+        }
     }
 
-    // Directors / PSC candidates from form data.
-    const directors = Array.isArray(payload.directors) ? payload.directors : [];
-    for (const director of directors) {
-        if (!director || typeof director !== "object") continue;
-        const person = director as Record<string, unknown>;
-        await maybeCreateIndividual({
-            fullName: `${String(person.firstName || "")} ${String(person.lastName || "")}`.trim(),
-            email,
-            dob: typeof person.dob === "string" ? person.dob : undefined,
-            address: typeof person.address === "string" ? person.address : undefined,
-        });
-    }
-
-    const updated: SubmissionRecord = {
+    return {
         ...record,
         updatedAt: new Date().toISOString(),
         status: "initiated",
         firmcheck: {
             clientIds: [...clientIds],
-            verificationIds: [...verificationIds],
+            verificationIds: [],
             lastPolledAt: record.firmcheck?.lastPolledAt,
             amlStatus: record.firmcheck?.amlStatus,
             riskLevel: record.firmcheck?.riskLevel,
         },
     };
-
-    return updated;
 }
 
 export async function GET(request: Request) {
@@ -130,12 +77,17 @@ export async function GET(request: Request) {
         await saveSubmission(updated);
 
         if (!updated.notifications?.initiatedEmailSent) {
+            const clientCount = updated.firmcheck?.clientIds.length || 0;
             await sendInternalEmail(
                 `Firmcheck AML initiated: ${submissionId}`,
-                `<p>Firmcheck AML has been initiated.</p>
+                `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #111;">Firmcheck AML Initiated</h2>
+                <p>${clientCount} client(s) created as prospects on Firmcheck.</p>
                 <p><strong>Submission ID:</strong> ${submissionId}</p>
                 <p><strong>Client IDs:</strong> ${updated.firmcheck?.clientIds.join(", ") || "N/A"}</p>
-                <p><strong>Verification IDs:</strong> ${updated.firmcheck?.verificationIds.join(", ") || "N/A"}</p>`
+                <p>Open Firmcheck to review the clients and start ID verification when ready.</p>
+                <p style="margin-top: 20px;"><a href="https://my.firmcheck.com" style="display:inline-block; background:#111; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Open Firmcheck Dashboard</a></p>
+                </div>`
             );
             updated.notifications = { ...(updated.notifications || {}), initiatedEmailSent: true };
             await saveSubmission(updated);
@@ -159,9 +111,13 @@ export async function GET(request: Request) {
 
         await sendInternalEmail(
             `Firmcheck AML failed: ${submissionId}`,
-            `<p>Firmcheck initiation failed and manual action is required.</p>
+            `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #dc2626;">Firmcheck AML Failed</h2>
+            <p>Firmcheck initiation failed and manual action is required.</p>
             <p><strong>Submission ID:</strong> ${submissionId}</p>
-            <p><strong>Error:</strong> ${(error as Error).message}</p>`
+            <p><strong>Error:</strong> ${(error as Error).message}</p>
+            <p style="margin-top: 20px;"><a href="https://my.firmcheck.com" style="display:inline-block; background:#111; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Open Firmcheck Dashboard</a></p>
+            </div>`
         );
 
         return NextResponse.json(

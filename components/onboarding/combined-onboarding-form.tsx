@@ -49,10 +49,10 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-6"
+                    className="space-y-[76px]"
                 >
                     {step === 1 && (
-                        <div className="space-y-8">
+                        <div className="space-y-[76px]">
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Personal Information</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -120,7 +120,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">3. Business Operations</h3>
                                 <div className="space-y-6">
@@ -185,7 +185,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">4. Self Assessment Information</h3>
                                 <div className="space-y-6">
@@ -214,7 +214,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     )}
 
                     {step === 4 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">5. Ownership & Roles</h3>
                                 <div className="space-y-4">
@@ -257,7 +257,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     )}
 
                     {step === 5 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">6. Essential Document Uploads</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -281,7 +281,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     )}
 
                     {step === 6 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">7. Compliance Checks & Confirmation</h3>
                                 <div className="space-y-8 pt-4">

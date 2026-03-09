@@ -25,11 +25,13 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
         if (step === 1) {
             // Check basics. Note: allowing fuzzy validation for now to ease testing, but 'required' fields should be populated.
             // Strict: return data.companyName && data.registrationNumber && data.utrNumber && data.companyAuthCode && data.photoId && data.proofOfAddress;
-            return data.companyName && data.registrationNumber; // MVP validation for demo
+            return data.companyName
+                && (data.registrationNumber || "").length === 8
+                && (data.utrNumber || "").length === 10
+                && (data.companyAuthCode || "").length === 6;
         }
         if (step === 2) {
-            // MVP validation
-            return true;
+            return (data.servicesRequired || []).length >= 1;
         }
         return true;
     };
@@ -66,10 +68,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-6"
+                    className="space-y-[76px]"
                 >
                     {step === 1 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Tax & Corporate Identifiers</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -87,30 +89,36 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         <Input
                                             id="companyNumber"
                                             placeholder="12345678"
+                                            minLength={8}
                                             maxLength={8}
                                             value={data.registrationNumber || ""}
-                                            onChange={(e) => updateField("registrationNumber", e.target.value)}
+                                            onChange={(e) => updateField("registrationNumber", e.target.value.replace(/\D/g, ""))}
                                         />
+                                        <p className="text-xs text-muted-foreground">Must be exactly 8 digits</p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="utrNumber">Business UTR *</Label>
                                         <Input
                                             id="utrNumber"
-                                            placeholder="10-digit UTR"
+                                            placeholder="1234567890"
+                                            minLength={10}
                                             maxLength={10}
                                             value={data.utrNumber || ""}
-                                            onChange={(e) => updateField("utrNumber", e.target.value)}
+                                            onChange={(e) => updateField("utrNumber", e.target.value.replace(/\D/g, ""))}
                                         />
+                                        <p className="text-xs text-muted-foreground">Must be exactly 10 digits</p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="authCode">Auth Code *</Label>
                                         <Input
                                             id="authCode"
-                                            placeholder="6-char code"
+                                            placeholder="ABC123"
+                                            minLength={6}
                                             maxLength={6}
                                             value={data.companyAuthCode || ""}
-                                            onChange={(e) => updateField("companyAuthCode", e.target.value)}
+                                            onChange={(e) => updateField("companyAuthCode", e.target.value.toUpperCase())}
                                         />
+                                        <p className="text-xs text-muted-foreground">Must be exactly 6 characters</p>
                                     </div>
                                 </div>
                             </div>
@@ -143,18 +151,25 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                 <Input
                                                     id="accountsOfficeRef"
                                                     placeholder="123PA01234567"
+                                                    minLength={13}
+                                                    maxLength={13}
                                                     value={data.accountsOfficeRef || ""}
-                                                    onChange={(e) => updateField("accountsOfficeRef", e.target.value)}
+                                                    onChange={(e) => updateField("accountsOfficeRef", e.target.value.toUpperCase())}
                                                 />
+                                                <p className="text-xs text-muted-foreground">13 characters</p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="payeRef">PAYE Reference</Label>
                                                 <Input
                                                     id="payeRef"
                                                     placeholder="123/AB45678"
+                                                    minLength={10}
+                                                    maxLength={12}
                                                     value={data.payeRef || ""}
-                                                    onChange={(e) => updateField("payeRef", e.target.value)}
+                                                    onChange={(e) => updateField("payeRef", e.target.value.toUpperCase())}
                                                 />
+                                                <p className="text-xs text-muted-foreground">10–12 characters</p>
+                                                <p className="text-xs text-muted-foreground">Format: 123/AB45678</p>
                                             </div>
                                         </div>
                                     )}
@@ -183,11 +198,13 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                 <Label htmlFor="vatNumber">VAT Number</Label>
                                                 <Input
                                                     id="vatNumber"
-                                                    placeholder="9 digits"
+                                                    placeholder="123456789"
+                                                    minLength={9}
                                                     maxLength={9}
                                                     value={data.vatNumber || ""}
-                                                    onChange={(e) => updateField("vatNumber", e.target.value)}
+                                                    onChange={(e) => updateField("vatNumber", e.target.value.replace(/\D/g, ""))}
                                                 />
+                                                <p className="text-xs text-muted-foreground">Must be exactly 9 digits</p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="vatRegDate">Registration Date</Label>
@@ -226,7 +243,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="space-y-3">
                                 <h3 className="text-lg font-semibold border-b border-border/50 pb-2">1. Ownership & Roles</h3>
                                 <p className="text-sm text-muted-foreground mb-4">Please provide details for everyone with 25%+ ownership.</p>
@@ -324,7 +341,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-6">
+                        <div className="space-y-[76px]">
                             <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-6">
                                 <h3 className="font-semibold text-primary mb-2">Final Compliance Checks</h3>
                                 <p className="text-sm text-muted-foreground">Required for Anti-Money Laundering regulations.</p>

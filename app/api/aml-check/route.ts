@@ -217,9 +217,10 @@ export async function POST(request: Request) {
             { message: 'Verification successful', status: 'cleared', submissionId: submission.id },
             { status: 200 }
         );
-    } catch {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Internal Server Error';
         return NextResponse.json(
-            { message: 'Internal Server Error' },
+            { message },
             { status: 500 }
         );
     }

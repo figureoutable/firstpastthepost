@@ -331,6 +331,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                 {step < 6 ? (
                     <GradientButton
                         onClick={nextStep}
+                        disabled={step === 5 && (!data.photoId || !data.proofOfAddress)}
                         className="flex-1"
                         variant="purple"
                     >

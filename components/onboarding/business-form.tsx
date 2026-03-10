@@ -50,7 +50,9 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
             return data.companyName
                 && (data.registrationNumber || "").length === 8
                 && (data.utrNumber || "").length === 10
-                && (data.companyAuthCode || "").length === 6;
+                && (data.companyAuthCode || "").length === 6
+                && data.photoId
+                && data.proofOfAddress;
         }
         if (step === 2) {
             return (data.servicesRequired || []).length >= 1;

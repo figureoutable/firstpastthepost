@@ -310,7 +310,7 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                 {step < 3 ? (
                     <GradientButton
                         type="submit"
-                        disabled={loading || (step === 1 && (!formData.utrNumber || !formData.niNumber))}
+                        disabled={loading || (step === 1 && (!formData.utrNumber || !formData.niNumber || !formData.photoId || !formData.proofOfAddress))}
                         className="flex-1"
                         variant="purple"
                     >

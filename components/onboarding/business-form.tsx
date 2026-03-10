@@ -293,7 +293,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                 </div>
                             </Section>
 
-                            <Section title="Service Scope">
+                            <Section title="Service Scope *">
                                 <p className="text-sm text-zinc-500 mb-2">Select at least one service.</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {[

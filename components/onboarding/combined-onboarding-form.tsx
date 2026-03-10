@@ -66,7 +66,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                             <Section title="Personal Information">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-600 text-sm">Full Name * (As shown on passport)</Label>
+                                        <Label className="text-zinc-900 text-sm">Full Name * (As shown on passport)</Label>
                                         <Input
                                             value={data.fullNamePassport || ""}
                                             onChange={(e) => updateField("fullNamePassport", e.target.value)}
@@ -74,7 +74,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-600 text-sm">Personal UTR *</Label>
+                                        <Label className="text-zinc-900 text-sm">Personal UTR *</Label>
                                         <Input
                                             value={data.personalUtr || ""}
                                             onChange={(e) => updateField("personalUtr", e.target.value)}
@@ -88,7 +88,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                             <Section title="Business Information">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-600 text-sm">Company Name *</Label>
+                                        <Label className="text-zinc-900 text-sm">Company Name *</Label>
                                         <Input
                                             value={data.companyName || ""}
                                             onChange={(e) => updateField("companyName", e.target.value)}
@@ -96,7 +96,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-600 text-sm">Company Number *</Label>
+                                        <Label className="text-zinc-900 text-sm">Company Number *</Label>
                                         <Input
                                             value={data.registrationNumber || ""}
                                             onChange={(e) => updateField("registrationNumber", e.target.value)}
@@ -105,7 +105,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-600 text-sm">Business UTR *</Label>
+                                        <Label className="text-zinc-900 text-sm">Business UTR *</Label>
                                         <Input
                                             value={data.businessUtr || ""}
                                             onChange={(e) => updateField("businessUtr", e.target.value)}
@@ -114,7 +114,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-600 text-sm">Company Auth Code *</Label>
+                                        <Label className="text-zinc-900 text-sm">Company Auth Code *</Label>
                                         <Input
                                             value={data.companyAuthCode || ""}
                                             onChange={(e) => updateField("companyAuthCode", e.target.value)}
@@ -131,7 +131,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                         <Section title="Business Operations">
                             <div className="space-y-5">
                                 <div className="space-y-2">
-                                    <Label htmlFor="businessNature" className="text-zinc-600 text-sm">Nature of Business *</Label>
+                                    <Label htmlFor="businessNature" className="text-zinc-900 text-sm">Nature of Business *</Label>
                                     <Textarea
                                         id="businessNature"
                                         placeholder="Daily activities, services provided..."
@@ -141,7 +141,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="sourceOfFunds" className="text-zinc-600 text-sm">Main Source of Funds/Income *</Label>
+                                    <Label htmlFor="sourceOfFunds" className="text-zinc-900 text-sm">Main Source of Funds/Income *</Label>
                                     <Input
                                         id="sourceOfFunds"
                                         placeholder="e.g. B2B Sales, Monthly Contracts"
@@ -151,7 +151,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                 </div>
 
                                 <div className="space-y-3 pt-4 border-t border-zinc-200">
-                                    <Label className="text-zinc-600 text-sm">Do you have an existing PAYE scheme?</Label>
+                                    <Label className="text-zinc-900 text-sm">Do you have an existing PAYE scheme?</Label>
                                     <RadioGroup value={data.hasPaye || "no"} onValueChange={(val) => updateField("hasPaye", val)} className="flex gap-6">
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="paye-yes" /><Label htmlFor="paye-yes" className="text-sm">Yes</Label></div>
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="paye-no" /><Label htmlFor="paye-no" className="text-sm">No</Label></div>
@@ -159,13 +159,13 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                 </div>
                                 {data.hasPaye === "yes" && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-purple-200">
-                                        <div className="space-y-2"><Label className="text-zinc-600 text-sm">Accounts Office Ref</Label><Input value={data.accountsOfficeRef || ""} onChange={(e) => updateField("accountsOfficeRef", e.target.value)} /></div>
-                                        <div className="space-y-2"><Label className="text-zinc-600 text-sm">PAYE Reference</Label><Input value={data.payeRef || ""} onChange={(e) => updateField("payeRef", e.target.value)} /></div>
+                                        <div className="space-y-2"><Label className="text-zinc-900 text-sm">Accounts Office Ref</Label><Input value={data.accountsOfficeRef || ""} onChange={(e) => updateField("accountsOfficeRef", e.target.value)} /></div>
+                                        <div className="space-y-2"><Label className="text-zinc-900 text-sm">PAYE Reference</Label><Input value={data.payeRef || ""} onChange={(e) => updateField("payeRef", e.target.value)} /></div>
                                     </motion.div>
                                 )}
 
                                 <div className="space-y-3 pt-4">
-                                    <Label className="text-zinc-600 text-sm">Are you VAT Registered?</Label>
+                                    <Label className="text-zinc-900 text-sm">Are you VAT Registered?</Label>
                                     <RadioGroup value={data.isVatRegistered || "no"} onValueChange={(val) => updateField("isVatRegistered", val)} className="flex gap-6">
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="vat-yes" /><Label htmlFor="vat-yes" className="text-sm">Yes</Label></div>
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="vat-no" /><Label htmlFor="vat-no" className="text-sm">No</Label></div>
@@ -173,8 +173,8 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                 </div>
                                 {data.isVatRegistered === "yes" && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-purple-200">
-                                        <div className="space-y-2"><Label className="text-zinc-600 text-sm">VAT Number</Label><Input maxLength={9} value={data.vatNumber || ""} onChange={(e) => updateField("vatNumber", e.target.value)} /></div>
-                                        <div className="space-y-2"><Label className="text-zinc-600 text-sm">Registration Date</Label><Input type="date" value={data.vatRegDate || ""} onChange={(e) => updateField("vatRegDate", e.target.value)} /></div>
+                                        <div className="space-y-2"><Label className="text-zinc-900 text-sm">VAT Number</Label><Input maxLength={9} value={data.vatNumber || ""} onChange={(e) => updateField("vatNumber", e.target.value)} /></div>
+                                        <div className="space-y-2"><Label className="text-zinc-900 text-sm">Registration Date</Label><Input type="date" value={data.vatRegDate || ""} onChange={(e) => updateField("vatRegDate", e.target.value)} /></div>
                                     </motion.div>
                                 )}
                             </div>
@@ -184,7 +184,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                     {step === 3 && (
                         <Section title="Self Assessment Information">
                             <div className="space-y-4">
-                                <Label className="text-zinc-600 text-sm">Select Personal Income Types *</Label>
+                                <Label className="text-zinc-900 text-sm">Select Personal Income Types *</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {["Employment (PAYE)", "Self-employment", "Rental Income", "Dividends", "Foreign Income", "Other"].map((type) => (
                                         <div key={type} className="flex items-center space-x-2">
@@ -207,7 +207,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
 
                     {step === 4 && (
                         <Section title="Ownership & Roles">
-                            <p className="text-sm text-zinc-400">Add details for all directors or significant shareholders (25%+).</p>
+                            <p className="text-sm text-zinc-500">Add details for all directors or significant shareholders (25%+).</p>
 
                             <div className="space-y-3">
                                 {(data.directors || []).map((director: any) => (
@@ -233,7 +233,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                             />
 
                             <div className="space-y-2 pt-4 border-t border-zinc-200">
-                                <Label className="text-zinc-600 text-sm">Trading Address (if different from Registration)</Label>
+                                <Label className="text-zinc-900 text-sm">Trading Address (if different from Registration)</Label>
                                 <Textarea
                                     value={data.tradingAddress || ""}
                                     onChange={(e) => updateField("tradingAddress", e.target.value)}
@@ -269,7 +269,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                             <Section title="Compliance Checks">
                                 <div className="space-y-6">
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)? *</Label>
+                                        <Label className="text-zinc-900 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)? *</Label>
                                         <RadioGroup value={data.isPep || "no"} onValueChange={(val) => updateField("isPep", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
@@ -277,7 +277,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Links to high-risk or sanctioned jurisdictions? *</Label>
+                                        <Label className="text-zinc-900 text-sm">Links to high-risk or sanctioned jurisdictions? *</Label>
                                         <RadioGroup value={data.hasSanctions || "no"} onValueChange={(val) => updateField("hasSanctions", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sanct-yes" /><Label htmlFor="sanct-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sanct-no" /><Label htmlFor="sanct-no" className="text-sm">No</Label></div>
@@ -285,7 +285,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Any bankruptcy or disqualification history? *</Label>
+                                        <Label className="text-zinc-900 text-sm">Any bankruptcy or disqualification history? *</Label>
                                         <RadioGroup value={data.hasBankruptcy || "no"} onValueChange={(val) => updateField("hasBankruptcy", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bank-yes" /><Label htmlFor="bank-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bank-no" /><Label htmlFor="bank-no" className="text-sm">No</Label></div>
@@ -366,23 +366,23 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
             <h4 className="font-medium text-sm text-zinc-600">Add New Director/Shareholder</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">First Name</Label>
+                    <Label className="text-zinc-900 text-sm">First Name</Label>
                     <Input value={director.firstName} onChange={(e) => setDirector({ ...director, firstName: e.target.value })} placeholder="John" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">Last Name</Label>
+                    <Label className="text-zinc-900 text-sm">Last Name</Label>
                     <Input value={director.lastName} onChange={(e) => setDirector({ ...director, lastName: e.target.value })} placeholder="Doe" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">Role</Label>
+                    <Label className="text-zinc-900 text-sm">Role</Label>
                     <Input value={director.role} onChange={(e) => setDirector({ ...director, role: e.target.value })} placeholder="Director" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">Date of Birth</Label>
+                    <Label className="text-zinc-900 text-sm">Date of Birth</Label>
                     <Input type="date" value={director.dob} onChange={(e) => setDirector({ ...director, dob: e.target.value })} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                    <Label className="text-zinc-500 text-sm">Home Address</Label>
+                    <Label className="text-zinc-900 text-sm">Home Address</Label>
                     <Textarea value={director.address} onChange={(e) => setDirector({ ...director, address: e.target.value })} placeholder="Address..." className="min-h-[60px]" />
                 </div>
             </div>

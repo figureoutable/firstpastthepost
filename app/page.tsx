@@ -27,10 +27,6 @@ export default function Home() {
           </GradientButton>
         </Link>
       </div>
-
-      <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-sm text-zinc-400">
-        &copy; {new Date().getFullYear()} Figures. All rights reserved.
-      </p>
     </BackgroundPaths>
   );
 }

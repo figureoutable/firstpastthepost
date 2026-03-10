@@ -79,7 +79,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             <Section title="Tax & Corporate Identifiers">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="companyName" className="text-zinc-600 text-sm">Company Name *</Label>
+                                        <Label htmlFor="companyName" className="text-zinc-900 text-sm">Company Name *</Label>
                                         <Input
                                             id="companyName"
                                             placeholder="Figures Accounting Ltd"
@@ -88,7 +88,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="companyNumber" className="text-zinc-600 text-sm">Company Number *</Label>
+                                        <Label htmlFor="companyNumber" className="text-zinc-900 text-sm">Company Number *</Label>
                                         <Input
                                             id="companyNumber"
                                             placeholder="12345678"
@@ -97,10 +97,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             value={data.registrationNumber || ""}
                                             onChange={(e) => updateField("registrationNumber", e.target.value.replace(/\D/g, ""))}
                                         />
-                                        <p className="text-xs text-zinc-400">Exactly 8 digits</p>
+                                        <p className="text-xs text-zinc-500">Exactly 8 digits</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="utrNumber" className="text-zinc-600 text-sm">Business UTR *</Label>
+                                        <Label htmlFor="utrNumber" className="text-zinc-900 text-sm">Business UTR *</Label>
                                         <Input
                                             id="utrNumber"
                                             placeholder="1234567890"
@@ -109,10 +109,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             value={data.utrNumber || ""}
                                             onChange={(e) => updateField("utrNumber", e.target.value.replace(/\D/g, ""))}
                                         />
-                                        <p className="text-xs text-zinc-400">Exactly 10 digits</p>
+                                        <p className="text-xs text-zinc-500">Exactly 10 digits</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="authCode" className="text-zinc-600 text-sm">Auth Code *</Label>
+                                        <Label htmlFor="authCode" className="text-zinc-900 text-sm">Auth Code *</Label>
                                         <Input
                                             id="authCode"
                                             placeholder="ABC123"
@@ -121,7 +121,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             value={data.companyAuthCode || ""}
                                             onChange={(e) => updateField("companyAuthCode", e.target.value.toUpperCase())}
                                         />
-                                        <p className="text-xs text-zinc-400">Exactly 6 characters</p>
+                                        <p className="text-xs text-zinc-500">Exactly 6 characters</p>
                                     </div>
                                 </div>
                             </Section>
@@ -129,7 +129,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             <Section title="Payroll & VAT">
                                 <div className="space-y-5">
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Do you have an existing PAYE scheme?</Label>
+                                        <Label className="text-zinc-900 text-sm">Do you have an existing PAYE scheme?</Label>
                                         <RadioGroup
                                             value={data.hasPaye || "no"}
                                             onValueChange={(val) => updateField("hasPaye", val)}
@@ -153,7 +153,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-purple-200"
                                         >
                                             <div className="space-y-2">
-                                                <Label htmlFor="accountsOfficeRef" className="text-zinc-600 text-sm">Accounts Office Ref</Label>
+                                                <Label htmlFor="accountsOfficeRef" className="text-zinc-900 text-sm">Accounts Office Ref</Label>
                                                 <Input
                                                     id="accountsOfficeRef"
                                                     placeholder="123PA01234567"
@@ -162,10 +162,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.accountsOfficeRef || ""}
                                                     onChange={(e) => updateField("accountsOfficeRef", e.target.value.toUpperCase())}
                                                 />
-                                                <p className="text-xs text-zinc-400">13 characters</p>
+                                                <p className="text-xs text-zinc-500">13 characters</p>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="payeRef" className="text-zinc-600 text-sm">PAYE Reference</Label>
+                                                <Label htmlFor="payeRef" className="text-zinc-900 text-sm">PAYE Reference</Label>
                                                 <Input
                                                     id="payeRef"
                                                     placeholder="123/AB45678"
@@ -174,13 +174,13 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.payeRef || ""}
                                                     onChange={(e) => updateField("payeRef", e.target.value.toUpperCase())}
                                                 />
-                                                <p className="text-xs text-zinc-400">10–12 characters</p>
+                                                <p className="text-xs text-zinc-500">10–12 characters</p>
                                             </div>
                                         </motion.div>
                                     )}
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Are you VAT Registered?</Label>
+                                        <Label className="text-zinc-900 text-sm">Are you VAT Registered?</Label>
                                         <RadioGroup
                                             value={data.isVatRegistered || "no"}
                                             onValueChange={(val) => updateField("isVatRegistered", val)}
@@ -204,7 +204,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-purple-200"
                                         >
                                             <div className="space-y-2">
-                                                <Label htmlFor="vatNumber" className="text-zinc-600 text-sm">VAT Number</Label>
+                                                <Label htmlFor="vatNumber" className="text-zinc-900 text-sm">VAT Number</Label>
                                                 <Input
                                                     id="vatNumber"
                                                     placeholder="123456789"
@@ -213,10 +213,10 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.vatNumber || ""}
                                                     onChange={(e) => updateField("vatNumber", e.target.value.replace(/\D/g, ""))}
                                                 />
-                                                <p className="text-xs text-zinc-400">Exactly 9 digits</p>
+                                                <p className="text-xs text-zinc-500">Exactly 9 digits</p>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="vatRegDate" className="text-zinc-600 text-sm">Registration Date</Label>
+                                                <Label htmlFor="vatRegDate" className="text-zinc-900 text-sm">Registration Date</Label>
                                                 <Input
                                                     id="vatRegDate"
                                                     type="date"
@@ -253,7 +253,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                     {step === 2 && (
                         <>
                             <Section title="Ownership & Roles">
-                                <p className="text-sm text-zinc-400">Please provide details for everyone with 25%+ ownership.</p>
+                                <p className="text-sm text-zinc-500">Please provide details for everyone with 25%+ ownership.</p>
 
                                 <div className="space-y-3">
                                     {(data.directors || []).map((director: any) => (
@@ -284,7 +284,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                 />
 
                                 <div className="space-y-2 pt-4 border-t border-zinc-200">
-                                    <Label className="text-zinc-600 text-sm">Trading Address (if different from Registered Office)</Label>
+                                    <Label className="text-zinc-900 text-sm">Trading Address (if different from Registered Office)</Label>
                                     <Input
                                         placeholder="Leave blank if same"
                                         value={data.tradingAddress || ""}
@@ -294,7 +294,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             </Section>
 
                             <Section title="Service Scope">
-                                <p className="text-sm text-zinc-400 mb-2">Select at least one service.</p>
+                                <p className="text-sm text-zinc-500 mb-2">Select at least one service.</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {[
                                         "Company Accounts & Corp Tax",
@@ -324,7 +324,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             <Section title="Business Nature">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="businessNature" className="text-zinc-600 text-sm">Nature of Business *</Label>
+                                        <Label htmlFor="businessNature" className="text-zinc-900 text-sm">Nature of Business *</Label>
                                         <Textarea
                                             id="businessNature"
                                             placeholder="Describe daily activities..."
@@ -333,7 +333,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="sourceOfFunds" className="text-zinc-600 text-sm">Main Source of Funds/Income *</Label>
+                                        <Label htmlFor="sourceOfFunds" className="text-zinc-900 text-sm">Main Source of Funds/Income *</Label>
                                         <Input
                                             id="sourceOfFunds"
                                             placeholder="e.g. Sales, Contracts..."
@@ -356,7 +356,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             <Section title="AML Questions">
                                 <div className="space-y-6">
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)?</Label>
+                                        <Label className="text-zinc-900 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)?</Label>
                                         <RadioGroup value={data.isPep || "no"} onValueChange={(val) => updateField("isPep", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
@@ -364,7 +364,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Do you trade with high-risk/sanctioned jurisdictions?</Label>
+                                        <Label className="text-zinc-900 text-sm">Do you trade with high-risk/sanctioned jurisdictions?</Label>
                                         <RadioGroup value={data.hasSanctions || "no"} onValueChange={(val) => updateField("hasSanctions", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sanctions-yes" /><Label htmlFor="sanctions-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sanctions-no" /><Label htmlFor="sanctions-no" className="text-sm">No</Label></div>
@@ -372,7 +372,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Does the company have complex ownership (holding companies)?</Label>
+                                        <Label className="text-zinc-900 text-sm">Does the company have complex ownership (holding companies)?</Label>
                                         <RadioGroup value={data.hasComplexStructure || "no"} onValueChange={(val) => updateField("hasComplexStructure", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="complex-yes" /><Label htmlFor="complex-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="complex-no" /><Label htmlFor="complex-no" className="text-sm">No</Label></div>
@@ -387,7 +387,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-600 text-sm">Any bankruptcy/disqualification history?</Label>
+                                        <Label className="text-zinc-900 text-sm">Any bankruptcy/disqualification history?</Label>
                                         <RadioGroup value={data.hasBankruptcy || "no"} onValueChange={(val) => updateField("hasBankruptcy", val)} className="flex gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
@@ -469,7 +469,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
             <h4 className="font-medium text-sm text-zinc-600">Add New Director/Partner</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">First Name</Label>
+                    <Label className="text-zinc-900 text-sm">First Name</Label>
                     <Input
                         value={director.firstName}
                         onChange={(e) => setDirector(d => ({ ...d, firstName: e.target.value }))}
@@ -477,7 +477,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">Last Name</Label>
+                    <Label className="text-zinc-900 text-sm">Last Name</Label>
                     <Input
                         value={director.lastName}
                         onChange={(e) => setDirector(d => ({ ...d, lastName: e.target.value }))}
@@ -485,7 +485,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">Role</Label>
+                    <Label className="text-zinc-900 text-sm">Role</Label>
                     <Input
                         value={director.role}
                         onChange={(e) => setDirector(d => ({ ...d, role: e.target.value }))}
@@ -493,7 +493,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-zinc-500 text-sm">Date of Birth</Label>
+                    <Label className="text-zinc-900 text-sm">Date of Birth</Label>
                     <Input
                         type="date"
                         value={director.dob}
@@ -501,7 +501,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
                     />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                    <Label className="text-zinc-500 text-sm">Home Address</Label>
+                    <Label className="text-zinc-900 text-sm">Home Address</Label>
                     <Textarea
                         value={director.address}
                         onChange={(e) => setDirector(d => ({ ...d, address: e.target.value }))}

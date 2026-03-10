@@ -53,13 +53,13 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
 
     return (
         <div className="w-full space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label className="text-sm font-medium leading-none text-zinc-900 peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 {label} {required && <span className="text-destructive">*</span>}
             </label>
             <div
                 className={cn(
                     "relative flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer overflow-hidden",
-                    dragActive ? "border-primary bg-primary/5" : "border-border/50 bg-secondary/20 hover:bg-secondary/30",
+                    dragActive ? "border-purple-400 bg-purple-50/50" : "border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50",
                     value ? "border-green-500/50 bg-green-500/5" : ""
                 )}
                 onDragEnter={handleDrag}
@@ -94,11 +94,11 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-2 p-4 text-center text-muted-foreground">
-                        <div className={`p-2 rounded-full transition-colors ${dragActive ? 'bg-primary/20 text-primary' : 'bg-background/50'}`}>
+                        <div className={`p-2 rounded-full transition-colors ${dragActive ? 'bg-purple-100 text-purple-500' : 'bg-zinc-100'}`}>
                             <Upload className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
+                            <p className="text-sm font-medium text-zinc-600">Click to upload or drag and drop</p>
                             <p className="text-xs">{desc || "SVG, PNG, JPG or PDF (max 5MB)"}</p>
                         </div>
                     </div>

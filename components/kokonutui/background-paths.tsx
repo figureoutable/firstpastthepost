@@ -216,10 +216,6 @@ export default memo(function BackgroundPaths({
 }) {
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-white">
-      <div className="absolute inset-0">
-        <FloatingPaths position={1} />
-      </div>
-
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
         <motion.div
           animate={{ opacity: 1 }}
@@ -230,6 +226,10 @@ export default memo(function BackgroundPaths({
           {children}
         </motion.div>
       </div>
+
+      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-xs text-zinc-400">
+        &copy; {new Date().getFullYear()} Figures. All rights reserved.
+      </p>
     </div>
   );
 });

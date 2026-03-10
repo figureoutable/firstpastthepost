@@ -48,6 +48,19 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
     const nextStep = () => setStep(s => Math.min(s + 1, 6));
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
 
+    const canGoNext = () => {
+        if (step === 2) {
+            return data.natureOfBusiness
+                && data.sourceOfFunds
+                && (data.hasPaye === "yes" || data.hasPaye === "no")
+                && (data.isVatRegistered === "yes" || data.isVatRegistered === "no");
+        }
+        if (step === 5) {
+            return !!(data.photoId && data.proofOfAddress);
+        }
+        return true;
+    };
+
     return (
         <div className="space-y-6">
             <StepIndicator current={step - 1} total={6} />
@@ -151,8 +164,8 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                 </div>
 
                                 <div className="space-y-3 pt-4 border-t border-zinc-200">
-                                    <Label className="text-zinc-900 text-sm">Do you have an existing PAYE scheme?</Label>
-                                    <RadioGroup value={data.hasPaye || "no"} onValueChange={(val) => updateField("hasPaye", val)} className="flex gap-6">
+                                    <Label className="text-zinc-900 text-sm">Do you have an existing PAYE scheme? *</Label>
+                                    <RadioGroup value={data.hasPaye ?? ""} onValueChange={(val) => updateField("hasPaye", val)} className="flex gap-6">
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="paye-yes" /><Label htmlFor="paye-yes" className="text-sm">Yes</Label></div>
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="paye-no" /><Label htmlFor="paye-no" className="text-sm">No</Label></div>
                                     </RadioGroup>
@@ -165,8 +178,8 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                                 )}
 
                                 <div className="space-y-3 pt-4">
-                                    <Label className="text-zinc-900 text-sm">Are you VAT Registered?</Label>
-                                    <RadioGroup value={data.isVatRegistered || "no"} onValueChange={(val) => updateField("isVatRegistered", val)} className="flex gap-6">
+                                    <Label className="text-zinc-900 text-sm">Are you VAT Registered? *</Label>
+                                    <RadioGroup value={data.isVatRegistered ?? ""} onValueChange={(val) => updateField("isVatRegistered", val)} className="flex gap-6">
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="vat-yes" /><Label htmlFor="vat-yes" className="text-sm">Yes</Label></div>
                                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="vat-no" /><Label htmlFor="vat-no" className="text-sm">No</Label></div>
                                     </RadioGroup>
@@ -331,7 +344,7 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                 {step < 6 ? (
                     <GradientButton
                         onClick={nextStep}
-                        disabled={step === 5 && (!data.photoId || !data.proofOfAddress)}
+                        disabled={!canGoNext()}
                         className="flex-1"
                         variant="purple"
                     >

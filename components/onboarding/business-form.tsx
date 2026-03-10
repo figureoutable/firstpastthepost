@@ -51,6 +51,8 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                 && (data.registrationNumber || "").length === 8
                 && (data.utrNumber || "").length === 10
                 && (data.companyAuthCode || "").length === 6
+                && (data.hasPaye === "yes" || data.hasPaye === "no")
+                && (data.isVatRegistered === "yes" || data.isVatRegistered === "no")
                 && data.photoId
                 && data.proofOfAddress;
         }
@@ -131,9 +133,9 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             <Section title="Payroll & VAT">
                                 <div className="space-y-5">
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-900 text-sm">Do you have an existing PAYE scheme?</Label>
+                                        <Label className="text-zinc-900 text-sm">Do you have an existing PAYE scheme? *</Label>
                                         <RadioGroup
-                                            value={data.hasPaye || "no"}
+                                            value={data.hasPaye ?? ""}
                                             onValueChange={(val) => updateField("hasPaye", val)}
                                             className="flex gap-6"
                                         >
@@ -182,9 +184,9 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                     )}
 
                                     <div className="space-y-3">
-                                        <Label className="text-zinc-900 text-sm">Are you VAT Registered?</Label>
+                                        <Label className="text-zinc-900 text-sm">Are you VAT Registered? *</Label>
                                         <RadioGroup
-                                            value={data.isVatRegistered || "no"}
+                                            value={data.isVatRegistered ?? ""}
                                             onValueChange={(val) => updateField("isVatRegistered", val)}
                                             className="flex gap-6"
                                         >

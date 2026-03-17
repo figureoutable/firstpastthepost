@@ -12,3 +12,17 @@ export async function sendInternalEmail(subject: string, html: string): Promise<
         html,
     });
 }
+
+export async function sendClientEmail(
+    to: string,
+    subject: string,
+    html: string
+): Promise<void> {
+    if (!resend || !to) return;
+    await resend.emails.send({
+        from: "Figures Onboarding <onboarding@resend.dev>",
+        to: [to],
+        subject,
+        html,
+    });
+}

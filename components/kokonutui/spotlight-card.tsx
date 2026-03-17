@@ -19,9 +19,11 @@ export interface SpotlightItem {
 interface SpotlightCardProps {
   item: SpotlightItem;
   onClick?: () => void;
+  /** e.g. h-full w-full so cards match in a grid */
+  className?: string;
 }
 
-export function SpotlightCard({ item, onClick }: SpotlightCardProps) {
+export function SpotlightCard({ item, onClick, className }: SpotlightCardProps) {
   const Icon = item.icon;
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -56,10 +58,11 @@ export function SpotlightCard({ item, onClick }: SpotlightCardProps) {
   return (
     <motion.div
       className={cn(
-        "group relative flex flex-col gap-5 overflow-hidden rounded-2xl border p-8 cursor-pointer",
+        "group relative flex h-full w-full min-h-0 flex-col items-start gap-5 overflow-hidden rounded-2xl border p-8 cursor-pointer text-left",
         "border-zinc-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         "transition-[border-color] duration-300",
-        "hover:border-zinc-300"
+        "hover:border-zinc-300",
+        className
       )}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -105,11 +108,11 @@ export function SpotlightCard({ item, onClick }: SpotlightCardProps) {
         <Icon size={22} strokeWidth={1.9} style={{ color: item.color }} />
       </div>
 
-      <div className="relative z-10 flex flex-col gap-2">
-        <h3 className="font-semibold text-lg text-zinc-900 tracking-tight">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-2">
+        <h3 className="w-full whitespace-pre-line text-left font-semibold text-lg text-zinc-900 tracking-tight">
           {item.title}
         </h3>
-        <p className="text-sm text-zinc-500 leading-relaxed">
+        <p className="w-full text-left text-sm text-zinc-500 leading-relaxed">
           {item.description}
         </p>
       </div>

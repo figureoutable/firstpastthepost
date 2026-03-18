@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { sendInternalEmail, sendClientEmail } from "@/lib/notifications";
-import { COMPANIES_HOUSE_IDENTITY_URL } from "@/lib/figures-config";
 
 export async function POST(request: Request) {
   try {
@@ -184,10 +183,9 @@ ${JSON.stringify(payload, null, 2)}
     await sendInternalEmail("Incorporation request submitted", html);
 
     const clientBody = `
-      <p>Thank you - we have received your incorporation request. The Figures team will be in touch within 1 business day.</p>
-      <p>There is one final step you must complete. Every director and anyone who owns more than 25% of the company must verify their identity with Companies House. You must do this in order to receive your personal code, and we need that code before we can register your company.</p>
-      <p><a href="${COMPANIES_HOUSE_IDENTITY_URL}">Please verify your identity here</a></p>
-      <p>Once verified, your personal code will be in the &quot;Manage account&quot; section of your Companies House account. Please send it to us on WhatsApp and we will take it from there.</p>
+      <p>Congrats on the first step to your new Limited company!</p>
+      <p>We have received everything we need and will be in touch with you shortly.</p>
+      <p>Kind regards,<br/>The Figures Team</p>
     `;
     await sendClientEmail(
       registeredEmail,

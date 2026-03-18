@@ -729,7 +729,8 @@ export function IncorporationWizard() {
                 <strong>Select up to 4 SIC codes</strong> by clicking the cards (click again to
                 deselect). You need <strong>at least one</strong> selected before you can continue. If
                 our suggestions don&apos;t fit, use the link to search the full list and pick codes
-                manually from the suggestions after searching, or tell us in the review step.
+                manually. Search results and suggestions may not be accurate, so please double-check
+                on the Companies House SIC list.
               </li>
             </ol>
           </div>

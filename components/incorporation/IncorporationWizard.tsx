@@ -19,7 +19,7 @@ const STEPS = 9;
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-zinc-800">
+    <p className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800">
       {children}
     </p>
   );
@@ -270,12 +270,12 @@ export function IncorporationWizard() {
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
-        <h2 className="text-xl font-semibold text-zinc-900">Thank you</h2>
-        <p className="mt-4 text-sm text-zinc-600">
+      <div className="mx-auto max-w-lg rounded-2xl border border-stone-200 bg-card p-8 text-center shadow-sm">
+        <h2 className="text-xl font-semibold text-stone-900">Thank you</h2>
+        <p className="mt-4 text-sm text-stone-600">
           We have received your incorporation request. The Figures team will be in touch shortly.
         </p>
-        <Link href="/" className="mt-6 inline-block text-sm text-purple-600 underline">
+        <Link href="/" className="mt-6 inline-block text-sm text-forest-600 underline">
           Back to home
         </Link>
       </div>
@@ -284,13 +284,13 @@ export function IncorporationWizard() {
 
   if (phase === "banner") {
     return (
-      <div className="mx-auto max-w-2xl space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm md:p-10">
-        <h1 className="text-2xl font-semibold text-zinc-900">Company incorporation</h1>
-        <div className="space-y-4 text-sm text-zinc-700 leading-relaxed">
+      <div className="mx-auto max-w-2xl space-y-6 rounded-2xl border border-stone-200 bg-card p-6 shadow-sm md:p-10">
+        <h1 className="text-2xl font-semibold text-stone-900">Company incorporation</h1>
+        <div className="space-y-4 text-sm text-stone-700 leading-relaxed">
           <p>
             This form takes approximately 25-30 minutes to complete. Please set aside enough time to
             finish it in one sitting, as{" "}
-            <span className="font-semibold text-zinc-900">the form does not auto-save.</span>
+            <span className="font-semibold text-stone-900">the form does not auto-save.</span>
           </p>
           <p>
             Before you start: all directors and anyone who owns more than 25% of the company must
@@ -306,19 +306,19 @@ export function IncorporationWizard() {
               href={COMPANIES_HOUSE_IDENTITY_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-purple-700 underline"
+              className="font-medium text-forest-700 underline"
             >
               Verify your identity here
             </a>
           </p>
           <p>
             If you have any questions at any point, take a screenshot and send it to us on{" "}
-            <span className="font-medium text-zinc-900">WhatsApp</span>. We are happy to help.
+            <span className="font-medium text-stone-900">WhatsApp</span>. We are happy to help.
           </p>
         </div>
         <div className="rounded-xl border-2 border-amber-400 bg-yellow-100 px-4 py-4 shadow-sm ring-2 ring-yellow-200/80">
-          <p className="text-base font-semibold text-zinc-900">Important</p>
-          <p className="mt-1 text-sm text-zinc-800">
+          <p className="text-base font-semibold text-stone-900">Important</p>
+          <p className="mt-1 text-sm text-stone-800">
             <strong>Only proceed if you have the Companies House personal codes to hand</strong> for
             all directors (and any PSCs who are not directors). You&apos;ll be asked for directors&apos;
             codes at the end of this form.
@@ -338,12 +338,12 @@ export function IncorporationWizard() {
 
   if (step1Blocked) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center">
-        <p className="text-zinc-800">
+      <div className="mx-auto max-w-lg rounded-2xl border border-stone-200 bg-card p-8 text-center">
+        <p className="text-stone-800">
           Thank you - one of our team will be in touch shortly to discuss the right structure for
           you.
         </p>
-        <Link href="/" className="mt-6 inline-block text-purple-600 underline">
+        <Link href="/" className="mt-6 inline-block text-forest-600 underline">
           Home
         </Link>
       </div>
@@ -352,16 +352,16 @@ export function IncorporationWizard() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-24">
-      <div className="sticky top-0 z-10 -mx-4 border-b border-zinc-200 bg-zinc-50/95 px-4 py-3 backdrop-blur">
-        <div className="mb-2 flex justify-between text-xs text-zinc-500">
+      <div className="sticky top-0 z-10 -mx-4 border-b border-stone-200 bg-stone-50/95 px-4 py-3 backdrop-blur">
+        <div className="mb-2 flex justify-between text-xs text-stone-500">
           <span>
             Step {step} of {STEPS}
           </span>
           <span>{progress}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-200">
+        <div className="h-2 overflow-hidden rounded-full bg-stone-200">
           <div
-            className="h-full rounded-full bg-purple-600 transition-all"
+            className="h-full rounded-full bg-forest-600 transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -425,7 +425,7 @@ export function IncorporationWizard() {
               href="https://find-and-update.company-information.service.gov.uk/company-name-availability"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 font-medium text-purple-800 shadow-sm transition hover:border-purple-300 hover:bg-purple-100"
+              className="inline-flex items-center justify-center rounded-lg border border-forest-200 bg-forest-50 px-3 py-2 font-medium text-forest-800 shadow-sm transition hover:border-forest-300 hover:bg-forest-100"
             >
               Check name availability on Companies House
             </a>
@@ -436,7 +436,7 @@ export function IncorporationWizard() {
               value={s.step2.name}
               onChange={(e) => update("step2", { ...s.step2, name: e.target.value })}
             />
-            <p className="text-xs text-zinc-500">Do not include Limited or Ltd - we add it for you.</p>
+            <p className="text-xs text-stone-500">Do not include Limited or Ltd - we add it for you.</p>
             {errors.name && <p className="text-xs text-red-600">{errors.name}</p>}
           </div>
           <div className="space-y-2">
@@ -527,8 +527,8 @@ export function IncorporationWizard() {
               ))}
             </RadioGroup>
           </div>
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 p-4">
-            <p className="mb-2 text-xs text-zinc-500">
+          <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
+            <p className="mb-2 text-xs text-stone-500">
               Enter the registered office address manually — this will appear on the public register.
             </p>
             <AddressFields
@@ -564,8 +564,8 @@ export function IncorporationWizard() {
             </RadioGroup>
           </div>
           {s.step3.principal === "different" && (
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 p-4">
-              <p className="mb-2 text-xs text-zinc-500">
+            <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
+              <p className="mb-2 text-xs text-stone-500">
                 Enter the address manually — this is where day-to-day business will happen.
               </p>
               <AddressFields
@@ -583,7 +583,7 @@ export function IncorporationWizard() {
               value={s.step3.registeredEmail}
               onChange={(e) => update("step3", { ...s.step3, registeredEmail: e.target.value })}
             />
-            <p className="text-xs text-zinc-500">Used for Companies House notices. Not shown publicly.</p>
+            <p className="text-xs text-stone-500">Used for Companies House notices. Not shown publicly.</p>
             {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
           </div>
           <div className="space-y-1">
@@ -592,7 +592,7 @@ export function IncorporationWizard() {
               value={s.step3.hmrcPhone}
               onChange={(e) => update("step3", { ...s.step3, hmrcPhone: e.target.value })}
             />
-            <p className="text-xs text-zinc-500">Only if HMRC has Corporation Tax questions.</p>
+            <p className="text-xs text-stone-500">Only if HMRC has Corporation Tax questions.</p>
           </div>
         </section>
       )}
@@ -623,8 +623,8 @@ export function IncorporationWizard() {
                 onChange={(e) => update("step4", { ...s.step4, prevBusinessName: e.target.value })}
               />
               {errors.prevName && <p className="text-xs text-red-600">{errors.prevName}</p>}
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 p-4">
-                <p className="mb-2 text-xs text-zinc-600">
+              <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
+                <p className="mb-2 text-xs text-stone-600">
                   Enter the address of the previous business manually.
                 </p>
                 <AddressFields
@@ -674,7 +674,7 @@ export function IncorporationWizard() {
             <Label className="font-medium">
               In the first 3 months, will any of these apply to the company?
             </Label>
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-stone-600">
               This includes paying interest on loans from directors, paying royalties (for example
               for using someone else&apos;s brand or content), or receiving income from overseas
               investments.
@@ -697,7 +697,7 @@ export function IncorporationWizard() {
               Has anyone on this application already asked Companies House to keep their personal
               details off the public register?
             </Label>
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-stone-600">
               This is usually only used where someone is at risk of harm and has applied directly to
               Companies House for extra privacy.
             </p>
@@ -714,9 +714,9 @@ export function IncorporationWizard() {
               <Label htmlFor="pr-n">No</Label>
             </RadioGroup>
           </div>
-          <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-zinc-800 space-y-2">
-            <p className="font-medium text-zinc-900">SIC codes — what to do</p>
-            <ol className="list-decimal list-inside space-y-1 text-zinc-700 leading-relaxed">
+          <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800 space-y-2">
+            <p className="font-medium text-stone-900">SIC codes — what to do</p>
+            <ol className="list-decimal list-inside space-y-1 text-stone-700 leading-relaxed">
               <li>
                 <strong>Describe your business</strong> in the box below (one or two sentences in plain
                 English).
@@ -734,7 +734,7 @@ export function IncorporationWizard() {
               </li>
             </ol>
           </div>
-          <Label className="text-zinc-900">Describe your business *</Label>
+          <Label className="text-stone-900">Describe your business *</Label>
           <Textarea
             rows={3}
             value={s.step4.businessDescription}
@@ -746,7 +746,7 @@ export function IncorporationWizard() {
             {s.step4.sicLoading ? "Finding…" : "Find my codes"}
           </Button>
           {s.step4.sicSuggestions.length === 0 && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               After you click Find my codes, suggested codes appear here — tap a card to add it (max 4).
             </p>
           )}
@@ -768,11 +768,11 @@ export function IncorporationWizard() {
                     update("step4", { ...s.step4, sicCodes: next });
                   }}
                   className={`rounded-lg border p-3 text-left text-sm ${
-                    on ? "border-purple-500 bg-purple-50" : "border-zinc-200"
+                    on ? "border-forest-500 bg-forest-50" : "border-stone-200"
                   } ${atMax ? "opacity-50" : ""}`}
                 >
                   <span className="font-mono font-semibold">{x.code}</span>
-                  <p className="text-zinc-600">{x.description}</p>
+                  <p className="text-stone-600">{x.description}</p>
                 </button>
               );
             })}
@@ -781,11 +781,11 @@ export function IncorporationWizard() {
             href="https://resources.companieshouse.gov.uk/sic/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-purple-700 underline"
+            className="text-sm text-forest-700 underline"
           >
             Search the full list manually
           </a>
-          <p className="text-sm font-medium text-zinc-700">
+          <p className="text-sm font-medium text-stone-700">
             Selected: {s.step4.sicCodes.length} of 4 (minimum 1 to continue)
           </p>
           {errors.sic && <p className="text-xs text-red-600">{errors.sic}</p>}
@@ -884,7 +884,7 @@ export function IncorporationWizard() {
         />
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 flex gap-3 border-t border-zinc-200 bg-white/95 p-4 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
+      <div className="fixed bottom-0 left-0 right-0 flex gap-3 border-t border-stone-200 bg-card/95 p-4 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
         <Button type="button" variant="outline" className="flex-1 md:flex-none" onClick={back}>
           Back
         </Button>
@@ -918,7 +918,7 @@ function DirectorCard({
   canRemove: boolean;
 }) {
   return (
-    <div className="space-y-3 rounded-xl border border-zinc-200 p-4">
+    <div className="space-y-3 rounded-xl border border-stone-200 p-4">
       <div className="flex justify-between">
         <span className="font-medium">Director {i + 1}</span>
         {canRemove && (
@@ -997,7 +997,7 @@ function DirectorCard({
       {errors[`d${i}.dob`] && <p className="text-xs text-red-600">{errors[`d${i}.dob`]}</p>}
       <div className="space-y-2">
         <Label>Correspondence address (public)</Label>
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-stone-600">
           This is the director&apos;s <strong>service address</strong> and it appears on the public
           Companies House register. Many people use the registered office address to keep their home
           address private.
@@ -1021,7 +1021,7 @@ function DirectorCard({
       </div>
       <div className="space-y-2">
         <Label>Home address (private)</Label>
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-stone-600">
           This is the director&apos;s <strong>residential address</strong>. It is not shown on the
           public register, but Companies House uses it for official records and identity checks.
         </p>
@@ -1036,8 +1036,8 @@ function DirectorCard({
           <Label htmlFor={`h${i}2`}>Different</Label>
         </RadioGroup>
         {d.homeType === "other" && (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 p-4">
-            <p className="mb-2 text-xs text-zinc-600">Enter the home address manually.</p>
+          <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
+            <p className="mb-2 text-xs text-stone-600">Enter the home address manually.</p>
             <AddressFields
               value={d.homeAddress}
               onChange={(a) => onChange({ ...d, homeAddress: a })}
@@ -1212,12 +1212,12 @@ function Step7({
       {!s.step7.standard && (
         <div className="space-y-2">
           <Label htmlFor="custom-shares">
-            Custom share structure * <span className="font-normal text-zinc-500">(editable)</span>
+            Custom share structure * <span className="font-normal text-stone-500">(editable)</span>
           </Label>
           <Textarea
             id="custom-shares"
             rows={5}
-            className="min-h-[120px] w-full border-zinc-900/20 bg-white text-zinc-900"
+            className="min-h-[120px] w-full border-stone-900/20 bg-card text-stone-900"
             placeholder="Describe share classes, nominal value per share, voting, dividends, and any special rights (e.g. Ordinary A vs B, preference shares). We will follow up if anything needs clarifying."
             value={s.step7.customShareDescription}
             onChange={(e) =>
@@ -1284,7 +1284,7 @@ function Step7({
           </tr>
         </tfoot>
       </table>
-      <p className="text-sm text-zinc-600">
+      <p className="text-sm text-stone-600">
         {total} shares total — ownership must sum to 100% across shareholders.
       </p>
       {errors.alloc && <p className="text-xs text-red-600">{errors.alloc}</p>}
@@ -1297,7 +1297,7 @@ function Step7({
         />
         <div className="space-y-1">
           <Label htmlFor="paid">All shares paid in full</Label>
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-stone-600">
             Each share normally has a cost of £1 per share. Tick this if, once the company is set up,
             the people getting shares will put that full amount into the company (for example into
             the company bank account) rather than leaving any amount unpaid.
@@ -1347,16 +1347,16 @@ function Step8View({
         {pscs.map((p) => (
           <li
             key={p.id}
-            className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-3"
+            className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-stone-200 bg-stone-50/80 px-4 py-3"
           >
-            <span className="font-medium text-zinc-900">{p.name}</span>
-            <span className="text-lg font-semibold tabular-nums text-purple-700">
+            <span className="font-medium text-stone-900">{p.name}</span>
+            <span className="text-lg font-semibold tabular-nums text-forest-700">
               {p.pct.toFixed(1)}% ownership
             </span>
           </li>
         ))}
       </ul>
-      <p className="text-sm text-zinc-600">
+      <p className="text-sm text-stone-600">
         Companies House will need each PSC&apos;s personal code — directors enter theirs on the final
         step. If any PSC is not a director, we&apos;ll confirm details with you after submission.
       </p>
@@ -1414,29 +1414,29 @@ function Step9Review({
     <div className="rounded-lg border p-4 text-left">
       <div className="mb-2 flex justify-between">
         <span className="font-medium">{label}</span>
-        <button type="button" className="text-sm text-purple-600 underline" onClick={() => setStep(edit)}>
+        <button type="button" className="text-sm text-forest-600 underline" onClick={() => setStep(edit)}>
           Edit
         </button>
       </div>
-      <div className="text-sm text-zinc-600">{children}</div>
+      <div className="text-sm text-stone-600">{children}</div>
     </div>
   );
   return (
     <section className="space-y-4">
       <div className="rounded-xl border-2 border-amber-400 bg-yellow-100 p-4 text-left ring-2 ring-yellow-200/80">
-        <h3 className="font-semibold text-zinc-900">Companies House personal codes (directors)</h3>
-        <p className="mt-1 text-sm text-zinc-800">
+        <h3 className="font-semibold text-stone-900">Companies House personal codes (directors)</h3>
+        <p className="mt-1 text-sm text-stone-800">
           Enter each director&apos;s 11-character code (Manage account → Companies House). You
           already entered yours at the start — re-enter each person below to confirm.
         </p>
         <div className="mt-4 space-y-3">
           {s.step5.directors.map((d) => (
             <div key={d.id}>
-              <Label className="text-zinc-900">
+              <Label className="text-stone-900">
                 {d.firstName || "Director"} {d.lastName || ""} — personal code *
               </Label>
               <Input
-                className="mt-1 border-amber-300 bg-white font-mono tracking-widest"
+                className="mt-1 border-amber-300 bg-card font-mono tracking-widest"
                 maxLength={11}
                 value={s.step9.directorPersonalCodes[d.id] || ""}
                 onChange={(e) =>
@@ -1459,7 +1459,7 @@ function Step9Review({
       {row(
         "Company type",
         1,
-        <p className="text-sm text-zinc-700">{companyTypeSummary}</p>
+        <p className="text-sm text-stone-700">{companyTypeSummary}</p>
       )}
       {row("Company name", 2, (
         <p>
@@ -1470,11 +1470,11 @@ function Step9Review({
         "Registration & address",
         3,
         <>
-          <p className="text-sm text-zinc-700">
+          <p className="text-sm text-stone-700">
             Registered in <span className="font-medium">{regionLabel}</span>
           </p>
-          <div className="mt-2 text-sm text-zinc-700">
-            <p className="font-medium text-zinc-900">Registered office</p>
+          <div className="mt-2 text-sm text-stone-700">
+            <p className="font-medium text-stone-900">Registered office</p>
             <p>
               {[
                 s.step3.registered.line1,
@@ -1488,18 +1488,18 @@ function Step9Review({
             </p>
           </div>
           {s.step3.principal === "same" && (
-            <p className="mt-1 text-sm text-zinc-700">
+            <p className="mt-1 text-sm text-stone-700">
               Principal place of business: same as registered office
             </p>
           )}
           {s.step3.principal === "none" && (
-            <p className="mt-1 text-sm text-zinc-700">
+            <p className="mt-1 text-sm text-stone-700">
               No fixed principal place of business yet
             </p>
           )}
           {s.step3.principal === "different" && (
-            <div className="mt-2 text-sm text-zinc-700">
-              <p className="font-medium text-zinc-900">Principal place of business</p>
+            <div className="mt-2 text-sm text-stone-700">
+              <p className="font-medium text-stone-900">Principal place of business</p>
               <p>
                 {[
                   s.step3.principalAddr.line1,
@@ -1513,7 +1513,7 @@ function Step9Review({
               </p>
             </div>
           )}
-          <p className="mt-2 text-sm text-zinc-700">
+          <p className="mt-2 text-sm text-stone-700">
             Registered email: <span className="font-mono">{s.step3.registeredEmail}</span>
           </p>
         </>
@@ -1534,8 +1534,8 @@ function Step9Review({
           ) : (
             <p className="whitespace-pre-wrap">{s.step7.customShareDescription || "—"}</p>
           )}
-          <p className="mt-2 text-sm text-zinc-700">Total shares: {totalShares}</p>
-          <ul className="mt-1 space-y-1 text-xs text-zinc-600">
+          <p className="mt-2 text-sm text-stone-700">Total shares: {totalShares}</p>
+          <ul className="mt-1 space-y-1 text-xs text-stone-600">
             {s.step6.shareholders.map((sh) => {
               const shares = s.step7.allocations[sh.id] || 0;
               if (!shares) return null;
@@ -1558,7 +1558,7 @@ function Step9Review({
         </>
       )}
       {row("PSC", 8, <p>See step 8</p>)}
-      <div className="space-y-3 rounded-lg border border-zinc-200 p-4 text-left">
+      <div className="space-y-3 rounded-lg border border-stone-200 p-4 text-left">
         <div className="flex items-start gap-2">
           <Checkbox
             id="a1"

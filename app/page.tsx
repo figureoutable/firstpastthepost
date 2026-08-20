@@ -23,14 +23,14 @@ export default function Home() {
           priority
         />
 
-        <p className="text-center text-sm text-zinc-500 max-w-md">
+        <p className="text-center text-sm text-muted-foreground max-w-md">
           Choose how you&apos;d like to get started.
         </p>
 
         <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-3 md:auto-rows-fr">
           <Link
             href="/onboard"
-            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 rounded-2xl"
+            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 rounded-2xl"
           >
             <SpotlightCard
               className="flex-1"
@@ -39,14 +39,14 @@ export default function Home() {
                 title: "Start Onboarding",
                 description:
                   "Complete your business or self-assessment onboarding with Figures.",
-                color: "#7c3aed",
+                color: "#c1592e",
               }}
             />
           </Link>
 
           <Link
             href="/incorporate"
-            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-2xl"
+            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500 focus-visible:ring-offset-2 rounded-2xl"
           >
             <SpotlightCard
               className="flex-1"
@@ -55,7 +55,7 @@ export default function Home() {
                 title: "Create a New\nLimited Company",
                 description:
                   "Complete our incorporation form — we register with Companies House for you.",
-                color: "#059669",
+                color: "#2f6f52",
               }}
             />
           </Link>
@@ -64,7 +64,7 @@ export default function Home() {
             href={GOV_VAT_REGISTRATION}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 rounded-2xl"
+            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500 focus-visible:ring-offset-2 rounded-2xl"
           >
             <SpotlightCard
               className="flex-1"
@@ -73,13 +73,13 @@ export default function Home() {
                 title: "Register for VAT",
                 description:
                   "Apply for a VAT number with HMRC (opens GOV.UK).",
-                color: "#0284c7",
+                color: "#3b5166",
               }}
             />
           </a>
         </div>
 
-        <p className="text-xs text-zinc-400 text-center max-w-lg">
+        <p className="text-xs text-stone-400 text-center max-w-lg">
           External links open official government services in a new tab. Figures is
           not affiliated with GOV.UK.
         </p>

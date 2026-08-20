@@ -59,9 +59,9 @@ export function SpotlightCard({ item, onClick, className }: SpotlightCardProps) 
     <motion.div
       className={cn(
         "group relative flex h-full w-full min-h-0 flex-col items-start gap-5 overflow-hidden rounded-2xl border p-8 cursor-pointer text-left",
-        "border-zinc-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "border-stone-200 bg-card shadow-[0_2px_10px_rgba(43,38,33,0.05)]",
         "transition-[border-color] duration-300",
-        "hover:border-zinc-300",
+        "hover:border-stone-300",
         className
       )}
       onClick={onClick}
@@ -109,10 +109,10 @@ export function SpotlightCard({ item, onClick, className }: SpotlightCardProps) 
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-2">
-        <h3 className="w-full whitespace-pre-line text-left font-semibold text-lg text-zinc-900 tracking-tight">
+        <h3 className="w-full whitespace-pre-line text-left font-semibold text-lg text-foreground tracking-tight">
           {item.title}
         </h3>
-        <p className="w-full text-left text-sm text-zinc-500 leading-relaxed">
+        <p className="w-full text-left text-sm text-muted-foreground leading-relaxed">
           {item.description}
         </p>
       </div>

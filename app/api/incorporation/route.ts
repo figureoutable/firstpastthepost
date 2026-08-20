@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendInternalEmail, sendClientEmail } from "@/lib/notifications";
+import { appendIncorporationSubmission } from "@/lib/google-sheets";
 
 export async function POST(request: Request) {
   try {
@@ -180,6 +181,7 @@ export async function POST(request: Request) {
 ${JSON.stringify(payload, null, 2)}
       </pre>
     `;
+    await appendIncorporationSubmission(payload as Record<string, unknown>);
     await sendInternalEmail("Incorporation request submitted", html);
 
     const clientBody = `

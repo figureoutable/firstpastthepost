@@ -9,19 +9,19 @@ interface GradientButtonProps
 
 const colorMap = {
   default: {
-    bg: "from-purple-600 to-indigo-600",
-    hover: "from-purple-700 to-indigo-700",
-    shadow: "shadow-purple-500/25",
+    bg: "from-forest-700 to-forest-800",
+    hover: "from-forest-800 to-forest-900",
+    shadow: "shadow-forest-800/25",
   },
   emerald: {
-    bg: "from-emerald-500 to-emerald-600",
-    hover: "from-emerald-600 to-emerald-700",
-    shadow: "shadow-emerald-500/25",
+    bg: "from-clay-600 to-clay-700",
+    hover: "from-clay-700 to-clay-800",
+    shadow: "shadow-clay-700/25",
   },
   purple: {
-    bg: "from-purple-600 to-indigo-600",
-    hover: "from-purple-700 to-indigo-700",
-    shadow: "shadow-purple-500/25",
+    bg: "from-forest-700 to-forest-800",
+    hover: "from-forest-800 to-forest-900",
+    shadow: "shadow-forest-800/25",
   },
 };
 

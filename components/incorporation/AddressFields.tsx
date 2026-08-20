@@ -155,7 +155,7 @@ export function PostcodeLookupBlock({
   };
 
   return (
-    <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
+    <div className="space-y-3 rounded-lg border border-stone-200 bg-stone-50/50 p-4">
       {!manual && (
         <>
           <div className="flex flex-wrap gap-2">
@@ -178,7 +178,7 @@ export function PostcodeLookupBlock({
                 <li key={x.address}>
                   <button
                     type="button"
-                    className="text-left text-purple-700 underline"
+                    className="text-left text-forest-700 underline"
                     onClick={() => pick(x.address)}
                   >
                     {x.address}

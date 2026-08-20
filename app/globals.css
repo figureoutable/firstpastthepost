@@ -1,50 +1,89 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+
+  /* Forest green - primary brand accent, replaces the old purple everywhere */
+  --color-forest-50: #f1f9f5;
+  --color-forest-100: #dff1e9;
+  --color-forest-200: #c0e3d2;
+  --color-forest-300: #95d0b4;
+  --color-forest-400: #68bb94;
+  --color-forest-500: #49a278;
+  --color-forest-600: #3c8663;
+  --color-forest-700: #316d51;
+  --color-forest-800: #285841;
+  --color-forest-900: #204634;
+  --color-forest-950: #152e22;
+
+  /* Clay / terracotta - warm secondary accent for emphasis + final actions */
+  --color-clay-50: #fbf2ef;
+  --color-clay-100: #f4e0d7;
+  --color-clay-200: #eac0ae;
+  --color-clay-300: #dd9a7e;
+  --color-clay-400: #d27b56;
+  --color-clay-500: #c96236;
+  --color-clay-600: #ad542e;
+  --color-clay-700: #914727;
+  --color-clay-800: #75391f;
+  --color-clay-900: #5d2d19;
+  --color-clay-950: #3c1d10;
+
+  /* Navy - muted third accent for a calm, trustworthy contrast note */
+  --color-navy-50: #f2f5f7;
+  --color-navy-100: #e1e8ed;
+  --color-navy-200: #c3d1da;
+  --color-navy-300: #99aebc;
+  --color-navy-400: #6d8697;
+  --color-navy-500: #4f677a;
+  --color-navy-600: #3f5464;
+  --color-navy-700: #354756;
+  --color-navy-800: #2c3b47;
+  --color-navy-900: #24303a;
+  --color-navy-950: #171f26;
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 6% 25%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 6% 25%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 6% 25%;
-  --primary: 252 56% 57%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 240 5% 96%;
-  --secondary-foreground: 240 6% 25%;
-  --muted: 240 5% 96%;
-  --muted-foreground: 240 4% 55%;
-  --accent: 240 5% 96%;
-  --accent-foreground: 240 6% 25%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 240 6% 90%;
-  --input: 240 6% 85%;
-  --ring: 252 56% 57%;
+  --background: 34 33% 96%;
+  --foreground: 27 14% 15%;
+  --card: 40 45% 99%;
+  --card-foreground: 27 14% 15%;
+  --popover: 40 45% 99%;
+  --popover-foreground: 27 14% 15%;
+  --primary: 152 38% 27%;
+  --primary-foreground: 40 45% 99%;
+  --secondary: 37 30% 91%;
+  --secondary-foreground: 27 14% 15%;
+  --muted: 37 30% 91%;
+  --muted-foreground: 30 8% 44%;
+  --accent: 152 30% 92%;
+  --accent-foreground: 152 38% 22%;
+  --destructive: 6 63% 46%;
+  --destructive-foreground: 40 45% 99%;
+  --border: 34 24% 87%;
+  --input: 34 20% 80%;
+  --ring: 152 38% 27%;
   --radius: 0.75rem;
 }
 

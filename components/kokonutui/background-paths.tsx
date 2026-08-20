@@ -119,7 +119,7 @@ const FloatingPaths = memo(function FloatingPaths({
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <svg
-        className="h-full w-full text-slate-950/40"
+        className="h-full w-full text-stone-900/30"
         fill="none"
         preserveAspectRatio="xMidYMid slice"
         viewBox="-2400 -800 4800 1600"
@@ -127,9 +127,9 @@ const FloatingPaths = memo(function FloatingPaths({
         <title>Background Paths</title>
         <defs>
           <linearGradient id="pathGrad" x1="0%" x2="100%" y1="0%" y2="0%">
-            <stop offset="0%" stopColor="rgba(147, 51, 234, 0.5)" />
-            <stop offset="50%" stopColor="rgba(236, 72, 153, 0.5)" />
-            <stop offset="100%" stopColor="rgba(59, 130, 246, 0.5)" />
+            <stop offset="0%" stopColor="rgba(49, 109, 81, 0.45)" />
+            <stop offset="50%" stopColor="rgba(201, 98, 54, 0.4)" />
+            <stop offset="100%" stopColor="rgba(63, 84, 100, 0.45)" />
           </linearGradient>
         </defs>
 
@@ -215,7 +215,7 @@ export default memo(function BackgroundPaths({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-white">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background">
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
         <motion.div
           animate={{ opacity: 1 }}
@@ -227,7 +227,7 @@ export default memo(function BackgroundPaths({
         </motion.div>
       </div>
 
-      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-xs text-zinc-400">
+      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-xs text-stone-400">
         &copy; {new Date().getFullYear()} Figures. All rights reserved.
       </p>
     </div>

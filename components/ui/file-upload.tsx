@@ -53,14 +53,14 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
 
     return (
         <div className="w-full space-y-2">
-            <label className="text-sm font-medium leading-none text-zinc-900 peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label className="text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 {label} {required && <span className="text-destructive">*</span>}
             </label>
             <div
                 className={cn(
                     "relative flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer overflow-hidden",
-                    dragActive ? "border-purple-400 bg-purple-50/50" : "border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50",
-                    value ? "border-green-500/50 bg-green-500/5" : ""
+                    dragActive ? "border-forest-400 bg-forest-50/50" : "border-stone-200 bg-stone-50/50 hover:bg-stone-50",
+                    value ? "border-forest-500/50 bg-forest-500/5" : ""
                 )}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -78,7 +78,7 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
 
                 {value ? (
                     <div className="flex flex-col items-center gap-2 p-4 text-center animate-in fade-in zoom-in-95 duration-200">
-                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                        <div className="w-10 h-10 rounded-full bg-forest-500/20 flex items-center justify-center text-forest-600">
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col max-w-[200px]">
@@ -94,11 +94,11 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-2 p-4 text-center text-muted-foreground">
-                        <div className={`p-2 rounded-full transition-colors ${dragActive ? 'bg-purple-100 text-purple-500' : 'bg-zinc-100'}`}>
+                        <div className={`p-2 rounded-full transition-colors ${dragActive ? 'bg-forest-100 text-forest-600' : 'bg-stone-100'}`}>
                             <Upload className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <p className="text-sm font-medium text-zinc-600">Click to upload or drag and drop</p>
+                            <p className="text-sm font-medium text-stone-600">Click to upload or drag and drop</p>
                             <p className="text-xs">{desc || "SVG, PNG, JPG or PDF (max 5MB)"}</p>
                         </div>
                     </div>

@@ -14,19 +14,19 @@ const SERVICE_OPTIONS: SpotlightItem[] = [
         icon: Building2,
         title: "Business",
         description: "Limited Company accounts, corporation tax, VAT, and payroll services.",
-        color: "#3b82f6",
+        color: "#3b5166",
     },
     {
         icon: User,
         title: "Self Assessment",
         description: "Personal tax returns for sole traders, freelancers, and individuals.",
-        color: "#8b5cf6",
+        color: "#c1592e",
     },
     {
         icon: Layers,
         title: "Both",
         description: "Combined Limited Company and Self Assessment tax services.",
-        color: "#10b981",
+        color: "#2f6f52",
     },
 ];
 
@@ -137,10 +137,10 @@ export default function OnboardPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50/50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
             <div className="pointer-events-none absolute inset-0">
-                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-100/60 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-100/60 rounded-full blur-[120px]" />
+                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-forest-100/70 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-clay-100/70 rounded-full blur-[120px]" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -158,7 +158,7 @@ export default function OnboardPage() {
                                 text="Select your service"
                                 className="text-3xl sm:text-4xl tracking-tight"
                             />
-                            <p className="text-zinc-500 mt-3 text-sm">
+                            <p className="text-muted-foreground mt-3 text-sm">
                                 Choose the service that best fits your needs.
                             </p>
                         </div>
@@ -179,7 +179,7 @@ export default function OnboardPage() {
                         </div>
 
                         <div className="flex justify-center mt-8">
-                            <span className="flex items-center gap-1 text-xs text-zinc-400">
+                            <span className="flex items-center gap-1 text-xs text-stone-400">
                                 <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
                             </span>
                         </div>
@@ -195,14 +195,14 @@ export default function OnboardPage() {
                         transition={{ duration: 0.4 }}
                         className="w-full max-w-3xl z-10"
                     >
-                        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm p-6 sm:p-10">
+                        <div className="rounded-2xl border border-border bg-card shadow-sm p-6 sm:p-10">
                             <div className="mb-6">
-                                <h2 className="text-xl font-semibold text-zinc-900 tracking-tight">
+                                <h2 className="text-xl font-semibold text-foreground tracking-tight">
                                     {onboardingType === 'business' ? 'Business Onboarding' :
                                      onboardingType === 'self-assessment' ? 'Self Assessment' :
                                      'Combined Onboarding'}
                                 </h2>
-                                <p className="text-zinc-500 text-sm mt-1">
+                                <p className="text-muted-foreground text-sm mt-1">
                                     Please provide the details requested below.
                                 </p>
                             </div>
@@ -243,7 +243,7 @@ export default function OnboardPage() {
                         </div>
 
                         <div className="flex justify-center mt-6">
-                            <span className="flex items-center gap-1 text-xs text-zinc-400">
+                            <span className="flex items-center gap-1 text-xs text-stone-400">
                                 <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
                             </span>
                         </div>
@@ -259,19 +259,19 @@ export default function OnboardPage() {
                         transition={{ duration: 0.5 }}
                         className="w-full max-w-lg z-10"
                     >
-                        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm p-10 text-center">
-                            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                        <div className="rounded-2xl border border-border bg-card shadow-sm p-10 text-center">
+                            <div className="w-20 h-20 bg-forest-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-10 h-10 text-forest-600" />
                             </div>
 
-                            <h2 className="text-2xl font-semibold text-zinc-900 mb-3">All Set!</h2>
-                            <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+                            <h2 className="text-2xl font-semibold text-foreground mb-3">All Set!</h2>
+                            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                                 We have securely received your details and our team is now performing the final administrative reviews to set up your account.
                             </p>
                         </div>
 
                         <div className="flex justify-center mt-6">
-                            <span className="flex items-center gap-1 text-xs text-zinc-400">
+                            <span className="flex items-center gap-1 text-xs text-stone-400">
                                 <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
                             </span>
                         </div>

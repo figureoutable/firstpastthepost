@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSubmission } from '@/lib/submission-store';
 import { signSubmissionId } from '@/lib/aml-signature';
 import { sendInternalEmail } from '@/lib/notifications';
+import { appendOnboardingSubmission } from '@/lib/google-sheets';
 
 function escapeHtml(input: string): string {
     return input
@@ -181,6 +182,8 @@ export async function POST(request: Request) {
         const requestUrl = new URL(request.url);
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${requestUrl.protocol}//${requestUrl.host}`;
         const initiateUrl = `${appUrl}/api/firmcheck/initiate?submissionId=${encodeURIComponent(submission.id)}&sig=${signature}`;
+
+        await appendOnboardingSubmission(submission.id, body as Record<string, unknown>);
 
         await sendInternalEmail(
             `New Onboarding: ${companyName || fullName || fullNamePassport}`,

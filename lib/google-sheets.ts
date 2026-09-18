@@ -142,7 +142,7 @@ async function appendRow(sheetName: string, headers: readonly string[], values: 
     const client = getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID?.trim();
     if (!client || !spreadsheetId) {
-        console.warn("[google-sheets] Not configured — skipping row append");
+        console.warn("[google-sheets] Not configured - skipping row append");
         return;
     }
 
@@ -245,7 +245,7 @@ export async function appendIncorporationSubmission(payload: Record<string, unkn
                   if (item && typeof item === "object" && "code" in item) {
                       const code = (item as { code?: string; description?: string }).code ?? "";
                       const description = (item as { code?: string; description?: string }).description ?? "";
-                      return description ? `${code} — ${description}` : code;
+                      return description ? `${code} - ${description}` : code;
                   }
                   return "";
               })

@@ -1,4 +1,4 @@
-/** Figures office — used as registered office / correspondence option */
+/** Figures office - used as registered office / correspondence option */
 export const FIGURES_ADDRESS = {
   line1: "Figures Accounting Ltd",
   line2: "Suite 2, Example Business Centre",

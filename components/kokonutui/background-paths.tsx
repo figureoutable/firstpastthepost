@@ -219,9 +219,9 @@ export default memo(function BackgroundPaths({
       <div className="container relative z-10 mx-auto px-4 text-center md:px-6">
         <motion.div
           animate={{ opacity: 1 }}
-          className="mx-auto max-w-4xl"
+          className="mx-auto max-w-5xl"
           initial={{ opacity: 0 }}
-          transition={{ duration: 2 }}
+          transition={{ duration: 0.45 }}
         >
           {children}
         </motion.div>

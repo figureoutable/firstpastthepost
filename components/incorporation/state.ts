@@ -165,9 +165,9 @@ export type IncorporationState = {
     paidAmounts: Record<string, string>;
   };
   step8: {
-    /** No one >25% — user confirms */
+    /** No one >25% - user confirms */
     noPscConfirm: boolean;
-    /** At least one PSC — user confirms list matches shareholdings */
+    /** At least one PSC - user confirms list matches shareholdings */
     pscListConfirm: boolean;
   };
   step9: {
@@ -176,7 +176,7 @@ export type IncorporationState = {
     acc2: boolean;
     acc3: boolean;
   };
-  /** Filled on banner before Start — reminder + required 11-char code */
+  /** Filled on banner before Start - reminder + required 11-char code */
   introPersonalCode: string;
 };
 

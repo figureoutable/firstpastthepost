@@ -529,7 +529,7 @@ export function IncorporationWizard() {
           </div>
           <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
             <p className="mb-2 text-xs text-stone-500">
-              Enter the registered office address manually — this will appear on the public register.
+              Enter the registered office address manually - this will appear on the public register.
             </p>
             <AddressFields
               value={s.step3.registered}
@@ -566,7 +566,7 @@ export function IncorporationWizard() {
           {s.step3.principal === "different" && (
             <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
               <p className="mb-2 text-xs text-stone-500">
-                Enter the address manually — this is where day-to-day business will happen.
+                Enter the address manually - this is where day-to-day business will happen.
               </p>
               <AddressFields
                 value={s.step3.principalAddr}
@@ -715,14 +715,14 @@ export function IncorporationWizard() {
             </RadioGroup>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800 space-y-2">
-            <p className="font-medium text-stone-900">SIC codes — what to do</p>
+            <p className="font-medium text-stone-900">SIC codes - what to do</p>
             <ol className="list-decimal list-inside space-y-1 text-stone-700 leading-relaxed">
               <li>
                 <strong>Describe your business</strong> in the box below (one or two sentences in plain
                 English).
               </li>
               <li>
-                Click <strong>Find my codes</strong> — we&apos;ll suggest codes that match your
+                Click <strong>Find my codes</strong> - we&apos;ll suggest codes that match your
                 description.
               </li>
               <li>
@@ -747,7 +747,7 @@ export function IncorporationWizard() {
           </Button>
           {s.step4.sicSuggestions.length === 0 && (
             <p className="text-xs text-stone-500">
-              After you click Find my codes, suggested codes appear here — tap a card to add it (max 4).
+              After you click Find my codes, suggested codes appear here - tap a card to add it (max 4).
             </p>
           )}
           <div className="grid gap-2 sm:grid-cols-2">
@@ -795,7 +795,7 @@ export function IncorporationWizard() {
       {step === 5 && (
         <section className="space-y-6 text-left">
           <Note>
-            Correspondence address is public on the register — many people use the registered office
+            Correspondence address is public on the register - many people use the registered office
             address. Personal codes are collected on the final step for each director.
           </Note>
           {s.step5.directors.map((d, i) => (
@@ -1285,7 +1285,7 @@ function Step7({
         </tfoot>
       </table>
       <p className="text-sm text-stone-600">
-        {total} shares total — ownership must sum to 100% across shareholders.
+        {total} shares total - ownership must sum to 100% across shareholders.
       </p>
       {errors.alloc && <p className="text-xs text-red-600">{errors.alloc}</p>}
       {errors.pct && <p className="text-xs text-red-600">{errors.pct}</p>}
@@ -1341,7 +1341,7 @@ function Step8View({
       <Note>
         Anyone with <strong>more than 25%</strong> of shares is a person with significant control
         (PSC). The percentages below are taken directly from your share allocation in the previous
-        step — no need to pick bands again.
+        step - no need to pick bands again.
       </Note>
       <ul className="space-y-3">
         {pscs.map((p) => (
@@ -1357,7 +1357,7 @@ function Step8View({
         ))}
       </ul>
       <p className="text-sm text-stone-600">
-        Companies House will need each PSC&apos;s personal code — directors enter theirs on the final
+        Companies House will need each PSC&apos;s personal code - directors enter theirs on the final
         step. If any PSC is not a director, we&apos;ll confirm details with you after submission.
       </p>
       <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 p-3">
@@ -1427,13 +1427,13 @@ function Step9Review({
         <h3 className="font-semibold text-stone-900">Companies House personal codes (directors)</h3>
         <p className="mt-1 text-sm text-stone-800">
           Enter each director&apos;s 11-character code (Manage account → Companies House). You
-          already entered yours at the start — re-enter each person below to confirm.
+          already entered yours at the start - re-enter each person below to confirm.
         </p>
         <div className="mt-4 space-y-3">
           {s.step5.directors.map((d) => (
             <div key={d.id}>
               <Label className="text-stone-900">
-                {d.firstName || "Director"} {d.lastName || ""} — personal code *
+                {d.firstName || "Director"} {d.lastName || ""} - personal code *
               </Label>
               <Input
                 className="mt-1 border-amber-300 bg-card font-mono tracking-widest"
@@ -1520,7 +1520,7 @@ function Step9Review({
       )}
       {row("About the business", 4, (
         <p>
-          {s.step4.businessDescription} — SIC: {s.step4.sicCodes.map((c) => c.code).join(", ")}
+          {s.step4.businessDescription} - SIC: {s.step4.sicCodes.map((c) => c.code).join(", ")}
         </p>
       ))}
       {row("Directors", 5, <p>{s.step5.directors.length} director(s)</p>)}
@@ -1532,7 +1532,7 @@ function Step9Review({
           {s.step7.standard ? (
             <p>Standard £1 ordinary shares</p>
           ) : (
-            <p className="whitespace-pre-wrap">{s.step7.customShareDescription || "—"}</p>
+            <p className="whitespace-pre-wrap">{s.step7.customShareDescription || "-"}</p>
           )}
           <p className="mt-2 text-sm text-stone-700">Total shares: {totalShares}</p>
           <ul className="mt-1 space-y-1 text-xs text-stone-600">

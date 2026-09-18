@@ -65,30 +65,31 @@
 }
 
 :root {
-  --background: 34 33% 96%;
+  --background: 0 0% 100%;
   --foreground: 27 14% 15%;
-  --card: 40 45% 99%;
+  --card: 0 0% 100%;
   --card-foreground: 27 14% 15%;
-  --popover: 40 45% 99%;
+  --popover: 0 0% 100%;
   --popover-foreground: 27 14% 15%;
   --primary: 152 38% 27%;
-  --primary-foreground: 40 45% 99%;
-  --secondary: 37 30% 91%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
   --secondary-foreground: 27 14% 15%;
-  --muted: 37 30% 91%;
+  --muted: 0 0% 96%;
   --muted-foreground: 30 8% 44%;
-  --accent: 152 30% 92%;
+  --accent: 152 30% 96%;
   --accent-foreground: 152 38% 22%;
   --destructive: 6 63% 46%;
-  --destructive-foreground: 40 45% 99%;
-  --border: 34 24% 87%;
-  --input: 34 20% 80%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 88%;
   --ring: 152 38% 27%;
   --radius: 0.75rem;
 }
 
+html,
 body {
-  background-color: var(--color-background);
+  background-color: #ffffff;
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

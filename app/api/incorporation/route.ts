@@ -122,7 +122,7 @@ export async function POST(request: Request) {
                 <div>Nationality: ${d.nationality || ""}</div>
                 <div style="margin-top:4px;"><em>Correspondence address (public)</em><br/>${corrAddress}</div>
                 <div style="margin-top:4px;"><em>Home address (private)</em><br/>${homeAddress}</div>
-                <div style="margin-top:4px;">Email for filing reminders: ${d.emailReminders || "—"}</div>
+                <div style="margin-top:4px;">Email for filing reminders: ${d.emailReminders || "-"}</div>
               </li>
             `;
           })
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
                 : "";
             return `
               <li style="margin-bottom:12px;">
-                <div><strong>${name}</strong> — ${isBusiness ? "Business shareholder" : "Individual shareholder"}</div>
+                <div><strong>${name}</strong> - ${isBusiness ? "Business shareholder" : "Individual shareholder"}</div>
                 <div>Shares: ${shares} share${shares === 1 ? "" : "s"}</div>
                 <div>Registered address (public): ${addr}</div>
                 ${acting ? `<div>Acting person: ${acting}</div>` : ""}
@@ -169,7 +169,7 @@ export async function POST(request: Request) {
         ${(Array.isArray(pscSummary) ? pscSummary : [])
           .map(
             (p: any) =>
-              `<li>${p.name} — ${p.pct?.toFixed ? p.pct.toFixed(1) : p.pct}% (>${
+              `<li>${p.name} - ${p.pct?.toFixed ? p.pct.toFixed(1) : p.pct}% (>${
                 p.pct
               }% shares)</li>`
           )

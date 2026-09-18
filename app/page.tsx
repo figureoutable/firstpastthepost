@@ -1,89 +1,85 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, ClipboardList, Landmark } from "lucide-react";
-import BackgroundPaths from "@/components/kokonutui/background-paths";
-import { SpotlightCard } from "@/components/kokonutui/spotlight-card";
+import { motion } from "framer-motion";
+import BlobBackground from "@/components/kokonutui/blob-background";
+import { VideoCard, type VideoCardHandle } from "@/components/kokonutui/video-card";
 
-const GOV_COMPANY_FORMATION =
-  "https://www.gov.uk/limited-company-formation/register-your-company";
-const GOV_VAT_REGISTRATION = "https://www.gov.uk/vat-registration";
+function VideoHomeCard({
+  href,
+  label,
+  src,
+  startAt,
+}: {
+  href: string;
+  label: string;
+  src: string;
+  startAt?: number;
+}) {
+  const videoRef = useRef<VideoCardHandle>(null);
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      onMouseEnter={() => videoRef.current?.play()}
+      onMouseLeave={() => videoRef.current?.pause()}
+      onFocus={() => videoRef.current?.play()}
+      onBlur={() => videoRef.current?.pause()}
+    >
+      <motion.div
+        className="flex w-full flex-col gap-0"
+        whileHover={{ y: -6 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 320, damping: 24 }}
+      >
+        <div className="w-full leading-none">
+          <VideoCard ref={videoRef} src={src} startAt={startAt} />
+        </div>
+        <p className="-mt-1 w-full bg-stone-900 px-4 py-2.5 text-center text-base font-semibold leading-none tracking-tight text-white">
+          {label}
+        </p>
+      </motion.div>
+    </Link>
+  );
+}
 
 export default function Home() {
   return (
-    <BackgroundPaths>
-      <div className="flex w-full max-w-5xl flex-col items-center gap-10 px-4">
+    <BlobBackground>
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-0 px-2 sm:px-4">
         <Image
           src="/figures-logo.png"
           alt="Figures Logo"
-          width={300}
+          width={320}
           height={100}
           className="h-auto w-auto"
           priority
         />
 
-        <p className="text-center text-sm text-muted-foreground max-w-md">
-          Choose how you&apos;d like to get started.
-        </p>
-
-        <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-3 md:auto-rows-fr">
-          <Link
+        <div className="-mt-2 mx-auto grid w-full max-w-[44.8rem] grid-cols-1 items-stretch gap-3 sm:grid-cols-3 sm:gap-4">
+          <VideoHomeCard
             href="/onboard"
-            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-400 focus-visible:ring-offset-2 rounded-2xl"
-          >
-            <SpotlightCard
-              className="flex-1"
-              item={{
-                icon: ClipboardList,
-                title: "Start Onboarding",
-                description:
-                  "Complete your business or self-assessment onboarding with Figures.",
-                color: "#c1592e",
-              }}
-            />
-          </Link>
-
-          <Link
+            label="Onboarding"
+            src="/videos/onboarding-v3.mp4"
+            startAt={0.5}
+          />
+          <VideoHomeCard
             href="/incorporate"
-            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500 focus-visible:ring-offset-2 rounded-2xl"
-          >
-            <SpotlightCard
-              className="flex-1"
-              item={{
-                icon: Building2,
-                title: "Create a New\nLimited Company",
-                description:
-                  "Complete our incorporation form — we register with Companies House for you.",
-                color: "#2f6f52",
-              }}
-            />
-          </Link>
-
-          <a
-            href={GOV_VAT_REGISTRATION}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-[280px] w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-500 focus-visible:ring-offset-2 rounded-2xl"
-          >
-            <SpotlightCard
-              className="flex-1"
-              item={{
-                icon: Landmark,
-                title: "Register for VAT",
-                description:
-                  "Apply for a VAT number with HMRC (opens GOV.UK).",
-                color: "#3b5166",
-              }}
-            />
-          </a>
+            label="New Company"
+            src="/videos/incorporate.mp4"
+            startAt={1}
+          />
+          <VideoHomeCard
+            href="/404"
+            label="Venture"
+            src="/videos/venture-v2.mp4"
+            startAt={0.5}
+          />
         </div>
-
-        <p className="text-xs text-stone-400 text-center max-w-lg">
-          External links open official government services in a new tab. Figures is
-          not affiliated with GOV.UK.
-        </p>
       </div>
-    </BackgroundPaths>
+    </BlobBackground>
   );
 }

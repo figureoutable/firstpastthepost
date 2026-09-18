@@ -178,7 +178,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                                     value={data.payeRef || ""}
                                                     onChange={(e) => updateField("payeRef", e.target.value.toUpperCase())}
                                                 />
-                                                <p className="text-xs text-stone-500">10–12 characters</p>
+                                                <p className="text-xs text-stone-500">10-12 characters</p>
                                             </div>
                                         </motion.div>
                                     )}

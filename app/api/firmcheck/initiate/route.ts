@@ -11,7 +11,7 @@ async function runFirmcheckInitiation(record: SubmissionRecord): Promise<Submiss
     const clientIds = new Set<string>(record.firmcheck?.clientIds || []);
 
     // Company: use CRN to create client. Firmcheck auto-pulls directors/PSCs
-    // from Companies House as related parties — no need to create them separately.
+    // from Companies House as related parties - no need to create them separately.
     if (onboardingType === "business" || onboardingType === "both") {
         const crn = typeof payload.registrationNumber === "string" ? payload.registrationNumber : "";
         if (!crn) {

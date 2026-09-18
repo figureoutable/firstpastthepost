@@ -55,7 +55,7 @@ export default function Home() {
           alt="Figures Logo"
           width={320}
           height={100}
-          className="h-auto w-auto"
+          className="h-auto w-[200px] sm:w-[240px]"
           priority
         />
 

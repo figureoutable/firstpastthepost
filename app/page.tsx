@@ -49,7 +49,7 @@ function VideoHomeCard({
 export default function Home() {
   return (
     <BlobBackground>
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-0 px-2 sm:px-4">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-2 sm:px-4 sm:gap-8">
         <Image
           src="/figures-logo.png"
           alt="Figures Logo"
@@ -59,7 +59,7 @@ export default function Home() {
           priority
         />
 
-        <div className="-mt-2 mx-auto grid w-full max-w-[44.8rem] grid-cols-1 items-stretch gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="mx-auto grid w-full max-w-[44.8rem] grid-cols-1 items-stretch gap-3 sm:grid-cols-3 sm:gap-4">
           <VideoHomeCard
             href="/onboard"
             label="Onboarding"

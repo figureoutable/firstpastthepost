@@ -8,10 +8,12 @@ export default function VentureLayout({
 }) {
   return (
     <VentureProvider>
-      <div className="min-h-screen bg-background py-6 md:py-10">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-start md:gap-8">
+      <div className="min-h-screen bg-background">
+        <div className="flex w-full flex-col md:flex-row md:items-stretch">
           <VentureSidebar />
-          <main className="min-w-0 flex-1">{children}</main>
+          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:py-10 lg:px-10">
+            <div className="mx-auto w-full max-w-6xl">{children}</div>
+          </main>
         </div>
       </div>
     </VentureProvider>

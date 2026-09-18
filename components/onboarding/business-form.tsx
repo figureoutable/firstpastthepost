@@ -14,7 +14,7 @@ import GradientButton from "@/components/kokonutui/gradient-button";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-6 space-y-4">
+        <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 space-y-3 sm:p-4">
             <h3 className="text-base font-semibold text-stone-900 tracking-tight">{title}</h3>
             {children}
         </div>
@@ -27,7 +27,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
             {Array.from({ length: total }, (_, i) => (
                 <div key={i} className="flex items-center gap-2 flex-1">
                     <div className={`h-1 w-full rounded-full transition-all duration-500 ${
-                        i < current ? "bg-forest-500" : i === current ? "bg-forest-300" : "bg-stone-200"
+                        i < current ? "bg-clay-500" : i === current ? "bg-clay-300" : "bg-stone-200"
                     }`} />
                 </div>
             ))}
@@ -47,14 +47,16 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
 
     const canGoNext = () => {
         if (step === 1) {
-            return data.companyName
-                && (data.registrationNumber || "").length === 8
-                && (data.utrNumber || "").length === 10
-                && (data.companyAuthCode || "").length === 6
+            return !!(
+                (data.companyName || "").trim()
+                && /^\d{8}$/.test(data.registrationNumber || "")
+                && /^\d{10}$/.test(data.utrNumber || "")
+                && /^[A-Z0-9]{6}$/.test(data.companyAuthCode || "")
                 && (data.hasPaye === "yes" || data.hasPaye === "no")
                 && (data.isVatRegistered === "yes" || data.isVatRegistered === "no")
                 && data.photoId
-                && data.proofOfAddress;
+                && data.proofOfAddress
+            );
         }
         if (step === 2) {
             return (data.servicesRequired || []).length >= 1;
@@ -62,8 +64,11 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
         return true;
     };
 
-    const nextStep = () => setStep(s => s + 1);
-    const prevStep = () => setStep(s => s - 1);
+    const nextStep = () => {
+        if (!canGoNext()) return;
+        setStep((s) => s + 1);
+    };
+    const prevStep = () => setStep((s) => s - 1);
 
     return (
         <div className="space-y-6">
@@ -82,7 +87,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                         <>
                             <Section title="Tax & Corporate Identifiers">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         <Label htmlFor="companyName" className="text-stone-900 text-sm">Company Name *</Label>
                                         <Input
                                             id="companyName"
@@ -91,53 +96,50 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                             onChange={(e) => updateField("companyName", e.target.value)}
                                         />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         <Label htmlFor="companyNumber" className="text-stone-900 text-sm">Company Number *</Label>
                                         <Input
                                             id="companyNumber"
-                                            placeholder="12345678"
+                                            placeholder="Exactly 8 digits"
                                             minLength={8}
                                             maxLength={8}
                                             value={data.registrationNumber || ""}
                                             onChange={(e) => updateField("registrationNumber", e.target.value.replace(/\D/g, ""))}
                                         />
-                                        <p className="text-xs text-stone-500">Exactly 8 digits</p>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Business UTR *</Label>
                                         <Input
                                             id="utrNumber"
-                                            placeholder="1234567890"
+                                            placeholder="Exactly 10 digits"
                                             minLength={10}
                                             maxLength={10}
                                             value={data.utrNumber || ""}
                                             onChange={(e) => updateField("utrNumber", e.target.value.replace(/\D/g, ""))}
                                         />
-                                        <p className="text-xs text-stone-500">Exactly 10 digits</p>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         <Label htmlFor="authCode" className="text-stone-900 text-sm">Auth Code *</Label>
                                         <Input
                                             id="authCode"
-                                            placeholder="ABC123"
+                                            placeholder="Exactly 6 characters"
                                             minLength={6}
                                             maxLength={6}
                                             value={data.companyAuthCode || ""}
                                             onChange={(e) => updateField("companyAuthCode", e.target.value.toUpperCase())}
                                         />
-                                        <p className="text-xs text-stone-500">Exactly 6 characters</p>
                                     </div>
                                 </div>
                             </Section>
 
                             <Section title="Payroll & VAT">
-                                <div className="space-y-5">
-                                    <div className="space-y-3">
+                                <div className="space-y-0">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm">Do you have an existing PAYE scheme? *</Label>
                                         <RadioGroup
                                             value={data.hasPaye ?? ""}
                                             onValueChange={(val) => updateField("hasPaye", val)}
-                                            className="flex gap-6"
+                                            className="flex shrink-0 gap-6"
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="yes" id="paye-yes" />
@@ -154,7 +156,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
                                             animate={{ opacity: 1, height: "auto" }}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-forest-200"
+                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200"
                                         >
                                             <div className="space-y-2">
                                                 <Label htmlFor="accountsOfficeRef" className="text-stone-900 text-sm">Accounts Office Ref</Label>
@@ -183,12 +185,12 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         </motion.div>
                                     )}
 
-                                    <div className="space-y-3">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm">Are you VAT Registered? *</Label>
                                         <RadioGroup
                                             value={data.isVatRegistered ?? ""}
                                             onValueChange={(val) => updateField("isVatRegistered", val)}
-                                            className="flex gap-6"
+                                            className="flex shrink-0 gap-6"
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="yes" id="vat-yes" />
@@ -205,7 +207,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
                                             animate={{ opacity: 1, height: "auto" }}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-forest-200"
+                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200"
                                         >
                                             <div className="space-y-2">
                                                 <Label htmlFor="vatNumber" className="text-stone-900 text-sm">VAT Number</Label>
@@ -234,7 +236,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                             </Section>
 
                             <Section title="Document Uploads">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <FileUpload
                                         label="Photo ID (Passport/License)"
                                         required
@@ -261,7 +263,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
 
                                 <div className="space-y-3">
                                     {(data.directors || []).map((director: any) => (
-                                        <div key={director.id} className="p-4 rounded-lg border border-stone-200 bg-stone-50/50 flex justify-between items-start">
+                                        <div key={director.id} className="p-4 rounded-none border border-stone-200 bg-stone-50/50 flex justify-between items-start">
                                             <div>
                                                 <p className="font-medium text-stone-900">{director.firstName} {director.lastName}</p>
                                                 <p className="text-sm text-stone-500">{director.role}</p>
@@ -352,35 +354,37 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
 
                     {step === 3 && (
                         <>
-                            <div className="rounded-xl border border-forest-200 bg-forest-50 p-4 mb-2">
-                                <h3 className="font-semibold text-forest-600 text-sm mb-1">Final Compliance Checks</h3>
+                            <div className="rounded-none border border-clay-200 bg-clay-50 p-4 mb-2">
+                                <h3 className="font-semibold text-clay-600 text-sm mb-1">Final Compliance Checks</h3>
                                 <p className="text-xs text-stone-500">Required for Anti-Money Laundering regulations.</p>
                             </div>
 
                             <Section title="AML Questions">
-                                <div className="space-y-6">
-                                    <div className="space-y-3">
+                                <div className="space-y-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)?</Label>
-                                        <RadioGroup value={data.isPep || "no"} onValueChange={(val) => updateField("isPep", val)} className="flex gap-6">
+                                        <RadioGroup value={data.isPep || "no"} onValueChange={(val) => updateField("isPep", val)} className="flex shrink-0 gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
                                         </RadioGroup>
                                     </div>
 
-                                    <div className="space-y-3">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm">Do you trade with high-risk/sanctioned jurisdictions?</Label>
-                                        <RadioGroup value={data.hasSanctions || "no"} onValueChange={(val) => updateField("hasSanctions", val)} className="flex gap-6">
+                                        <RadioGroup value={data.hasSanctions || "no"} onValueChange={(val) => updateField("hasSanctions", val)} className="flex shrink-0 gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sanctions-yes" /><Label htmlFor="sanctions-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sanctions-no" /><Label htmlFor="sanctions-no" className="text-sm">No</Label></div>
                                         </RadioGroup>
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-stone-900 text-sm">Does the company have complex ownership (holding companies)?</Label>
-                                        <RadioGroup value={data.hasComplexStructure || "no"} onValueChange={(val) => updateField("hasComplexStructure", val)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="complex-yes" /><Label htmlFor="complex-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="complex-no" /><Label htmlFor="complex-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                            <Label className="text-stone-900 text-sm">Does the company have complex ownership (holding companies)?</Label>
+                                            <RadioGroup value={data.hasComplexStructure || "no"} onValueChange={(val) => updateField("hasComplexStructure", val)} className="flex shrink-0 gap-6">
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="complex-yes" /><Label htmlFor="complex-yes" className="text-sm">Yes</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="complex-no" /><Label htmlFor="complex-no" className="text-sm">No</Label></div>
+                                            </RadioGroup>
+                                        </div>
                                         {data.hasComplexStructure === "yes" && (
                                             <Textarea
                                                 placeholder="Describe structure..."
@@ -391,11 +395,13 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-stone-900 text-sm">Any bankruptcy/disqualification history?</Label>
-                                        <RadioGroup value={data.hasBankruptcy || "no"} onValueChange={(val) => updateField("hasBankruptcy", val)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                            <Label className="text-stone-900 text-sm">Any bankruptcy/disqualification history?</Label>
+                                            <RadioGroup value={data.hasBankruptcy || "no"} onValueChange={(val) => updateField("hasBankruptcy", val)} className="flex shrink-0 gap-6">
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
+                                            </RadioGroup>
+                                        </div>
                                         {data.hasBankruptcy === "yes" && (
                                             <Textarea
                                                 placeholder="Provide details..."
@@ -407,7 +413,7 @@ export function BusinessForm({ data, updateData, onBack, onSubmit, loading }: an
                                 </div>
                             </Section>
 
-                            <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-5">
+                            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 sm:p-4">
                                 <div className="flex items-center space-x-3">
                                     <Checkbox
                                         id="confirm"
@@ -469,7 +475,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
     };
 
     return (
-        <div className="p-4 rounded-lg border border-stone-200 bg-stone-50/30 space-y-4">
+        <div className="p-4 rounded-none border border-stone-200 bg-stone-50/30 space-y-4">
             <h4 className="font-medium text-sm text-stone-600">Add New Director/Partner</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">

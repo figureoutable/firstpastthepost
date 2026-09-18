@@ -49,7 +49,7 @@ export function ModuleIntro({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="w-full overflow-hidden rounded-md border border-stone-200 bg-card shadow-sm"
+      className="w-full overflow-hidden rounded-sm border border-stone-200 bg-card"
     >
       <div className="flex flex-col gap-3 p-4 sm:p-5">
         {eyebrow && (

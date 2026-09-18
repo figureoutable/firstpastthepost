@@ -48,10 +48,6 @@ export function AddressFields({
         <Input value={value.line1} onChange={(e) => set("line1", e.target.value)} />
         {errors?.[p("line1")] && <p className="text-xs text-red-600">{errors[p("line1")]}</p>}
       </div>
-      <div className="sm:col-span-2 space-y-1">
-        <Label>Address line 2</Label>
-        <Input value={value.line2} onChange={(e) => set("line2", e.target.value)} />
-      </div>
       <div className="space-y-1">
         <Label>Town *</Label>
         <Input value={value.town} onChange={(e) => set("town", e.target.value)} />

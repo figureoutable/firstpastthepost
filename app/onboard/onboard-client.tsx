@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertCircle, Building2, User, Layers, ShieldCheck } from "lucide-react";
-import { SpotlightCard, type SpotlightItem } from "@/components/kokonutui/spotlight-card";
+import { CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import { VideoCard, type VideoCardHandle } from "@/components/kokonutui/video-card";
 import ShimmerText from "@/components/kokonutui/shimmer-text";
 import { BusinessForm } from "@/components/onboarding/business-form";
 import { SelfAssessmentForm } from "@/components/onboarding/self-assessment-form";
@@ -19,26 +19,46 @@ function parseOnboardingType(value: string | null): OnboardingType | null {
     return null;
 }
 
-const SERVICE_OPTIONS: SpotlightItem[] = [
-    {
-        icon: Building2,
-        title: "Business",
-        description: "Limited Company accounts, corporation tax, VAT, and payroll services.",
-        color: "#3b5166",
-    },
-    {
-        icon: User,
-        title: "Self Assessment",
-        description: "Personal tax returns for sole traders, freelancers, and individuals.",
-        color: "#c1592e",
-    },
-    {
-        icon: Layers,
-        title: "Both",
-        description: "Combined Limited Company and Self Assessment tax services.",
-        color: "#2f6f52",
-    },
-];
+function ServiceVideoCard({
+    label,
+    src,
+    startAt,
+    onClick,
+}: {
+    label: string;
+    src: string;
+    startAt?: number;
+    onClick: () => void;
+}) {
+    const videoRef = useRef<VideoCardHandle>(null);
+
+    return (
+        <button
+            type="button"
+            aria-label={label}
+            onClick={onClick}
+            className="flex h-full w-full flex-col bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500 focus-visible:ring-offset-2"
+            onMouseEnter={() => videoRef.current?.play()}
+            onMouseLeave={() => videoRef.current?.pause()}
+            onFocus={() => videoRef.current?.play()}
+            onBlur={() => videoRef.current?.pause()}
+        >
+            <motion.div
+                className="h-full min-h-0 w-full flex-1 leading-none"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 320, damping: 24 }}
+            >
+                <VideoCard
+                    ref={videoRef}
+                    src={src}
+                    startAt={startAt}
+                    className="h-full min-h-[180px] rounded-none bg-transparent"
+                />
+            </motion.div>
+        </button>
+    );
+}
 
 export default function OnboardClient() {
     const router = useRouter();
@@ -167,8 +187,7 @@ export default function OnboardClient() {
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
             <div className="pointer-events-none absolute inset-0">
-                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-forest-100/70 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-clay-100/70 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-clay-50/80 rounded-full blur-[120px]" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -183,25 +202,28 @@ export default function OnboardClient() {
                     >
                         <div className="text-center mb-10">
                             <ShimmerText
-                                text="Select your service"
+                                text="Select Your Service"
                                 className="text-3xl sm:text-4xl tracking-tight"
                             />
-                            <p className="text-muted-foreground mt-3 text-sm">
-                                Choose the service that best fits your needs.
-                            </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <SpotlightCard
-                                item={SERVICE_OPTIONS[0]}
-                                onClick={() => handleServiceSelect("business")}
-                            />
-                            <SpotlightCard
-                                item={SERVICE_OPTIONS[1]}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 items-stretch">
+                            <ServiceVideoCard
+                                label="Self Assessment"
+                                src="/videos/self-assessment.mp4"
+                                startAt={0.5}
                                 onClick={() => handleServiceSelect("self-assessment")}
                             />
-                            <SpotlightCard
-                                item={SERVICE_OPTIONS[2]}
+                            <ServiceVideoCard
+                                label="Business"
+                                src="/videos/business.mp4"
+                                startAt={0.5}
+                                onClick={() => handleServiceSelect("business")}
+                            />
+                            <ServiceVideoCard
+                                label="Both"
+                                src="/videos/both.mp4"
+                                startAt={0.5}
                                 onClick={() => handleServiceSelect("both")}
                             />
                         </div>
@@ -223,7 +245,7 @@ export default function OnboardClient() {
                         transition={{ duration: 0.4 }}
                         className="w-full max-w-3xl z-10"
                     >
-                        <div className="rounded-2xl border border-border bg-card shadow-sm p-6 sm:p-10">
+                        <div className="rounded-none border border-border bg-card p-6 sm:p-10">
                             <div className="mb-6">
                                 <h2 className="text-xl font-semibold text-foreground tracking-tight">
                                     {onboardingType === 'business' ? 'Business Onboarding' :
@@ -287,9 +309,9 @@ export default function OnboardClient() {
                         transition={{ duration: 0.5 }}
                         className="w-full max-w-lg z-10"
                     >
-                        <div className="rounded-2xl border border-border bg-card shadow-sm p-10 text-center">
-                            <div className="w-20 h-20 bg-forest-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle2 className="w-10 h-10 text-forest-600" />
+                        <div className="rounded-none border border-border bg-card p-10 text-center">
+                            <div className="w-20 h-20 bg-clay-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-10 h-10 text-clay-600" />
                             </div>
 
                             <h2 className="text-2xl font-semibold text-foreground mb-3">All Set!</h2>

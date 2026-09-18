@@ -37,18 +37,18 @@
   --color-forest-900: #204634;
   --color-forest-950: #152e22;
 
-  /* Clay / terracotta - warm secondary accent for emphasis + final actions */
-  --color-clay-50: #fbf2ef;
-  --color-clay-100: #f4e0d7;
-  --color-clay-200: #eac0ae;
-  --color-clay-300: #dd9a7e;
-  --color-clay-400: #d27b56;
-  --color-clay-500: #c96236;
-  --color-clay-600: #ad542e;
-  --color-clay-700: #914727;
-  --color-clay-800: #75391f;
-  --color-clay-900: #5d2d19;
-  --color-clay-950: #3c1d10;
+  /* Clay / orange - warm accent for emphasis + actions */
+  --color-clay-50: #fff7ed;
+  --color-clay-100: #ffedd5;
+  --color-clay-200: #fed7aa;
+  --color-clay-300: #fdba74;
+  --color-clay-400: #fb923c;
+  --color-clay-500: #f97316;
+  --color-clay-600: #ea580c;
+  --color-clay-700: #e04e0b;
+  --color-clay-800: #c2410c;
+  --color-clay-900: #9a3412;
+  --color-clay-950: #7c2d12;
 
   /* Navy - muted third accent for a calm, trustworthy contrast note */
   --color-navy-50: #f2f5f7;
@@ -71,19 +71,19 @@
   --card-foreground: 27 14% 15%;
   --popover: 0 0% 100%;
   --popover-foreground: 27 14% 15%;
-  --primary: 152 38% 27%;
+  --primary: 24 95% 53%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 96%;
   --secondary-foreground: 27 14% 15%;
   --muted: 0 0% 96%;
   --muted-foreground: 30 8% 44%;
-  --accent: 152 30% 96%;
-  --accent-foreground: 152 38% 22%;
+  --accent: 33 100% 96%;
+  --accent-foreground: 24 95% 35%;
   --destructive: 6 63% 46%;
   --destructive-foreground: 0 0% 100%;
   --border: 0 0% 90%;
   --input: 0 0% 88%;
-  --ring: 152 38% 27%;
+  --ring: 24 95% 53%;
   --radius: 0.75rem;
 }
 

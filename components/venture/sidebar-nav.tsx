@@ -55,7 +55,7 @@ export function VentureSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-full shrink-0 md:sticky md:top-6 md:w-64">
+    <aside className="w-full shrink-0 border-b border-stone-200 bg-background px-4 py-5 sm:px-6 md:sticky md:top-0 md:h-screen md:w-64 md:overflow-y-auto md:border-b-0 md:border-r md:px-4 md:py-6 lg:w-72">
       <Link
         href="/"
         className="mb-4 inline-flex items-center gap-1.5 px-1 text-sm font-medium text-forest-700 hover:text-forest-800"

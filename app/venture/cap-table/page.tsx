@@ -355,7 +355,7 @@ export default function CapTablePage() {
         }
       />
 
-      <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-stone-900">Shareholders</h2>
@@ -601,7 +601,7 @@ export default function CapTablePage() {
         </div>
       </div>
 
-      <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="mb-1 text-lg font-semibold text-stone-900">Share classes</h3>
@@ -814,7 +814,7 @@ export default function CapTablePage() {
       </div>
 
       {events.length > 0 && (
-        <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+        <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
           <div className="mb-4 flex items-center gap-2">
             <History className="h-4 w-4 text-stone-400" />
             <h3 className="text-lg font-semibold text-stone-900">Share history</h3>
@@ -835,7 +835,7 @@ export default function CapTablePage() {
         </div>
       )}
 
-      <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
         <h3 className="mb-4 text-lg font-semibold text-stone-900">Companies House filing</h3>
         <StubAction
           emphasized

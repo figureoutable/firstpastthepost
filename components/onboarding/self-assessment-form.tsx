@@ -14,7 +14,7 @@ import GradientButton from "@/components/kokonutui/gradient-button";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-6 space-y-4">
+        <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 space-y-3 sm:p-4">
             <h3 className="text-base font-semibold text-stone-900 tracking-tight">{title}</h3>
             {children}
         </div>
@@ -27,7 +27,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
             {Array.from({ length: total }, (_, i) => (
                 <div key={i} className="flex items-center gap-2 flex-1">
                     <div className={`h-1 w-full rounded-full transition-all duration-500 ${
-                        i < current ? "bg-forest-500" : i === current ? "bg-forest-300" : "bg-stone-200"
+                        i < current ? "bg-clay-500" : i === current ? "bg-clay-300" : "bg-stone-200"
                     }`} />
                 </div>
             ))}
@@ -104,19 +104,18 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     {step === 1 && (
                         <>
                             <Section title="Personal Tax Identifiers">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="space-y-3">
                                         <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Unique Tax Reference (UTR) *</Label>
                                         <Input
                                             id="utrNumber"
                                             value={formData.utrNumber}
                                             onChange={(e) => setFormData({ ...formData, utrNumber: e.target.value })}
-                                            placeholder="12345 67890"
+                                            placeholder="Your 10-digit tax number"
                                             required
                                         />
-                                        <p className="text-xs text-stone-500">Your 10-digit tax number</p>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         <Label htmlFor="niNumber" className="text-stone-900 text-sm">National Insurance Number *</Label>
                                         <Input
                                             id="niNumber"
@@ -130,16 +129,16 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                             </Section>
 
                             <Section title="Essential Document Uploads">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <FileUpload
-                                        label="Photo ID *"
+                                        label="Photo ID"
                                         desc="Passport or Driving License"
                                         required
                                         value={formData.photoId}
                                         onChange={(file) => setFormData({ ...formData, photoId: file })}
                                     />
                                     <FileUpload
-                                        label="Proof of Address *"
+                                        label="Proof of Address"
                                         desc="Utility bill or bank statement (<3 months)"
                                         required
                                         value={formData.proofOfAddress}
@@ -153,7 +152,6 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     {step === 2 && (
                         <>
                             <Section title="Income Types">
-                                <p className="text-sm text-stone-500">Select all that apply.</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {[
                                         "Employment (PAYE)",
@@ -179,12 +177,12 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
 
                             <Section title="Foreign Income Detail">
                                 <div className="space-y-4">
-                                    <div className="space-y-3">
-                                        <Label className="text-stone-900 text-sm">Do you expect to receive income from outside the UK? *</Label>
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                        <Label className="text-stone-900 text-sm shrink-0">Do you expect to receive income from outside the UK? *</Label>
                                         <RadioGroup
                                             value={formData.expectsForeignIncome}
                                             onValueChange={(val) => setFormData({ ...formData, expectsForeignIncome: val })}
-                                            className="flex gap-6"
+                                            className="flex shrink-0 gap-6"
                                         >
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="foreign-yes" /><Label htmlFor="foreign-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="foreign-no" /><Label htmlFor="foreign-no" className="text-sm">No</Label></div>
@@ -238,21 +236,23 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     {step === 3 && (
                         <>
                             <Section title="Compliance Questions">
-                                <div className="space-y-6">
-                                    <div className="space-y-3">
+                                <div className="space-y-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm">Are you a Politically Exposed Person (PEP)? *</Label>
-                                        <RadioGroup value={formData.isPep} onValueChange={(val) => setFormData({ ...formData, isPep: val })} className="flex gap-6">
+                                        <RadioGroup value={formData.isPep} onValueChange={(val) => setFormData({ ...formData, isPep: val })} className="flex shrink-0 gap-6">
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
                                             <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
                                         </RadioGroup>
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-stone-900 text-sm">Do you have income or links to sanctioned/high-risk countries? *</Label>
-                                        <RadioGroup value={formData.hasHighRiskIncome} onValueChange={(val) => setFormData({ ...formData, hasHighRiskIncome: val })} className="flex gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="highrisk-yes" /><Label htmlFor="highrisk-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="highrisk-no" /><Label htmlFor="highrisk-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                            <Label className="text-stone-900 text-sm">Do you have income or links to sanctioned/high-risk countries? *</Label>
+                                            <RadioGroup value={formData.hasHighRiskIncome} onValueChange={(val) => setFormData({ ...formData, hasHighRiskIncome: val })} className="flex shrink-0 gap-6">
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="highrisk-yes" /><Label htmlFor="highrisk-yes" className="text-sm">Yes</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="highrisk-no" /><Label htmlFor="highrisk-no" className="text-sm">No</Label></div>
+                                            </RadioGroup>
+                                        </div>
                                         {formData.hasHighRiskIncome === "Yes" && (
                                             <Input
                                                 placeholder="Please specify details..."
@@ -263,11 +263,13 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                                     </div>
 
                                     <div className="space-y-3">
-                                        <Label className="text-stone-900 text-sm">Have you ever been bankrupt or in serious financial difficulty? *</Label>
-                                        <RadioGroup value={formData.financialDifficulty} onValueChange={(val) => setFormData({ ...formData, financialDifficulty: val })} className="flex gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                            <Label className="text-stone-900 text-sm">Have you ever been bankrupt or in serious financial difficulty? *</Label>
+                                            <RadioGroup value={formData.financialDifficulty} onValueChange={(val) => setFormData({ ...formData, financialDifficulty: val })} className="flex shrink-0 gap-6">
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
+                                                <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
+                                            </RadioGroup>
+                                        </div>
                                         {formData.financialDifficulty === "Yes" && (
                                             <Textarea
                                                 placeholder="Provide detail..."
@@ -279,7 +281,7 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                                 </div>
                             </Section>
 
-                            <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-5">
+                            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 sm:p-4">
                                 <div className="flex items-center space-x-3">
                                     <Checkbox
                                         id="confirm"

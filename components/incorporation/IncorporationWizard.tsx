@@ -476,17 +476,34 @@ export function IncorporationWizard() {
               </div>
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            <Checkbox
-              id="avail"
-              checked={s.step2.confirmedAvailable}
-              onCheckedChange={(c) =>
-                update("step2", { ...s.step2, confirmedAvailable: !!c })
-              }
-            />
-            <Label htmlFor="avail" className="font-normal leading-tight">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <Label className="min-w-0 flex-1 font-normal leading-tight">
               I have checked and confirmed this name is available *
             </Label>
+            <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+              {(["yes", "no"] as const).map((value) => {
+                const selected = (s.step2.confirmedAvailable ? "yes" : "no") === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      update("step2", {
+                        ...s.step2,
+                        confirmedAvailable: value === "yes",
+                      })
+                    }
+                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                      selected
+                        ? "border-clay-500 bg-clay-50 text-clay-800"
+                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {errors.confirmed && <p className="text-xs text-red-600">{errors.confirmed}</p>}
         </section>

@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Loader2 } from "lucide-react";
@@ -193,10 +191,22 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
 
                                 <div className="flex flex-col gap-3 border-t border-stone-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                     <Label className="text-stone-900 text-sm">Do you have an existing PAYE scheme? *</Label>
-                                    <RadioGroup value={data.hasPaye ?? ""} onValueChange={(val) => updateField("hasPaye", val)} className="flex shrink-0 gap-6">
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="paye-yes" /><Label htmlFor="paye-yes" className="text-sm">Yes</Label></div>
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="paye-no" /><Label htmlFor="paye-no" className="text-sm">No</Label></div>
-                                    </RadioGroup>
+                                    <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                        {(["yes", "no"] as const).map((value) => (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                onClick={() => updateField("hasPaye", value)}
+                                                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                                                    data.hasPaye === value
+                                                        ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                }`}
+                                            >
+                                                {value}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                                 {data.hasPaye === "yes" && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
@@ -207,10 +217,22 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
 
                                 <div className="flex flex-col gap-3 pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                     <Label className="text-stone-900 text-sm">Are you VAT Registered? *</Label>
-                                    <RadioGroup value={data.isVatRegistered ?? ""} onValueChange={(val) => updateField("isVatRegistered", val)} className="flex shrink-0 gap-6">
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="vat-yes" /><Label htmlFor="vat-yes" className="text-sm">Yes</Label></div>
-                                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="vat-no" /><Label htmlFor="vat-no" className="text-sm">No</Label></div>
-                                    </RadioGroup>
+                                    <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                        {(["yes", "no"] as const).map((value) => (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                onClick={() => updateField("isVatRegistered", value)}
+                                                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                                                    data.isVatRegistered === value
+                                                        ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                }`}
+                                            >
+                                                {value}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                                 {data.isVatRegistered === "yes" && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
@@ -224,23 +246,30 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
 
                     {step === 3 && (
                         <Section title="Select Personal Income Types">
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {["Employment (PAYE)", "Self-employment", "Rental Income", "Dividends", "Foreign Income", "Other"].map((type) => (
-                                        <div key={type} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={type}
-                                                checked={(data.incomeTypes || []).includes(type)}
-                                                onCheckedChange={(checked) => {
-                                                    const current = data.incomeTypes || [];
-                                                    const updated = checked ? [...current, type] : current.filter((t: string) => t !== type);
-                                                    updateField("incomeTypes", updated);
-                                                }}
-                                            />
-                                            <Label htmlFor={type} className="text-sm font-normal text-stone-700 cursor-pointer">{type}</Label>
-                                        </div>
-                                    ))}
-                                </div>
+                            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                {["Employment (PAYE)", "Self-employment", "Rental Income", "Dividends", "Foreign Income", "Other"].map((type) => {
+                                    const selected = (data.incomeTypes || []).includes(type);
+                                    return (
+                                        <button
+                                            key={type}
+                                            type="button"
+                                            onClick={() => {
+                                                const current = data.incomeTypes || [];
+                                                const updated = selected
+                                                    ? current.filter((t: string) => t !== type)
+                                                    : [...current, type];
+                                                updateField("incomeTypes", updated);
+                                            }}
+                                            className={`flex min-h-12 items-center justify-center rounded-none border px-3 py-2 text-center text-sm font-medium transition ${
+                                                selected
+                                                    ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                            }`}
+                                        >
+                                            {type}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </Section>
                     )}
@@ -308,51 +337,64 @@ export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loa
                         <>
                             <Section title="Compliance Checks">
                                 <div className="space-y-4">
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                                        <Label className="text-stone-900 text-sm">Are you (or any owner) a Politically Exposed Person (PEP)? *</Label>
-                                        <RadioGroup value={data.isPep || "no"} onValueChange={(val) => updateField("isPep", val)} className="flex shrink-0 gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
-                                    </div>
-
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                                        <Label className="text-stone-900 text-sm">Links to high-risk or sanctioned jurisdictions? *</Label>
-                                        <RadioGroup value={data.hasSanctions || "no"} onValueChange={(val) => updateField("hasSanctions", val)} className="flex shrink-0 gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sanct-yes" /><Label htmlFor="sanct-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sanct-no" /><Label htmlFor="sanct-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                                            <Label className="text-stone-900 text-sm">Any bankruptcy or disqualification history? *</Label>
-                                            <RadioGroup value={data.hasBankruptcy || "no"} onValueChange={(val) => updateField("hasBankruptcy", val)} className="flex shrink-0 gap-6">
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="bank-yes" /><Label htmlFor="bank-yes" className="text-sm">Yes</Label></div>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="bank-no" /><Label htmlFor="bank-no" className="text-sm">No</Label></div>
-                                            </RadioGroup>
+                                    {(
+                                        [
+                                            ["isPep", "Are you (or any owner) a Politically Exposed Person (PEP)? *"],
+                                            ["hasSanctions", "Links to high-risk or sanctioned jurisdictions? *"],
+                                            ["hasBankruptcy", "Any bankruptcy or disqualification history? *"],
+                                        ] as const
+                                    ).map(([field, label]) => (
+                                        <div key={field} className="space-y-3">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                                <Label className="text-stone-900 text-sm">{label}</Label>
+                                                <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                                    {(["yes", "no"] as const).map((value) => (
+                                                        <button
+                                                            key={value}
+                                                            type="button"
+                                                            onClick={() => updateField(field, value)}
+                                                            className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                                                                (data[field] || "no") === value
+                                                                    ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                            }`}
+                                                        >
+                                                            {value}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {field === "hasBankruptcy" && data.hasBankruptcy === "yes" && (
+                                                <Textarea
+                                                    placeholder="Provide details..."
+                                                    value={data.bankruptcyDescription || ""}
+                                                    onChange={(e) => updateField("bankruptcyDescription", e.target.value)}
+                                                />
+                                            )}
                                         </div>
-                                        {data.hasBankruptcy === "yes" && (
-                                            <Textarea
-                                                placeholder="Provide details..."
-                                                value={data.bankruptcyDescription || ""}
-                                                onChange={(e) => updateField("bankruptcyDescription", e.target.value)}
-                                            />
-                                        )}
-                                    </div>
+                                    ))}
                                 </div>
                             </Section>
 
-                            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 sm:p-4">
-                                <div className="flex items-center space-x-3">
-                                    <Checkbox
-                                        id="confirm"
-                                        checked={data.confirmed}
-                                        onCheckedChange={(c) => updateField("confirmed", !!c)}
-                                    />
-                                    <Label htmlFor="confirm" className="text-sm font-normal text-stone-700 cursor-pointer leading-tight">
-                                        I confirm that all information provided for both Business and Self Assessment services is accurate.
-                                    </Label>
+                            <div className="flex flex-col gap-3 rounded-none border border-stone-200 bg-stone-50/50 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+                                <Label className="min-w-0 flex-1 font-normal text-sm text-stone-800 leading-snug">
+                                    I confirm that all information provided for both Business and Self Assessment services is accurate.
+                                </Label>
+                                <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                    {(["yes", "no"] as const).map((value) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() => updateField("confirmed", value === "yes")}
+                                            className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                                                (data.confirmed ? "yes" : "no") === value
+                                                    ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                            }`}
+                                        >
+                                            {value}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </>
@@ -405,7 +447,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
     };
 
     return (
-        <div className="p-4 rounded-none border border-stone-200 bg-stone-50/30 space-y-4">
+        <div className="space-y-4">
             <h4 className="font-medium text-sm text-stone-600">Add New Director/Shareholder</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">

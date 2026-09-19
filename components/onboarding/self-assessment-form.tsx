@@ -4,8 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowRight, ArrowLeft } from "lucide-react";
@@ -152,7 +150,7 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                     {step === 2 && (
                         <>
                             <Section title="Income Types">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                                     {[
                                         "Employment (PAYE)",
                                         "Self-employment / Sole Trader",
@@ -162,16 +160,23 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                                         "Capital Gains (Shares, Crypto, Property)",
                                         "Foreign Income",
                                         "Other (Pensions, Benefits, etc.)"
-                                    ].map((type) => (
-                                        <div key={type} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={type}
-                                                checked={formData.incomeTypes.includes(type)}
-                                                onCheckedChange={() => handleIncomeToggle(type)}
-                                            />
-                                            <Label htmlFor={type} className="text-sm font-normal text-stone-700 cursor-pointer">{type}</Label>
-                                        </div>
-                                    ))}
+                                    ].map((type) => {
+                                        const selected = formData.incomeTypes.includes(type);
+                                        return (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => handleIncomeToggle(type)}
+                                                className={`flex min-h-12 items-center justify-center rounded-none border px-3 py-2 text-center text-sm font-medium transition ${
+                                                    selected
+                                                        ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </Section>
 
@@ -179,14 +184,22 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                                 <div className="space-y-4">
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm shrink-0">Do you expect to receive income from outside the UK? *</Label>
-                                        <RadioGroup
-                                            value={formData.expectsForeignIncome}
-                                            onValueChange={(val) => setFormData({ ...formData, expectsForeignIncome: val })}
-                                            className="flex shrink-0 gap-6"
-                                        >
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="foreign-yes" /><Label htmlFor="foreign-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="foreign-no" /><Label htmlFor="foreign-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
+                                        <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                            {(["Yes", "No"] as const).map((value) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, expectsForeignIncome: value })}
+                                                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
+                                                        formData.expectsForeignIncome === value
+                                                            ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                            : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                    }`}
+                                                >
+                                                    {value}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     {formData.expectsForeignIncome === "Yes" && (
                                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
@@ -237,60 +250,71 @@ export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: S
                         <>
                             <Section title="Compliance Questions">
                                 <div className="space-y-4">
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                                        <Label className="text-stone-900 text-sm">Are you a Politically Exposed Person (PEP)? *</Label>
-                                        <RadioGroup value={formData.isPep} onValueChange={(val) => setFormData({ ...formData, isPep: val })} className="flex shrink-0 gap-6">
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="pep-yes" /><Label htmlFor="pep-yes" className="text-sm">Yes</Label></div>
-                                            <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="pep-no" /><Label htmlFor="pep-no" className="text-sm">No</Label></div>
-                                        </RadioGroup>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                                            <Label className="text-stone-900 text-sm">Do you have income or links to sanctioned/high-risk countries? *</Label>
-                                            <RadioGroup value={formData.hasHighRiskIncome} onValueChange={(val) => setFormData({ ...formData, hasHighRiskIncome: val })} className="flex shrink-0 gap-6">
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="highrisk-yes" /><Label htmlFor="highrisk-yes" className="text-sm">Yes</Label></div>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="highrisk-no" /><Label htmlFor="highrisk-no" className="text-sm">No</Label></div>
-                                            </RadioGroup>
+                                    {(
+                                        [
+                                            ["isPep", "Are you a Politically Exposed Person (PEP)? *", null],
+                                            ["hasHighRiskIncome", "Do you have income or links to sanctioned/high-risk countries? *", "highRiskDetails"],
+                                            ["financialDifficulty", "Have you ever been bankrupt or in serious financial difficulty? *", "financialDifficultyDetails"],
+                                        ] as const
+                                    ).map(([field, label, detailField]) => (
+                                        <div key={field} className="space-y-3">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                                <Label className="text-stone-900 text-sm">{label}</Label>
+                                                <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                                    {(["Yes", "No"] as const).map((value) => (
+                                                        <button
+                                                            key={value}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, [field]: value })}
+                                                            className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
+                                                                formData[field] === value
+                                                                    ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                            }`}
+                                                        >
+                                                            {value}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {detailField === "highRiskDetails" && formData.hasHighRiskIncome === "Yes" && (
+                                                <Input
+                                                    placeholder="Please specify details..."
+                                                    value={formData.highRiskDetails}
+                                                    onChange={(e) => setFormData({ ...formData, highRiskDetails: e.target.value })}
+                                                />
+                                            )}
+                                            {detailField === "financialDifficultyDetails" && formData.financialDifficulty === "Yes" && (
+                                                <Textarea
+                                                    placeholder="Provide detail..."
+                                                    value={formData.financialDifficultyDetails}
+                                                    onChange={(e) => setFormData({ ...formData, financialDifficultyDetails: e.target.value })}
+                                                />
+                                            )}
                                         </div>
-                                        {formData.hasHighRiskIncome === "Yes" && (
-                                            <Input
-                                                placeholder="Please specify details..."
-                                                value={formData.highRiskDetails}
-                                                onChange={(e) => setFormData({ ...formData, highRiskDetails: e.target.value })}
-                                            />
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                                            <Label className="text-stone-900 text-sm">Have you ever been bankrupt or in serious financial difficulty? *</Label>
-                                            <RadioGroup value={formData.financialDifficulty} onValueChange={(val) => setFormData({ ...formData, financialDifficulty: val })} className="flex shrink-0 gap-6">
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="Yes" id="bankrupt-yes" /><Label htmlFor="bankrupt-yes" className="text-sm">Yes</Label></div>
-                                                <div className="flex items-center space-x-2"><RadioGroupItem value="No" id="bankrupt-no" /><Label htmlFor="bankrupt-no" className="text-sm">No</Label></div>
-                                            </RadioGroup>
-                                        </div>
-                                        {formData.financialDifficulty === "Yes" && (
-                                            <Textarea
-                                                placeholder="Provide detail..."
-                                                value={formData.financialDifficultyDetails}
-                                                onChange={(e) => setFormData({ ...formData, financialDifficultyDetails: e.target.value })}
-                                            />
-                                        )}
-                                    </div>
+                                    ))}
                                 </div>
                             </Section>
 
-                            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 sm:p-4">
-                                <div className="flex items-center space-x-3">
-                                    <Checkbox
-                                        id="confirm"
-                                        checked={formData.confirmed}
-                                        onCheckedChange={(c) => setFormData({ ...formData, confirmed: c as boolean })}
-                                    />
-                                    <Label htmlFor="confirm" className="text-sm font-normal text-stone-700 leading-tight cursor-pointer">
-                                        I confirm the information provided is accurate.
-                                    </Label>
+                            <div className="flex flex-col gap-3 rounded-none border border-stone-200 bg-stone-50/50 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+                                <Label className="min-w-0 flex-1 font-normal text-sm text-stone-800 leading-snug">
+                                    I confirm the information provided is accurate.
+                                </Label>
+                                <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
+                                    {(["Yes", "No"] as const).map((value) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, confirmed: value === "Yes" })}
+                                            className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
+                                                (formData.confirmed ? "Yes" : "No") === value
+                                                    ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                            }`}
+                                        >
+                                            {value}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </>

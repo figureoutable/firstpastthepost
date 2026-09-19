@@ -551,9 +551,6 @@ export default function OnboardClient() {
                                           ? "Self Assessment"
                                           : "Combined Onboarding"}
                                 </h2>
-                                <p className="text-muted-foreground text-sm mt-1">
-                                    Please provide the details requested below.
-                                </p>
                             </div>
 
                             {status === "error" && (

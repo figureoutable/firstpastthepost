@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import GradientButton from "@/components/kokonutui/gradient-button";
 import { StepIndicator } from "./step-indicator";
 
@@ -53,9 +52,9 @@ export function WizardShell({
 
       {!hideFooter && (
         <div className="mt-6 flex gap-3 border-t border-stone-200 pt-6">
-          <Button type="button" variant="outline" onClick={onBack}>
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
-          </Button>
+          <GradientButton type="button" appearance="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" /> {backLabel}
+          </GradientButton>
           <GradientButton
             type="button"
             variant={isLastStep ? "emerald" : "purple"}
@@ -64,7 +63,7 @@ export function WizardShell({
             className="ml-auto flex-1 sm:flex-none"
           >
             {loading ? "Saving…" : nextLabel}
-            {!isLastStep && !loading && <ArrowRight className="h-4 w-4" />}
+            {!loading && <ArrowRight className="h-4 w-4" />}
           </GradientButton>
         </div>
       )}

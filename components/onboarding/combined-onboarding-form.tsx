@@ -415,14 +415,15 @@ export function CombinedOnboardingForm({
             </AnimatePresence>
 
             <div className="flex gap-3 pt-6 border-t border-stone-200">
-                <Button
-                    variant="outline"
+                <GradientButton
+                    type="button"
+                    appearance="outline"
                     onClick={step === 1 ? onBack : prevStep}
                     disabled={loading}
-                    className="flex-1 border-stone-300 bg-card text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                    className="flex-1"
                 >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> {step === 1 ? "Back" : "Previous"}
-                </Button>
+                    <ArrowLeft className="w-4 h-4" /> {step === 1 ? "Back" : "Previous"}
+                </GradientButton>
 
                 {step < 6 ? (
                     <GradientButton
@@ -441,7 +442,7 @@ export function CombinedOnboardingForm({
                         className="flex-1"
                         variant="emerald"
                     >
-                        Submit Combined Application
+                        Submit Combined Application <ArrowRight className="h-4 w-4" />
                     </GradientButton>
                 )}
             </div>

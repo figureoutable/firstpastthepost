@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileSignature, Plus, ArrowLeft } from "lucide-react";
+import { FileSignature, Plus, ArrowLeft, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/venture/page-header";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { FormSection, FormSubGroup } from "@/components/venture/form-section";
@@ -514,9 +514,9 @@ export default function SafePage() {
           </div>
 
           <div className="mt-6 flex gap-3 border-t border-stone-200 pt-6">
-            <Button type="button" variant="outline" onClick={() => setView("list")}>
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-            </Button>
+            <GradientButton type="button" appearance="outline" onClick={() => setView("list")}>
+              <ArrowLeft className="h-4 w-4" /> Back
+            </GradientButton>
             <GradientButton
               type="button"
               variant="emerald"
@@ -524,7 +524,7 @@ export default function SafePage() {
               disabled={!canSubmit}
               className="ml-auto flex-1 sm:flex-none"
             >
-              Generate agreement
+              Generate agreement <ArrowRight className="h-4 w-4" />
             </GradientButton>
           </div>
         </div>

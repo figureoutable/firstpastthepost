@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import GradientButton from "@/components/kokonutui/gradient-button";
 import {
   COMPANIES_HOUSE_IDENTITY_URL,
   FIGURES_WHATSAPP_URL,
@@ -1197,29 +1198,30 @@ export function IncorporationWizard() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 flex gap-3 border-t border-stone-200 bg-card/95 p-4 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0">
-        <Button type="button" variant="outline" className="flex-1 md:flex-none" onClick={back}>
-          Back
-        </Button>
+        <GradientButton type="button" appearance="outline" className="flex-1 md:flex-none" onClick={back}>
+          <ArrowLeft className="h-4 w-4" /> Back
+        </GradientButton>
         {step < STEPS ? (
-          <Button
+          <GradientButton
             type="button"
             className="flex-1 md:flex-none"
             disabled={!canProceed}
             title={!canProceed ? "Complete all required fields on this step" : undefined}
             onClick={next}
           >
-            Next
-          </Button>
+            Next <ArrowRight className="h-4 w-4" />
+          </GradientButton>
         ) : (
-          <Button
+          <GradientButton
             type="button"
             className="flex-1 md:flex-none"
             disabled={submitting || !canProceed}
+            loading={submitting}
             title={!canProceed ? "Complete all required fields on this step" : undefined}
             onClick={submit}
           >
-            {submitting ? "Submitting…" : "Submit incorporation request"}
-          </Button>
+            Submit incorporation request <ArrowRight className="h-4 w-4" />
+          </GradientButton>
         )}
       </div>
     </div>

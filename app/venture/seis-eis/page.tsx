@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, ArrowLeft } from "lucide-react";
+import { ShieldCheck, ArrowLeft, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/venture/page-header";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { FormSection } from "@/components/venture/form-section";
@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Button } from "@/components/ui/button";
 import GradientButton from "@/components/kokonutui/gradient-button";
 import { useVenture } from "@/lib/venture/store";
 import { getSeisEisStatus } from "@/lib/venture/status";
@@ -199,9 +198,9 @@ export default function SeisEisPage() {
           </FormSection>
 
           <div className="flex gap-3 border-t border-stone-200 pt-6">
-            <Button type="button" variant="outline" onClick={() => setView("intro")}>
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-            </Button>
+            <GradientButton type="button" appearance="outline" onClick={() => setView("intro")}>
+              <ArrowLeft className="h-4 w-4" /> Back
+            </GradientButton>
             <GradientButton
               type="button"
               variant="emerald"
@@ -215,7 +214,7 @@ export default function SeisEisPage() {
                 });
               }}
             >
-              Save application
+              Save application <ArrowRight className="h-4 w-4" />
             </GradientButton>
           </div>
         </div>

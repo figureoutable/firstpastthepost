@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
+import { Expandable } from "@/components/ui/expandable";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import GradientButton from "@/components/kokonutui/gradient-button";
@@ -169,12 +170,7 @@ export function BusinessForm({
                                         </div>
                                     </div>
 
-                                    {data.hasPaye === "yes" && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200"
-                                        >
+                                    <Expandable show={data.hasPaye === "yes"} contentKey="paye-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
                                             <div className="space-y-2">
                                                 <Label htmlFor="accountsOfficeRef" className="text-stone-900 text-sm">Accounts Office Ref</Label>
                                                 <Input
@@ -199,8 +195,7 @@ export function BusinessForm({
                                                 />
                                                 <p className="text-xs text-stone-500">10-12 characters</p>
                                             </div>
-                                        </motion.div>
-                                    )}
+                                    </Expandable>
 
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                         <Label className="text-stone-900 text-sm">Are you VAT Registered? *</Label>
@@ -222,12 +217,7 @@ export function BusinessForm({
                                         </div>
                                     </div>
 
-                                    {data.isVatRegistered === "yes" && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200"
-                                        >
+                                    <Expandable show={data.isVatRegistered === "yes"} contentKey="vat-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
                                             <div className="space-y-2">
                                                 <Label htmlFor="vatNumber" className="text-stone-900 text-sm">VAT Number</Label>
                                                 <Input
@@ -249,8 +239,7 @@ export function BusinessForm({
                                                     onChange={(e) => updateField("vatRegDate", e.target.value)}
                                                 />
                                             </div>
-                                        </motion.div>
-                                    )}
+                                    </Expandable>
                                 </div>
                             </Section>
 
@@ -415,20 +404,20 @@ export function BusinessForm({
                                                     ))}
                                                 </div>
                                             </div>
-                                            {field === "hasComplexStructure" && data.hasComplexStructure === "yes" && (
+                                            <Expandable show={field === "hasComplexStructure" && data.hasComplexStructure === "yes"} contentKey="structure-details">
                                                 <Textarea
                                                     placeholder="Describe structure..."
                                                     value={data.structureDescription || ""}
                                                     onChange={(e) => updateField("structureDescription", e.target.value)}
                                                 />
-                                            )}
-                                            {field === "hasBankruptcy" && data.hasBankruptcy === "yes" && (
+                                            </Expandable>
+                                            <Expandable show={field === "hasBankruptcy" && data.hasBankruptcy === "yes"} contentKey="bankruptcy-details">
                                                 <Textarea
                                                     placeholder="Provide details..."
                                                     value={data.bankruptcyDescription || ""}
                                                     onChange={(e) => updateField("bankruptcyDescription", e.target.value)}
                                                 />
-                                            )}
+                                            </Expandable>
                                         </div>
                                     ))}
                                 </div>

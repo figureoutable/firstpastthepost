@@ -16,6 +16,7 @@ import {
 } from "@/lib/figures-config";
 import { type IncorporationState, type Director, type Shareholder, initialState, newDirector, newShareholder } from "./state";
 import { AddressFields, PostcodeInput, PostcodeLookupBlock } from "./AddressFields";
+import { Expandable } from "@/components/ui/expandable";
 import sicData from "@/lib/sic-codes-data.json";
 
 const STEPS = 9;
@@ -816,7 +817,7 @@ export function IncorporationWizard() {
               })}
             </div>
           </div>
-          {s.step3.principal === "different" && (
+          <Expandable show={s.step3.principal === "different"} contentKey="principal-different">
             <div className="rounded-none border border-stone-200 bg-stone-50/70 p-4">
               <p className="mb-2 text-xs text-stone-500">
                 Enter the address manually - this is where day-to-day business will happen.
@@ -828,7 +829,7 @@ export function IncorporationWizard() {
                 prefix="pri"
               />
             </div>
-          )}
+          </Expandable>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Registered email address *</Label>
@@ -876,7 +877,7 @@ export function IncorporationWizard() {
               })}
             </div>
           </div>
-          {s.step4.replacing === "yes" && (
+          <Expandable show={s.step4.replacing === "yes"} contentKey="replacing-yes">
             <div className="space-y-3 rounded-lg border p-4">
               <Input
                 placeholder="Name of previous business *"
@@ -901,7 +902,7 @@ export function IncorporationWizard() {
                 onChange={(e) => update("step4", { ...s.step4, handoverPerson: e.target.value })}
               />
             </div>
-          )}
+          </Expandable>
           <div className="space-y-3">
             <Label>When will the company start trading?</Label>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1295,12 +1296,10 @@ function DirectorCard({
           })}
         </div>
       </div>
-      {d.differentName === "yes" && (
-        <div className="grid gap-2 sm:grid-cols-2">
+      <Expandable show={d.differentName === "yes"} contentKey={`diff-name-${i}`} className="grid gap-2 sm:grid-cols-2">
           <Input placeholder="Previous first" value={d.prevFirst} onChange={(e) => onChange({ ...d, prevFirst: e.target.value })} />
           <Input placeholder="Previous last" value={d.prevLast} onChange={(e) => onChange({ ...d, prevLast: e.target.value })} />
-        </div>
-      )}
+      </Expandable>
       <div className="grid gap-2 sm:grid-cols-2">
         <div>
           <Label>Nationality *</Label>
@@ -1402,9 +1401,9 @@ function DirectorCard({
           })}
         </div>
       </div>
-      {d.corrType === "other" && (
+      <Expandable show={d.corrType === "other"} contentKey={`corr-other-${i}`}>
         <AddressFields value={d.corrAddress} onChange={(a) => onChange({ ...d, corrAddress: a })} />
-      )}
+      </Expandable>
       <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="min-w-0 flex-1 space-y-2">
           <Label>Home address (private)</Label>
@@ -1438,7 +1437,7 @@ function DirectorCard({
           })}
         </div>
       </div>
-      {d.homeType === "other" && (
+      <Expandable show={d.homeType === "other"} contentKey={`home-other-${i}`}>
         <div className="rounded-none border border-stone-200 bg-stone-50/70 p-4">
           <p className="mb-2 text-xs text-stone-600">Enter the home address manually.</p>
           <AddressFields
@@ -1448,7 +1447,7 @@ function DirectorCard({
             prefix={`hd${i}`}
           />
         </div>
-      )}
+      </Expandable>
       <div className="grid gap-2 sm:grid-cols-2">
         <div>
           <Label>Country of residence *</Label>
@@ -1609,9 +1608,9 @@ function ShareholderCard({
               })}
             </div>
           </div>
-          {sh.addrType === "other" && (
+          <Expandable show={sh.addrType === "other"} contentKey={`sh-addr-other-${i}`}>
             <AddressFields value={sh.addr} onChange={(a) => onChange({ ...sh, addr: a })} />
-          )}
+          </Expandable>
         </>
       )}
       {sh.kind === "business" && (
@@ -1671,7 +1670,7 @@ function Step7({
           })}
         </div>
       </div>
-      {!s.step7.standard && (
+      <Expandable show={!s.step7.standard} contentKey="custom-share-structure">
         <p className="rounded-none border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800">
           Please email us at{" "}
           <a
@@ -1682,7 +1681,7 @@ function Step7({
           </a>{" "}
           and we&apos;ll help set up a custom share structure.
         </p>
-      )}
+      </Expandable>
       <table className="mt-6 w-full text-sm">
         <thead>
           <tr className="border-b">

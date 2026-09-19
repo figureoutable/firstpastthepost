@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Address } from "./state";
 import { emptyAddress } from "./state";
+import { Expandable } from "@/components/ui/expandable";
 
 function upperPostcode(pc: string) {
   return pc.trim().toUpperCase();
@@ -168,7 +169,7 @@ export function PostcodeLookupBlock({
               Enter manually
             </Button>
           </div>
-          {list.length > 0 && (
+          <Expandable show={list.length > 0} contentKey="address-list">
             <ul className="max-h-40 overflow-auto text-sm">
               {list.map((x) => (
                 <li key={x.address}>
@@ -182,17 +183,15 @@ export function PostcodeLookupBlock({
                 </li>
               ))}
             </ul>
-          )}
+          </Expandable>
         </>
       )}
-      {manual && (
-        <>
+      <Expandable show={manual} contentKey="manual-address" className="space-y-3">
           <AddressFields value={value} onChange={onChange} errors={errors} prefix={id} />
           <Button type="button" variant="ghost" size="sm" onClick={() => setManual(false)}>
             Back to postcode search
           </Button>
-        </>
-      )}
+      </Expandable>
     </div>
   );
 }

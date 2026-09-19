@@ -18,6 +18,7 @@ import { OwnershipPie } from "@/components/venture/ownership-pie";
 import { FormSection } from "@/components/venture/form-section";
 import { StubAction } from "@/components/venture/stub-action";
 import { Label } from "@/components/ui/label";
+import { Expandable } from "@/components/ui/expandable";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import GradientButton from "@/components/kokonutui/gradient-button";
@@ -466,7 +467,7 @@ export default function CapTablePage() {
                 ))}
               </RadioGroup>
 
-              {recordForm.type === "transfer" && (
+              <Expandable show={recordForm.type === "transfer"} contentKey="transfer-from">
                 <div className="space-y-2">
                   <Label>From shareholder *</Label>
                   <select
@@ -482,7 +483,7 @@ export default function CapTablePage() {
                     ))}
                   </select>
                 </div>
-              )}
+              </Expandable>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -678,7 +679,7 @@ export default function CapTablePage() {
                   />
                 </button>
 
-                {removing && (
+                <Expandable show={removing} contentKey={`removing-${sc.id}`}>
                   <div className="space-y-3 border-t border-stone-100 bg-red-50/60 px-4 py-4">
                     <p className="text-sm font-medium text-stone-900">
                       Remove &ldquo;{sc.name}&rdquo;? Reassign its {holders.length} holder
@@ -709,9 +710,9 @@ export default function CapTablePage() {
                       </Button>
                     </div>
                   </div>
-                )}
+                </Expandable>
 
-                {expanded && (
+                <Expandable show={expanded} contentKey={`expanded-${sc.id}`}>
                   <div className="space-y-3 border-t border-stone-100 bg-stone-50/60 px-4 py-4">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       <div className="space-y-1.5">
@@ -805,8 +806,7 @@ export default function CapTablePage() {
                         </table>
                       </div>
                     )}
-                  </div>
-                )}
+                  </div>                </Expandable>
               </div>
             );
           })}

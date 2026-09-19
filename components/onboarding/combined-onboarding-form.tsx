@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
+import { Expandable } from "@/components/ui/expandable";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import GradientButton from "@/components/kokonutui/gradient-button";
 
@@ -220,12 +221,10 @@ export function CombinedOnboardingForm({
                                         ))}
                                     </div>
                                 </div>
-                                {data.hasPaye === "yes" && (
-                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
+                                <Expandable show={data.hasPaye === "yes"} contentKey="paye-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
                                         <div className="space-y-2"><Label className="text-stone-900 text-sm">Accounts Office Ref</Label><Input value={data.accountsOfficeRef || ""} onChange={(e) => updateField("accountsOfficeRef", e.target.value)} /></div>
                                         <div className="space-y-2"><Label className="text-stone-900 text-sm">PAYE Reference</Label><Input value={data.payeRef || ""} onChange={(e) => updateField("payeRef", e.target.value)} /></div>
-                                    </motion.div>
-                                )}
+                                </Expandable>
 
                                 <div className="flex flex-col gap-3 pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                     <Label className="text-stone-900 text-sm">Are you VAT Registered? *</Label>
@@ -246,12 +245,10 @@ export function CombinedOnboardingForm({
                                         ))}
                                     </div>
                                 </div>
-                                {data.isVatRegistered === "yes" && (
-                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
+                                <Expandable show={data.isVatRegistered === "yes"} contentKey="vat-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
                                         <div className="space-y-2"><Label className="text-stone-900 text-sm">VAT Number</Label><Input maxLength={9} value={data.vatNumber || ""} onChange={(e) => updateField("vatNumber", e.target.value)} /></div>
                                         <div className="space-y-2"><Label className="text-stone-900 text-sm">Registration Date</Label><Input type="date" value={data.vatRegDate || ""} onChange={(e) => updateField("vatRegDate", e.target.value)} /></div>
-                                    </motion.div>
-                                )}
+                                </Expandable>
                             </div>
                         </Section>
                     )}
@@ -376,13 +373,13 @@ export function CombinedOnboardingForm({
                                                     ))}
                                                 </div>
                                             </div>
-                                            {field === "hasBankruptcy" && data.hasBankruptcy === "yes" && (
+                                            <Expandable show={field === "hasBankruptcy" && data.hasBankruptcy === "yes"} contentKey="bankruptcy-details">
                                                 <Textarea
                                                     placeholder="Provide details..."
                                                     value={data.bankruptcyDescription || ""}
                                                     onChange={(e) => updateField("bankruptcyDescription", e.target.value)}
                                                 />
-                                            )}
+                                            </Expandable>
                                         </div>
                                     ))}
                                 </div>

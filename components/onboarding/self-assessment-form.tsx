@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
+import { Expandable } from "@/components/ui/expandable";
 import GradientButton from "@/components/kokonutui/gradient-button";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -361,16 +362,14 @@ export function SelfAssessmentForm({
                                             ))}
                                         </div>
                                     </div>
-                                    {formData.expectsForeignIncome === "Yes" && (
-                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
+                                    <Expandable show={formData.expectsForeignIncome === "Yes"} contentKey="foreign-income" className="space-y-2">
                                             <Label className="text-stone-900 text-sm">List the countries and nature of income.</Label>
                                             <Textarea
                                                 placeholder="e.g. USA - Dividends"
                                                 value={formData.foreignIncomeDetails}
                                                 onChange={(e) => setFormData({ foreignIncomeDetails: e.target.value })}
                                             />
-                                        </motion.div>
-                                    )}
+                                    </Expandable>
                                 </div>
                             </Section>
                         </>
@@ -407,20 +406,20 @@ export function SelfAssessmentForm({
                                                     ))}
                                                 </div>
                                             </div>
-                                            {detailField === "highRiskDetails" && formData.hasHighRiskIncome === "Yes" && (
+                                            <Expandable show={detailField === "highRiskDetails" && formData.hasHighRiskIncome === "Yes"} contentKey="high-risk-details">
                                                 <Input
                                                     placeholder="Please specify details..."
                                                     value={formData.highRiskDetails}
                                                     onChange={(e) => setFormData({ highRiskDetails: e.target.value })}
                                                 />
-                                            )}
-                                            {detailField === "financialDifficultyDetails" && formData.financialDifficulty === "Yes" && (
+                                            </Expandable>
+                                            <Expandable show={detailField === "financialDifficultyDetails" && formData.financialDifficulty === "Yes"} contentKey="financial-difficulty-details">
                                                 <Textarea
                                                     placeholder="Provide detail..."
                                                     value={formData.financialDifficultyDetails}
                                                     onChange={(e) => setFormData({ financialDifficultyDetails: e.target.value })}
                                                 />
-                                            )}
+                                            </Expandable>
                                         </div>
                                     ))}
                                 </div>

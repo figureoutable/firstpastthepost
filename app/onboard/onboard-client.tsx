@@ -460,12 +460,12 @@ export default function OnboardClient() {
                             />
                         </div>
 
-                        <div className="mt-8 flex justify-center">
-                            <div className="inline-flex flex-col gap-2 rounded-none border border-stone-200 bg-card px-4 py-3">
-                                <Label htmlFor="onboarding-resume-code" className="block whitespace-nowrap text-stone-900 leading-none">
+                        <div className="mt-8 flex w-full justify-center">
+                            <div className="w-fit max-w-full rounded-none border border-stone-200 bg-card px-4 py-3">
+                                <Label htmlFor="onboarding-resume-code" className="mb-2 block whitespace-nowrap text-stone-900 leading-none">
                                     Already started? Resume with your code
                                 </Label>
-                                <div className="flex gap-2">
+                                <div className="flex w-fit gap-2">
                                     <Input
                                         id="onboarding-resume-code"
                                         value={resumeInput}
@@ -478,7 +478,7 @@ export default function OnboardClient() {
                                             )
                                         }
                                         placeholder="e.g. AB3K7MPQ"
-                                        className="w-44 font-mono tracking-wider uppercase"
+                                        className="w-44 shrink-0 font-mono tracking-wider uppercase"
                                         maxLength={8}
                                         disabled={starting || resuming}
                                     />

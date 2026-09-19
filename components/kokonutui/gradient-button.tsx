@@ -4,7 +4,8 @@ import { motion, type HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface GradientButtonProps extends HTMLMotionProps<"button"> {
+interface GradientButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
+  children?: React.ReactNode;
   variant?: "emerald" | "purple" | "default";
   appearance?: "solid" | "outline";
   loading?: boolean;

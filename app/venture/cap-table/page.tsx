@@ -355,7 +355,7 @@ export default function CapTablePage() {
         }
       />
 
-      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-none border border-border bg-card p-6 sm:p-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-stone-900">Shareholders</h2>
@@ -410,7 +410,7 @@ export default function CapTablePage() {
                   <Label htmlFor="addClass">Share class</Label>
                   <select
                     id="addClass"
-                    className="flex h-12 w-full rounded-md border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
+                    className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
                     value={addForm.shareClass}
                     onChange={(e) => setAddForm((f) => ({ ...f, shareClass: e.target.value }))}
                   >
@@ -458,7 +458,7 @@ export default function CapTablePage() {
                 ].map((opt) => (
                   <label
                     key={opt.value}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
+                    className="flex cursor-pointer items-center gap-3 rounded-none border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
                   >
                     <RadioGroupItem value={opt.value} id={`rec-${opt.value}`} />
                     {opt.label}
@@ -470,7 +470,7 @@ export default function CapTablePage() {
                 <div className="space-y-2">
                   <Label>From shareholder *</Label>
                   <select
-                    className="flex h-12 w-full rounded-md border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
+                    className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
                     value={recordForm.fromId}
                     onChange={(e) => setRecordForm((f) => ({ ...f, fromId: e.target.value }))}
                   >
@@ -488,7 +488,7 @@ export default function CapTablePage() {
                 <div className="space-y-2">
                   <Label>To (existing shareholder)</Label>
                   <select
-                    className="flex h-12 w-full rounded-md border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
+                    className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
                     value={recordForm.toExisting}
                     onChange={(e) => setRecordForm((f) => ({ ...f, toExisting: e.target.value, toName: "" }))}
                   >
@@ -534,7 +534,7 @@ export default function CapTablePage() {
           </div>
         )}
 
-        <div className="overflow-x-auto rounded-md border border-stone-200">
+        <div className="overflow-x-auto rounded-none border border-stone-200">
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
@@ -601,7 +601,7 @@ export default function CapTablePage() {
         </div>
       </div>
 
-      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-none border border-border bg-card p-6 sm:p-8">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="mb-1 text-lg font-semibold text-stone-900">Share classes</h3>
@@ -614,7 +614,7 @@ export default function CapTablePage() {
           </Button>
         </div>
 
-        <div className="divide-y divide-stone-200 rounded-md border border-stone-200">
+        <div className="divide-y divide-stone-200 rounded-none border border-stone-200">
           {shareClasses.map((sc) => {
             const expanded = expandedClassId === sc.id;
             const holders = shareholders.filter((sh) => sh.shareClass === sc.name);
@@ -639,7 +639,7 @@ export default function CapTablePage() {
                     value={sc.name}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => updateShareClass(sc.id, { name: e.target.value })}
-                    className="h-9 max-w-[160px] shrink-0 rounded-md px-2 text-sm font-semibold"
+                    className="h-9 max-w-[160px] shrink-0 rounded-none px-2 text-sm font-semibold"
                   />
                   <p className="min-w-0 flex-1 truncate text-sm text-stone-500">{definition}</p>
                   <span className="hidden shrink-0 text-xs text-stone-400 sm:inline">
@@ -655,7 +655,7 @@ export default function CapTablePage() {
                     type="button"
                     title={canRemove ? "Remove class" : "You need at least one share class"}
                     disabled={!canRemove}
-                    className="shrink-0 rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-stone-400"
+                    className="shrink-0 rounded-none p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-stone-400"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!canRemove) return;
@@ -686,7 +686,7 @@ export default function CapTablePage() {
                     </p>
                     <div className="flex flex-wrap items-center gap-3">
                       <select
-                        className="flex h-10 min-w-[180px] rounded-md border border-stone-200 bg-card px-3 text-sm text-stone-700"
+                        className="flex h-10 min-w-[180px] rounded-none border border-stone-200 bg-card px-3 text-sm text-stone-700"
                         value={reassignTarget}
                         onChange={(e) => setReassignTarget(e.target.value)}
                       >
@@ -717,7 +717,7 @@ export default function CapTablePage() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Class type</Label>
                         <select
-                          className="flex h-10 w-full rounded-md border border-stone-200 bg-card px-3 text-sm text-stone-700"
+                          className="flex h-10 w-full rounded-none border border-stone-200 bg-card px-3 text-sm text-stone-700"
                           value={sc.classType}
                           onChange={(e) => updateShareClass(sc.id, { classType: e.target.value })}
                         >
@@ -760,7 +760,7 @@ export default function CapTablePage() {
                     {holders.length === 0 ? (
                       <p className="text-sm text-stone-400">No holders in this class yet.</p>
                     ) : (
-                      <div className="overflow-x-auto rounded-md border border-stone-200 bg-card">
+                      <div className="overflow-x-auto rounded-none border border-stone-200 bg-card">
                         <table className="w-full text-left text-sm">
                           <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                             <tr>
@@ -787,7 +787,7 @@ export default function CapTablePage() {
                                 </td>
                                 <td className="px-3 py-2">
                                   <select
-                                    className="flex h-8 rounded-md border border-stone-200 bg-card px-2 text-xs text-stone-700"
+                                    className="flex h-8 rounded-none border border-stone-200 bg-card px-2 text-xs text-stone-700"
                                     value={sc.name}
                                     onChange={(e) => moveHolderToClass(sh.id, e.target.value)}
                                   >
@@ -814,7 +814,7 @@ export default function CapTablePage() {
       </div>
 
       {events.length > 0 && (
-        <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
+        <div className="rounded-none border border-border bg-card p-6 sm:p-8">
           <div className="mb-4 flex items-center gap-2">
             <History className="h-4 w-4 text-stone-400" />
             <h3 className="text-lg font-semibold text-stone-900">Share history</h3>
@@ -835,7 +835,7 @@ export default function CapTablePage() {
         </div>
       )}
 
-      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-none border border-border bg-card p-6 sm:p-8">
         <h3 className="mb-4 text-lg font-semibold text-stone-900">Companies House filing</h3>
         <StubAction
           emphasized

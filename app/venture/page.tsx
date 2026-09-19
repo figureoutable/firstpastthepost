@@ -75,10 +75,10 @@ export default function VentureOverviewPage() {
         {stats.map((s) => (
           <div
             key={s.label}
-            className="flex items-center gap-4 rounded-md border border-stone-200 bg-card p-5 shadow-sm"
+            className="flex items-center gap-4 rounded-none border border-stone-200 bg-card p-5 shadow-sm"
           >
             <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-none"
               style={{ backgroundColor: `${s.color}1F`, color: s.color }}
             >
               <s.icon className="h-5 w-5" />

@@ -109,14 +109,14 @@ function NavItem({
     <Link
       href={href}
       className={cn(
-        "group flex shrink-0 items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors md:shrink md:w-full",
+        "group flex shrink-0 items-center gap-3 rounded-none px-3 py-2.5 text-sm transition-colors md:shrink md:w-full",
         active
           ? "bg-stone-900 text-white shadow-sm"
           : "text-stone-600 hover:bg-stone-100"
       )}
     >
       <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none"
         style={{
           backgroundColor: active ? "rgba(255,255,255,0.15)" : `${color}1F`,
           color: active ? "#ffffff" : color,

@@ -36,8 +36,20 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
     );
 }
 
-export function CombinedOnboardingForm({ data, updateData, onBack, onSubmit, loading }: any) {
-    const [step, setStep] = useState(1);
+export function CombinedOnboardingForm({
+    data,
+    updateData,
+    onBack,
+    onSubmit,
+    loading,
+    formStep = 1,
+    onFormStepChange,
+}: any) {
+    const step = formStep;
+    const setStep = (next: number | ((prev: number) => number)) => {
+        const value = typeof next === "function" ? next(step) : next;
+        onFormStepChange?.(value);
+    };
 
     const updateField = (field: string, value: any) => {
         updateData({ ...data, [field]: value });

@@ -167,7 +167,7 @@ export default function SafePage() {
             hideStatus
           />
 
-          <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Instrument register</h2>
@@ -181,11 +181,11 @@ export default function SafePage() {
             </div>
 
             {instruments.length === 0 ? (
-              <p className="rounded-md border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
+              <p className="rounded-none border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
                 No instruments issued yet.
               </p>
             ) : (
-              <div className="overflow-x-auto rounded-md border border-stone-200">
+              <div className="overflow-x-auto rounded-none border border-stone-200">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                     <tr>
@@ -229,7 +229,7 @@ export default function SafePage() {
       )}
 
       {view === "form" && (
-        <div className="rounded-md border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="rounded-none border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="space-y-10">
             <FormSection
               step={1}
@@ -371,7 +371,7 @@ export default function SafePage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between gap-4 rounded-md border border-forest-200 bg-forest-50 px-4 py-3">
+                    <div className="mt-4 flex items-center justify-between gap-4 rounded-none border border-forest-200 bg-forest-50 px-4 py-3">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-forest-700">
                           Illustrative pre-money valuation (derived)
@@ -531,14 +531,14 @@ export default function SafePage() {
       )}
 
       {view === "preview" && (
-        <div className="rounded-md border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="rounded-none border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="space-y-6">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-stone-900">Agreement preview</h3>
               <StatusPill status="draft" label="Ready to send" />
             </div>
 
-            <div className="rounded-md border border-stone-200 bg-stone-50/50 p-6">
+            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-6">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">
                 Deal parties
               </p>
@@ -548,7 +548,7 @@ export default function SafePage() {
               <SummaryRow label="Registered office" value={draft.companyRegisteredOffice} />
             </div>
 
-            <div className="rounded-md border border-stone-200 bg-stone-50/50 p-6">
+            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-6">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">
                 Deal economics
               </p>
@@ -570,7 +570,7 @@ export default function SafePage() {
               <SummaryRow label="Longstop date" value={formatDate(draft.longstopDate)} />
             </div>
 
-            <div className="rounded-md border border-stone-200 bg-stone-50/50 p-6">
+            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-6">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">
                 Admin
               </p>

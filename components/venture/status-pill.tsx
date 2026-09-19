@@ -78,14 +78,14 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap",
         STYLES[key],
         className
       )}
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-full",
+          "h-1.5 w-1.5 rounded-none",
           key === "fail" || key === "declined"
             ? "bg-red-500"
             : key === "in_progress" || key === "borderline" || key === "sent" || key === "documents_generated"

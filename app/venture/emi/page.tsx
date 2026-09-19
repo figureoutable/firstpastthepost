@@ -125,7 +125,7 @@ export default function EmiPage() {
 
       {view === "workspace" && (
         <div className="space-y-6">
-          <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight text-stone-900">Option pool settings</h2>
               {!editingPool && (
@@ -178,7 +178,7 @@ export default function EmiPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-md border border-stone-200 bg-stone-50/50 p-6">
+              <div className="rounded-none border border-stone-200 bg-stone-50/50 p-6">
                 <SummaryRow label="Pool size" value={`${poolSizePercent}% of fully diluted shares`} />
                 <SummaryRow label="Default vesting" value={`${vestingYears} years`} />
                 <SummaryRow label="Default cliff" value={`${cliffMonths} months`} />
@@ -201,7 +201,7 @@ export default function EmiPage() {
             </div>
           </div>
 
-          <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Option grants</h2>
@@ -215,11 +215,11 @@ export default function EmiPage() {
             </div>
 
             {grants.length === 0 ? (
-              <p className="rounded-md border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
+              <p className="rounded-none border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
                 No grants recorded yet.
               </p>
             ) : (
-              <div className="overflow-x-auto rounded-md border border-stone-200">
+              <div className="overflow-x-auto rounded-none border border-stone-200">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                     <tr>

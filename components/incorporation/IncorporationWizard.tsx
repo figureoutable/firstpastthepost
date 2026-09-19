@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import { AddressFields, PostcodeInput, PostcodeLookupBlock } from "./AddressFiel
 import sicData from "@/lib/sic-codes-data.json";
 
 const STEPS = 9;
+const RESUME_CODE_KEY = "incorporation-resume-code";
 const SIC_LIST = sicData as { code: string; description: string }[];
 const SIC_LOOKUP = new Map(SIC_LIST.map((r) => [r.code, r.description]));
 
@@ -36,6 +38,22 @@ function Note({ children }: { children: React.ReactNode }) {
   );
 }
 
+function persistResumeCode(code: string) {
+  try {
+    sessionStorage.setItem(RESUME_CODE_KEY, code);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readResumeCode(): string {
+  try {
+    return sessionStorage.getItem(RESUME_CODE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
 export function IncorporationWizard() {
   const [phase, setPhase] = useState<"banner" | "form">("banner");
   const [step, setStep] = useState(1);
@@ -44,6 +62,14 @@ export function IncorporationWizard() {
   const [step1Blocked, setStep1Blocked] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resumeCode, setResumeCode] = useState("");
+  const [resumeInput, setResumeInput] = useState("");
+  const [bannerError, setBannerError] = useState("");
+  const [starting, setStarting] = useState(false);
+  const [resuming, setResuming] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [hydrating, setHydrating] = useState(true);
+  const skipNextAutosave = useRef(false);
 
   const started = phase === "form" && !submitted;
 
@@ -57,6 +83,131 @@ export function IncorporationWizard() {
     window.addEventListener("beforeunload", h);
     return () => window.removeEventListener("beforeunload", h);
   }, [started]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const code = readResumeCode();
+      if (!code) {
+        if (!cancelled) setHydrating(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/incorporation/draft?code=${encodeURIComponent(code)}`);
+        if (!res.ok) {
+          if (!cancelled) setHydrating(false);
+          return;
+        }
+        const draft = await res.json();
+        if (cancelled) return;
+        skipNextAutosave.current = true;
+        setResumeCode(draft.code);
+        setS(draft.state);
+        setStep(draft.step || 1);
+        setPhase(draft.phase === "form" ? "form" : "banner");
+        persistResumeCode(draft.code);
+      } catch {
+        /* keep banner */
+      } finally {
+        if (!cancelled) setHydrating(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!resumeCode || phase !== "form" || submitted || hydrating) return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetch("/api/incorporation/draft", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: resumeCode, step, phase, state: s }),
+      }).catch(() => {
+        /* silent autosave failure */
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [resumeCode, step, phase, s, submitted, hydrating]);
+
+  const applyDraft = useCallback((draft: {
+    code: string;
+    step: number;
+    phase: "banner" | "form";
+    state: IncorporationState;
+  }) => {
+    skipNextAutosave.current = true;
+    setResumeCode(draft.code);
+    persistResumeCode(draft.code);
+    setS(draft.state);
+    setStep(draft.step || 1);
+    setPhase("form");
+    setErrors({});
+    setStep1Blocked(false);
+    setBannerError("");
+  }, []);
+
+  const handleStart = async () => {
+    setBannerError("");
+    setStarting(true);
+    try {
+      const res = await fetch("/api/incorporation/draft", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.code) {
+        setBannerError(data.error || "Could not create a resume code. Please try again.");
+        return;
+      }
+      skipNextAutosave.current = true;
+      setResumeCode(data.code);
+      persistResumeCode(data.code);
+      setS(initialState());
+      setStep(1);
+      setPhase("form");
+    } catch {
+      setBannerError("Could not create a resume code. Please try again.");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const handleResume = async () => {
+    setBannerError("");
+    const code = resumeInput.trim().toUpperCase();
+    if (!code) {
+      setBannerError("Enter your resume code.");
+      return;
+    }
+    setResuming(true);
+    try {
+      const res = await fetch(`/api/incorporation/draft?code=${encodeURIComponent(code)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBannerError(data.error || "No draft found for that code.");
+        return;
+      }
+      applyDraft(data);
+    } catch {
+      setBannerError("Could not load your draft. Please try again.");
+    } finally {
+      setResuming(false);
+    }
+  };
+
+  const copyResumeCode = async () => {
+    if (!resumeCode) return;
+    try {
+      await navigator.clipboard.writeText(resumeCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const update = useCallback(<K extends keyof IncorporationState>(key: K, val: IncorporationState[K]) => {
     setS((prev) => ({ ...prev, [key]: val }));
@@ -263,6 +414,11 @@ export function IncorporationWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      try {
+        sessionStorage.removeItem(RESUME_CODE_KEY);
+      } catch {
+        /* ignore */
+      }
       setSubmitted(true);
     } finally {
       setSubmitting(false);
@@ -270,6 +426,14 @@ export function IncorporationWizard() {
   };
 
   const progress = phase === "banner" ? 0 : Math.round((step / STEPS) * 100);
+
+  if (hydrating) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-none border border-stone-200 bg-card p-6 text-center text-sm text-stone-600 md:p-10">
+        Loading your saved progress…
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -291,9 +455,9 @@ export function IncorporationWizard() {
         <h1 className="text-2xl font-semibold text-stone-900">Company Incorporation</h1>
         <div className="space-y-4 text-sm text-stone-700 leading-relaxed">
           <p>
-            This form takes approximately 25-30 minutes to complete. Please set aside enough time to
-            finish it in one sitting, as{" "}
-            <span className="font-semibold text-stone-900">the form does not auto-save.</span>
+            This form takes approximately 25-30 minutes to complete. Your progress{" "}
+            <span className="font-semibold text-stone-900">saves automatically</span>, and you will
+            get a short resume code so you can continue later on any device.
           </p>
           <p>
             Before you start: all directors and anyone who owns more than 25% of the company must
@@ -325,14 +489,43 @@ export function IncorporationWizard() {
             non-director PSCs.
           </p>
         </div>
-        <Button
-          className="w-full sm:w-auto"
-          onClick={() => {
-            setPhase("form");
-          }}
-        >
-          Start
+
+        {bannerError && (
+          <p className="rounded-none border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {bannerError}
+          </p>
+        )}
+
+        <Button className="w-full sm:w-auto" onClick={handleStart} disabled={starting || resuming}>
+          {starting ? "Starting…" : "Start"}
         </Button>
+
+        <div className="space-y-3 border-t border-stone-200 pt-6">
+          <Label htmlFor="resume-code" className="text-stone-900">
+            Already started? Resume with your code
+          </Label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              id="resume-code"
+              value={resumeInput}
+              onChange={(e) =>
+                setResumeInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8))
+              }
+              placeholder="e.g. AB3K7MPQ"
+              className="font-mono tracking-wider uppercase sm:max-w-xs"
+              maxLength={8}
+              disabled={starting || resuming}
+            />
+            <Button
+              variant="outline"
+              onClick={handleResume}
+              disabled={starting || resuming}
+              className="border-stone-300"
+            >
+              {resuming ? "Loading…" : "Resume"}
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -353,7 +546,35 @@ export function IncorporationWizard() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-24">
-      <div className="sticky top-0 z-10 -mx-4 border-b border-stone-200 bg-stone-50/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-4 space-y-2 border-b border-stone-200 bg-stone-50/95 px-4 py-3 backdrop-blur">
+        {resumeCode && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-clay-200 bg-clay-50 px-3 py-2">
+            <div className="min-w-0 text-xs text-stone-700 sm:text-sm">
+              <span className="font-medium text-stone-900">Resume code: </span>
+              <span className="font-mono tracking-wider text-clay-800">{resumeCode}</span>
+              <span className="mt-0.5 block text-stone-500 sm:mt-0 sm:ml-2 sm:inline">
+                Keep this code to continue later on any device.
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copyResumeCode}
+              className="h-8 shrink-0 border-stone-300 bg-white px-2.5"
+            >
+              {copied ? (
+                <>
+                  <Check className="mr-1.5 h-3.5 w-3.5" /> Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="mr-1.5 h-3.5 w-3.5" /> Copy
+                </>
+              )}
+            </Button>
+          </div>
+        )}
         <div className="mb-2 flex justify-between text-xs text-stone-500">
           <span>
             Step {step} of {STEPS}

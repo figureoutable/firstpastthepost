@@ -175,14 +175,14 @@ export function OwnershipPie({
                   scale: { type: "spring", stiffness: 300, damping: 20 },
                 }}
                 className={cn(
-                  "flex cursor-pointer items-start gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                  "flex cursor-pointer items-start gap-2 rounded-none px-2 py-2 text-sm transition-colors",
                   isActive && "bg-stone-100 ring-1 ring-stone-200"
                 )}
                 onMouseEnter={() => setHovered(arc.name)}
                 onMouseLeave={() => setHovered(null)}
               >
                 <span
-                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-sm"
+                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-none"
                   style={{ backgroundColor: arc.color }}
                 />
                 <div className="min-w-0 flex-1">

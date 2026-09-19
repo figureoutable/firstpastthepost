@@ -124,7 +124,7 @@ export default function TermSheetsPage() {
 
       {view === "list" && (
         <div className="space-y-6">
-          <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Term sheets</h2>
@@ -143,13 +143,13 @@ export default function TermSheetsPage() {
             </div>
 
             {sheets.length === 0 ? (
-              <p className="rounded-md border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
+              <p className="rounded-none border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
                 No term sheets yet.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {sheets.map((s) => (
-                  <div key={s.id} className="rounded-md border border-stone-200 bg-stone-50/50 p-5">
+                  <div key={s.id} className="rounded-none border border-stone-200 bg-stone-50/50 p-5">
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <label className="flex items-center gap-2">
                         <Checkbox
@@ -184,14 +184,14 @@ export default function TermSheetsPage() {
 
       {view === "compare" && compareSheets.length === 2 && (
         <div className="space-y-6">
-          <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight text-stone-900">Comparing term sheets</h2>
               <Button variant="outline" onClick={() => setView("list")}>
                 Back to list
               </Button>
             </div>
-            <div className="overflow-x-auto rounded-md border border-stone-200">
+            <div className="overflow-x-auto rounded-none border border-stone-200">
               <table className="w-full text-left text-sm">
                 <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                   <tr>
@@ -291,7 +291,7 @@ export default function TermSheetsPage() {
                   {["yes", "no"].map((v) => (
                     <label
                       key={v}
-                      className="flex cursor-pointer items-center gap-3 rounded-md border border-stone-200 bg-card p-4 text-sm capitalize text-stone-700 transition-colors hover:border-forest-300"
+                      className="flex cursor-pointer items-center gap-3 rounded-none border border-stone-200 bg-card p-4 text-sm capitalize text-stone-700 transition-colors hover:border-forest-300"
                     >
                       <RadioGroupItem value={v} id={`pr-${v}`} />
                       {v}

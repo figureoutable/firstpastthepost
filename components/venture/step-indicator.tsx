@@ -13,7 +13,7 @@ export function StepIndicator({
         {Array.from({ length: total }, (_, i) => (
           <div key={i} className="flex flex-1 items-center gap-2">
             <div
-              className={`h-1 w-full rounded-full transition-all duration-500 ${
+              className={`h-1 w-full rounded-none transition-all duration-500 ${
                 i < current
                   ? "bg-forest-500"
                   : i === current

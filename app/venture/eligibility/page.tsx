@@ -164,7 +164,7 @@ export default function EligibilityPage() {
                 ].map((opt) => (
                   <label
                     key={opt.value}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
+                    className="flex cursor-pointer items-center gap-3 rounded-none border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
                   >
                     <RadioGroupItem value={opt.value} id={`trade-${opt.value}`} />
                     {opt.label}
@@ -273,7 +273,7 @@ export default function EligibilityPage() {
                 ].map((opt) => (
                   <label
                     key={opt.value}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
+                    className="flex cursor-pointer items-center gap-3 rounded-none border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
                   >
                     <RadioGroupItem value={opt.value} id={`indep-${opt.value}`} />
                     {opt.label}
@@ -287,7 +287,7 @@ export default function EligibilityPage() {
 
       {view === "results" && state.eligibility.results && (
         <div className="space-y-6">
-          <div className="rounded-md border border-border bg-card p-6 shadow-sm sm:p-10">
+          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-10">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">
@@ -314,7 +314,7 @@ export default function EligibilityPage() {
                 return (
                   <div
                     key={r.scheme}
-                    className="rounded-md border border-stone-200 bg-stone-50/50 p-5"
+                    className="rounded-none border border-stone-200 bg-stone-50/50 p-5"
                   >
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <h3 className="text-base font-bold text-stone-900">{r.scheme}</h3>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,45 +36,66 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 }
 
 interface SelfAssessmentFormProps {
-    initialData: any;
+    data: any;
+    updateData: (data: any) => void;
     onSubmit: (data: any) => Promise<void>;
     onBack: () => void;
     loading: boolean;
+    formStep?: number;
+    onFormStepChange?: (step: number) => void;
 }
 
-export function SelfAssessmentForm({ initialData, onSubmit, onBack, loading }: SelfAssessmentFormProps) {
-    const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState({
-        utrNumber: initialData.utrNumber || "",
-        niNumber: initialData.niNumber || "",
-        photoId: null as File | null,
-        proofOfAddress: null as File | null,
-        incomeTypes: [] as string[],
-        otherIncome: "",
-        expectsForeignIncome: "",
-        foreignIncomeDetails: "",
-        fullNamePassport: initialData.fullName || "",
-        homeAddress: "",
-        phoneNumber: "",
-        isPep: "",
-        hasHighRiskIncome: "",
-        highRiskDetails: "",
-        financialDifficulty: "",
-        financialDifficultyDetails: "",
-        confirmed: false
-    });
+export function SelfAssessmentForm({
+    data,
+    updateData,
+    onSubmit,
+    onBack,
+    loading,
+    formStep = 1,
+    onFormStepChange,
+}: SelfAssessmentFormProps) {
+    const step = formStep;
+    const setStep = (next: number | ((prev: number) => number)) => {
+        const value = typeof next === "function" ? next(step) : next;
+        onFormStepChange?.(value);
+    };
+
+    const formData = {
+        utrNumber: data.utrNumber || "",
+        niNumber: data.niNumber || "",
+        photoId: data.photoId ?? null,
+        proofOfAddress: data.proofOfAddress ?? null,
+        incomeTypes: data.incomeTypes || [],
+        otherIncome: data.otherIncome || "",
+        expectsForeignIncome: data.expectsForeignIncome || "",
+        foreignIncomeDetails: data.foreignIncomeDetails || "",
+        fullNamePassport: data.fullNamePassport || data.fullName || "",
+        homeAddress: data.homeAddress || "",
+        phoneNumber: data.phoneNumber || "",
+        isPep: data.isPep || "",
+        hasHighRiskIncome: data.hasHighRiskIncome || "",
+        highRiskDetails: data.highRiskDetails || "",
+        financialDifficulty: data.financialDifficulty || "",
+        financialDifficultyDetails: data.financialDifficultyDetails || "",
+        confirmed: !!data.confirmed,
+    };
+
+    const setFormData = (updater: any) => {
+        const next = typeof updater === "function" ? updater(formData) : updater;
+        updateData({ ...data, ...next });
+    };
 
     const handleIncomeToggle = (type: string) => {
-        setFormData(prev => ({
+        setFormData((prev: typeof formData) => ({
             ...prev,
             incomeTypes: prev.incomeTypes.includes(type)
-                ? prev.incomeTypes.filter(t => t !== type)
+                ? prev.incomeTypes.filter((t: string) => t !== type)
                 : [...prev.incomeTypes, type]
         }));
     };
 
-    const nextStep = () => setStep(s => Math.min(s + 1, 3));
-    const prevStep = () => setStep(s => Math.max(s - 1, 1));
+    const nextStep = () => setStep((s) => Math.min(s + 1, 3));
+    const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

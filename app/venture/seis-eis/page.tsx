@@ -74,7 +74,7 @@ export default function SeisEisPage() {
       )}
 
       {view === "form" && (
-        <div className="space-y-10 rounded-md border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="space-y-10 rounded-none border border-border bg-card p-4 shadow-sm sm:p-5">
           <FormSection title="Company & trading details">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -111,7 +111,7 @@ export default function SeisEisPage() {
                 {["SEIS", "EIS", "Both"].map((opt) => (
                   <label
                     key={opt}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
+                    className="flex cursor-pointer items-center gap-3 rounded-none border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
                   >
                     <RadioGroupItem value={opt} id={`scheme-${opt}`} />
                     {opt}
@@ -173,7 +173,7 @@ export default function SeisEisPage() {
           </FormSection>
 
           <FormSection title="Review" description="Check everything looks right before submitting.">
-            <div className="rounded-md border border-stone-200 bg-card p-4">
+            <div className="rounded-none border border-stone-200 bg-card p-4">
               <SummaryRow label="Company" value={form.companyName || "-"} />
               <SummaryRow label="Trading since" value={`${form.tradingSinceMonths ?? "-"} months ago`} />
               <SummaryRow label="Scheme" value={form.schemeType ?? "-"} />

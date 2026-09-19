@@ -4,10 +4,9 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
-import { ArrowLeft, ArrowRight, Plus, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import GradientButton from "@/components/kokonutui/gradient-button";
 
@@ -53,7 +52,7 @@ export function BusinessForm({
     };
 
     const updateField = (field: string, value: any) => {
-        updateData({ ...data, [field]: value });
+        updateData((prev: any) => ({ ...prev, [field]: value }));
     };
 
     const canGoNext = () => {
@@ -70,7 +69,12 @@ export function BusinessForm({
             );
         }
         if (step === 2) {
-            return (data.servicesRequired || []).length >= 1;
+            return (
+                (data.directors || []).length >= 1
+                && (data.servicesRequired || []).length >= 1
+                && !!(data.natureOfBusiness || "").trim()
+                && !!(data.sourceOfFunds || "").trim()
+            );
         }
         return true;
     };
@@ -316,29 +320,36 @@ export function BusinessForm({
 
                             <Section title="Service Scope *">
                                 <p className="text-sm text-stone-500 mb-2">Select at least one service.</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                                     {[
                                         "Company Accounts & Corp Tax",
                                         "VAT Preparation & Submission",
                                         "Payroll Preparation & Submission",
                                         "New registration (PAYE/VAT)",
                                         "Other"
-                                    ].map((service) => (
-                                        <div key={service} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={service}
-                                                checked={(data.servicesRequired || []).includes(service)}
-                                                onCheckedChange={(checked) => {
+                                    ].map((service) => {
+                                        const selected = (data.servicesRequired || []).includes(service);
+                                        return (
+                                            <button
+                                                key={service}
+                                                type="button"
+                                                onClick={() => {
                                                     const current = data.servicesRequired || [];
-                                                    const updated = checked
-                                                        ? [...current, service]
-                                                        : current.filter((s: string) => s !== service);
+                                                    const updated = selected
+                                                        ? current.filter((s: string) => s !== service)
+                                                        : [...current, service];
                                                     updateField("servicesRequired", updated);
                                                 }}
-                                            />
-                                            <Label htmlFor={service} className="text-sm font-normal text-stone-700 cursor-pointer">{service}</Label>
-                                        </div>
-                                    ))}
+                                                className={`flex min-h-12 items-center justify-center rounded-none border px-3 py-2 text-center text-sm font-medium transition ${
+                                                    selected
+                                                        ? "border-clay-500 bg-clay-50 text-clay-800"
+                                                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                                                }`}
+                                            >
+                                                {service}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </Section>
 
@@ -472,10 +483,11 @@ export function BusinessForm({
                     <GradientButton
                         onClick={() => onSubmit(data)}
                         disabled={!data.confirmed || loading}
+                        loading={loading}
                         className="flex-1"
                         variant="emerald"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
+                        Submit Application
                     </GradientButton>
                 )}
             </div>
@@ -542,7 +554,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
             <Button
                 onClick={handleAdd}
                 disabled={!director.firstName || !director.lastName || !director.role}
-                className="w-full border-stone-300 bg-card text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                className="w-full border-clay-200 bg-clay-50 text-clay-800 hover:bg-clay-100 hover:text-clay-900"
                 variant="outline"
             >
                 <Plus className="w-4 h-4 mr-2" /> Save & Add Director

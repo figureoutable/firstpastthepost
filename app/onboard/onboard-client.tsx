@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertCircle, ShieldCheck, Copy, Check } from "lucide-react";
+import { AlertCircle, ShieldCheck, Copy, Check } from "lucide-react";
 import { VideoCard, type VideoCardHandle } from "@/components/kokonutui/video-card";
 import ShimmerText from "@/components/kokonutui/shimmer-text";
 import { BusinessForm } from "@/components/onboarding/business-form";
@@ -315,7 +315,7 @@ export default function OnboardClient() {
             clearResumeCode();
             setResumeCode("");
             setStatus("success");
-            setStep(3);
+            router.push("/onboard/success");
         } catch (error: any) {
             setStatus("error");
             setErrorMessage(
@@ -428,12 +428,6 @@ export default function OnboardClient() {
                                 text="Select Your Service"
                                 className="text-3xl sm:text-4xl tracking-tight"
                             />
-                            <p className="mt-3 text-sm text-stone-600">
-                                Your progress{" "}
-                                <span className="font-semibold text-stone-900">saves automatically</span>
-                                , and you will get a short resume code so you can continue later on any
-                                device.
-                            </p>
                         </div>
 
                         {bannerError && (
@@ -460,41 +454,43 @@ export default function OnboardClient() {
                             <ServiceVideoCard
                                 label="Both"
                                 src="/videos/both.mp4"
-                                startAt={0.5}
+                                startAt={0}
                                 disabled={starting || resuming}
                                 onClick={() => handleServiceSelect("both")}
                             />
                         </div>
 
-                        <div className="mt-8 space-y-3 rounded-none border border-stone-200 bg-card p-4 sm:p-5">
-                            <Label htmlFor="onboarding-resume-code" className="text-stone-900">
-                                Already started? Resume with your code
-                            </Label>
-                            <div className="flex flex-col gap-2 sm:flex-row">
-                                <Input
-                                    id="onboarding-resume-code"
-                                    value={resumeInput}
-                                    onChange={(e) =>
-                                        setResumeInput(
-                                            e.target.value
-                                                .toUpperCase()
-                                                .replace(/[^A-Z0-9]/g, "")
-                                                .slice(0, 8)
-                                        )
-                                    }
-                                    placeholder="e.g. AB3K7MPQ"
-                                    className="font-mono tracking-wider uppercase sm:max-w-xs"
-                                    maxLength={8}
-                                    disabled={starting || resuming}
-                                />
-                                <Button
-                                    variant="outline"
-                                    onClick={handleResume}
-                                    disabled={starting || resuming}
-                                    className="border-stone-300"
-                                >
-                                    {resuming ? "Loading…" : "Resume"}
-                                </Button>
+                        <div className="mt-8 flex justify-center">
+                            <div className="inline-flex flex-col gap-2 rounded-none border border-stone-200 bg-card px-4 py-3">
+                                <Label htmlFor="onboarding-resume-code" className="block whitespace-nowrap text-stone-900 leading-none">
+                                    Already started? Resume with your code
+                                </Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="onboarding-resume-code"
+                                        value={resumeInput}
+                                        onChange={(e) =>
+                                            setResumeInput(
+                                                e.target.value
+                                                    .toUpperCase()
+                                                    .replace(/[^A-Z0-9]/g, "")
+                                                    .slice(0, 8)
+                                            )
+                                        }
+                                        placeholder="e.g. AB3K7MPQ"
+                                        className="w-44 font-mono tracking-wider uppercase"
+                                        maxLength={8}
+                                        disabled={starting || resuming}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleResume}
+                                        disabled={starting || resuming}
+                                        className="shrink-0 border-stone-300"
+                                    >
+                                        {resuming ? "Loading…" : "Resume"}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
@@ -600,35 +596,6 @@ export default function OnboardClient() {
                                     onFormStepChange={setFormStep}
                                 />
                             )}
-                        </div>
-
-                        <div className="flex justify-center mt-6">
-                            <span className="flex items-center gap-1 text-xs text-stone-400">
-                                <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
-                            </span>
-                        </div>
-                    </motion.div>
-                )}
-
-                {step === 3 && (
-                    <motion.div
-                        key="step3"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-full max-w-lg z-10"
-                    >
-                        <div className="rounded-none border border-border bg-card p-10 text-center">
-                            <div className="w-20 h-20 bg-clay-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle2 className="w-10 h-10 text-clay-600" />
-                            </div>
-
-                            <h2 className="text-2xl font-semibold text-foreground mb-3">All Set!</h2>
-                            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                                We have securely received your details and our team is now performing the
-                                final administrative reviews to set up your account.
-                            </p>
                         </div>
 
                         <div className="flex justify-center mt-6">

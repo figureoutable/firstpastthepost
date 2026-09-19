@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import GradientButton from "@/components/kokonutui/gradient-button";
 
@@ -35,6 +36,23 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
     );
 }
 
+function hasUpload(value: unknown): boolean {
+    if (!value) return false;
+    if (typeof File !== "undefined" && value instanceof File) return true;
+    if (typeof value === "string") return value.trim().length > 0;
+    return false;
+}
+
+function isValidUtr(value: string): boolean {
+    return /^\d{10}$/.test((value || "").trim());
+}
+
+function isValidNi(value: string): boolean {
+    // Exact length/shape only (2 letters + 6 digits + 1 letter). Letter exclusions are not enforced here.
+    const cleaned = (value || "").replace(/\s/g, "").toUpperCase();
+    return cleaned.length === 9 && /^[A-Z]{2}\d{6}[A-Z]$/.test(cleaned);
+}
+
 interface SelfAssessmentFormProps {
     data: any;
     updateData: (data: any) => void;
@@ -54,6 +72,7 @@ export function SelfAssessmentForm({
     formStep = 1,
     onFormStepChange,
 }: SelfAssessmentFormProps) {
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const step = formStep;
     const setStep = (next: number | ((prev: number) => number)) => {
         const value = typeof next === "function" ? next(step) : next;
@@ -81,9 +100,46 @@ export function SelfAssessmentForm({
     };
 
     const setFormData = (updater: any) => {
-        const next = typeof updater === "function" ? updater(formData) : updater;
-        updateData({ ...data, ...next });
+        updateData((prev: any) => {
+            const current = {
+                utrNumber: prev.utrNumber || "",
+                niNumber: prev.niNumber || "",
+                photoId: prev.photoId ?? null,
+                proofOfAddress: prev.proofOfAddress ?? null,
+                incomeTypes: prev.incomeTypes || [],
+                otherIncome: prev.otherIncome || "",
+                expectsForeignIncome: prev.expectsForeignIncome || "",
+                foreignIncomeDetails: prev.foreignIncomeDetails || "",
+                fullNamePassport: prev.fullNamePassport || prev.fullName || "",
+                homeAddress: prev.homeAddress || "",
+                phoneNumber: prev.phoneNumber || "",
+                isPep: prev.isPep || "",
+                hasHighRiskIncome: prev.hasHighRiskIncome || "",
+                highRiskDetails: prev.highRiskDetails || "",
+                financialDifficulty: prev.financialDifficulty || "",
+                financialDifficultyDetails: prev.financialDifficultyDetails || "",
+                confirmed: !!prev.confirmed,
+            };
+            const next = typeof updater === "function" ? updater(current) : updater;
+            return { ...prev, ...next };
+        });
     };
+
+    const utrOk = isValidUtr(formData.utrNumber);
+    const niOk = isValidNi(formData.niNumber);
+    const canProceedStep1 =
+        utrOk && niOk && hasUpload(formData.photoId) && hasUpload(formData.proofOfAddress);
+
+    const canProceedStep2 = !!(
+        (formData.incomeTypes || []).length >= 1
+        && (formData.expectsForeignIncome === "Yes" || formData.expectsForeignIncome === "No")
+        && (formData.expectsForeignIncome !== "Yes" || (formData.foreignIncomeDetails || "").trim())
+        && (formData.fullNamePassport || "").trim()
+        && (formData.homeAddress || "").trim()
+        && (formData.phoneNumber || "").trim()
+    );
+
+    const canProceed = step === 1 ? canProceedStep1 : step === 2 ? canProceedStep2 : formData.confirmed;
 
     const handleIncomeToggle = (type: string) => {
         setFormData((prev: typeof formData) => ({
@@ -97,17 +153,35 @@ export function SelfAssessmentForm({
     const nextStep = () => setStep((s) => Math.min(s + 1, 3));
     const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
+    const tryGoNext = () => {
+        if (step === 1) {
+            const errors: Record<string, string> = {};
+            if (!utrOk) errors.utrNumber = "Enter exactly 10 digits";
+            if (!niOk) errors.niNumber = "Enter exactly 9 characters (e.g. QQ123456C)";
+            if (!hasUpload(formData.photoId)) errors.photoId = "Photo ID is required";
+            if (!hasUpload(formData.proofOfAddress)) errors.proofOfAddress = "Proof of address is required";
+            setFieldErrors(errors);
+            if (Object.keys(errors).length > 0) return;
+        }
+        if (step === 2 && !canProceedStep2) {
+            setFieldErrors({ step2: "Complete income types, foreign income, and contact details" });
+            return;
+        }
+        setFieldErrors({});
+        nextStep();
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (step < 3) {
-            nextStep();
-        } else {
+            tryGoNext();
+        } else if (formData.confirmed) {
             onSubmit(formData);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <StepIndicator current={step - 1} total={3} />
 
             <AnimatePresence mode="wait">
@@ -122,46 +196,83 @@ export function SelfAssessmentForm({
                     {step === 1 && (
                         <>
                             <Section title="Personal Tax Identifiers">
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-3">
                                         <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Unique Tax Reference (UTR) *</Label>
                                         <Input
                                             id="utrNumber"
                                             value={formData.utrNumber}
-                                            onChange={(e) => setFormData({ ...formData, utrNumber: e.target.value })}
-                                            placeholder="Your 10-digit tax number"
-                                            required
+                                            onChange={(e) => {
+                                                setFieldErrors((prev) => ({ ...prev, utrNumber: "" }));
+                                                setFormData({ utrNumber: e.target.value.replace(/\D/g, "").slice(0, 10) });
+                                            }}
+                                            placeholder="Exactly 10 digits"
+                                            inputMode="numeric"
+                                            minLength={10}
+                                            maxLength={10}
+                                            aria-invalid={!!fieldErrors.utrNumber}
                                         />
+                                        <p className={`text-xs ${fieldErrors.utrNumber ? "text-red-600" : "text-stone-500"}`}>
+                                            {fieldErrors.utrNumber || `Exactly 10 digits${formData.utrNumber ? ` (${formData.utrNumber.length}/10)` : ""}`}
+                                        </p>
                                     </div>
                                     <div className="space-y-3">
                                         <Label htmlFor="niNumber" className="text-stone-900 text-sm">National Insurance Number *</Label>
                                         <Input
                                             id="niNumber"
                                             value={formData.niNumber}
-                                            onChange={(e) => setFormData({ ...formData, niNumber: e.target.value })}
-                                            placeholder="QQ 12 34 56 C"
-                                            required
+                                            onChange={(e) => {
+                                                setFieldErrors((prev) => ({ ...prev, niNumber: "" }));
+                                                const cleaned = e.target.value
+                                                    .toUpperCase()
+                                                    .replace(/[^A-Z0-9]/g, "")
+                                                    .slice(0, 9);
+                                                setFormData({ niNumber: cleaned });
+                                            }}
+                                            placeholder="QQ123456C"
+                                            minLength={9}
+                                            maxLength={9}
+                                            aria-invalid={!!fieldErrors.niNumber}
                                         />
+                                        <p className={`text-xs ${fieldErrors.niNumber ? "text-red-600" : "text-stone-500"}`}>
+                                            {fieldErrors.niNumber || `Exactly 9 characters${formData.niNumber ? ` (${formData.niNumber.length}/9)` : " (e.g. QQ123456C)"}`}
+                                        </p>
                                     </div>
                                 </div>
                             </Section>
 
                             <Section title="Essential Document Uploads">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <FileUpload
-                                        label="Photo ID"
-                                        desc="Passport or Driving License"
-                                        required
-                                        value={formData.photoId}
-                                        onChange={(file) => setFormData({ ...formData, photoId: file })}
-                                    />
-                                    <FileUpload
-                                        label="Proof of Address"
-                                        desc="Utility bill or bank statement (<3 months)"
-                                        required
-                                        value={formData.proofOfAddress}
-                                        onChange={(file) => setFormData({ ...formData, proofOfAddress: file })}
-                                    />
+                                    <div className="space-y-1">
+                                        <FileUpload
+                                            label="Photo ID"
+                                            desc="Passport or Driving License"
+                                            required
+                                            value={formData.photoId instanceof File ? formData.photoId : null}
+                                            onChange={(file) => {
+                                                setFieldErrors((prev) => ({ ...prev, photoId: "" }));
+                                                setFormData({ photoId: file });
+                                            }}
+                                        />
+                                        {fieldErrors.photoId && (
+                                            <p className="text-xs text-red-600">{fieldErrors.photoId}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <FileUpload
+                                            label="Proof of Address"
+                                            desc="Utility bill or bank statement (<3 months)"
+                                            required
+                                            value={formData.proofOfAddress instanceof File ? formData.proofOfAddress : null}
+                                            onChange={(file) => {
+                                                setFieldErrors((prev) => ({ ...prev, proofOfAddress: "" }));
+                                                setFormData({ proofOfAddress: file });
+                                            }}
+                                        />
+                                        {fieldErrors.proofOfAddress && (
+                                            <p className="text-xs text-red-600">{fieldErrors.proofOfAddress}</p>
+                                        )}
+                                    </div>
                                 </div>
                             </Section>
                         </>
@@ -169,6 +280,36 @@ export function SelfAssessmentForm({
 
                     {step === 2 && (
                         <>
+                            <Section title="Contact Information">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-stone-900 text-sm">Full Name * (As shown on passport)</Label>
+                                        <Input
+                                            value={formData.fullNamePassport}
+                                            onChange={(e) => setFormData({ fullNamePassport: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-stone-900 text-sm">Home Address *</Label>
+                                        <Textarea
+                                            value={formData.homeAddress}
+                                            onChange={(e) => setFormData({ homeAddress: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-stone-900 text-sm">Phone Number *</Label>
+                                        <Input
+                                            type="tel"
+                                            value={formData.phoneNumber}
+                                            onChange={(e) => setFormData({ phoneNumber: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </Section>
+
                             <Section title="Income Types">
                                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                                     {[
@@ -209,7 +350,7 @@ export function SelfAssessmentForm({
                                                 <button
                                                     key={value}
                                                     type="button"
-                                                    onClick={() => setFormData({ ...formData, expectsForeignIncome: value })}
+                                                    onClick={() => setFormData({ expectsForeignIncome: value })}
                                                     className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
                                                         formData.expectsForeignIncome === value
                                                             ? "border-clay-500 bg-clay-50 text-clay-800"
@@ -227,40 +368,10 @@ export function SelfAssessmentForm({
                                             <Textarea
                                                 placeholder="e.g. USA - Dividends"
                                                 value={formData.foreignIncomeDetails}
-                                                onChange={(e) => setFormData({ ...formData, foreignIncomeDetails: e.target.value })}
+                                                onChange={(e) => setFormData({ foreignIncomeDetails: e.target.value })}
                                             />
                                         </motion.div>
                                     )}
-                                </div>
-                            </Section>
-
-                            <Section title="Contact Information">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Full Name * (As shown on passport)</Label>
-                                        <Input
-                                            value={formData.fullNamePassport}
-                                            onChange={(e) => setFormData({ ...formData, fullNamePassport: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Home Address *</Label>
-                                        <Textarea
-                                            value={formData.homeAddress}
-                                            onChange={(e) => setFormData({ ...formData, homeAddress: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Phone Number *</Label>
-                                        <Input
-                                            type="tel"
-                                            value={formData.phoneNumber}
-                                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                            required
-                                        />
-                                    </div>
                                 </div>
                             </Section>
                         </>
@@ -285,7 +396,7 @@ export function SelfAssessmentForm({
                                                         <button
                                                             key={value}
                                                             type="button"
-                                                            onClick={() => setFormData({ ...formData, [field]: value })}
+                                                            onClick={() => setFormData({ [field]: value })}
                                                             className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
                                                                 formData[field] === value
                                                                     ? "border-clay-500 bg-clay-50 text-clay-800"
@@ -301,14 +412,14 @@ export function SelfAssessmentForm({
                                                 <Input
                                                     placeholder="Please specify details..."
                                                     value={formData.highRiskDetails}
-                                                    onChange={(e) => setFormData({ ...formData, highRiskDetails: e.target.value })}
+                                                    onChange={(e) => setFormData({ highRiskDetails: e.target.value })}
                                                 />
                                             )}
                                             {detailField === "financialDifficultyDetails" && formData.financialDifficulty === "Yes" && (
                                                 <Textarea
                                                     placeholder="Provide detail..."
                                                     value={formData.financialDifficultyDetails}
-                                                    onChange={(e) => setFormData({ ...formData, financialDifficultyDetails: e.target.value })}
+                                                    onChange={(e) => setFormData({ financialDifficultyDetails: e.target.value })}
                                                 />
                                             )}
                                         </div>
@@ -325,7 +436,7 @@ export function SelfAssessmentForm({
                                         <button
                                             key={value}
                                             type="button"
-                                            onClick={() => setFormData({ ...formData, confirmed: value === "Yes" })}
+                                            onClick={() => setFormData({ confirmed: value === "Yes" })}
                                             className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
                                                 (formData.confirmed ? "Yes" : "No") === value
                                                     ? "border-clay-500 bg-clay-50 text-clay-800"
@@ -355,8 +466,9 @@ export function SelfAssessmentForm({
 
                 {step < 3 ? (
                     <GradientButton
-                        type="submit"
-                        disabled={loading || (step === 1 && (!formData.utrNumber || !formData.niNumber || !formData.photoId || !formData.proofOfAddress))}
+                        type="button"
+                        onClick={tryGoNext}
+                        disabled={loading || !canProceed}
                         className="flex-1"
                         variant="purple"
                     >
@@ -366,10 +478,11 @@ export function SelfAssessmentForm({
                     <GradientButton
                         type="submit"
                         disabled={loading || !formData.confirmed}
+                        loading={loading}
                         className="flex-1"
                         variant="emerald"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
+                        Submit Application
                     </GradientButton>
                 )}
             </div>

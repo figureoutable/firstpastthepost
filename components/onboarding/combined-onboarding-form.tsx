@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
-import { ArrowLeft, ArrowRight, Plus, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import GradientButton from "@/components/kokonutui/gradient-button";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -52,7 +52,7 @@ export function CombinedOnboardingForm({
     };
 
     const updateField = (field: string, value: any) => {
-        updateData({ ...data, [field]: value });
+        updateData((prev: any) => ({ ...prev, [field]: value }));
     };
 
     const canGoNext = () => {
@@ -437,10 +437,11 @@ export function CombinedOnboardingForm({
                     <GradientButton
                         onClick={() => onSubmit(data)}
                         disabled={loading || !data.confirmed}
+                        loading={loading}
                         className="flex-1"
                         variant="emerald"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Combined Application"}
+                        Submit Combined Application
                     </GradientButton>
                 )}
             </div>
@@ -486,7 +487,7 @@ function DirectorEntryForm({ onAdd }: { onAdd: (d: any) => void }) {
             <Button
                 onClick={handleAdd}
                 disabled={!director.firstName || !director.lastName || !director.role}
-                className="w-full border-stone-300 bg-card text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                className="w-full border-clay-200 bg-clay-50 text-clay-800 hover:bg-clay-100 hover:text-clay-900"
                 variant="outline"
             >
                 <Plus className="w-4 h-4 mr-2" /> Add Person

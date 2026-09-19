@@ -1,11 +1,10 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface GradientButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface GradientButtonProps extends HTMLMotionProps<"button"> {
   variant?: "emerald" | "purple" | "default";
   loading?: boolean;
 }

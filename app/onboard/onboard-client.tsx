@@ -169,6 +169,13 @@ export default function OnboardClient() {
             try {
                 const res = await fetch(`/api/onboarding/draft?code=${encodeURIComponent(code)}`);
                 if (!res.ok) {
+                    // Only forget the code when the server has confirmed it's gone.
+                    // Transient 500s/network errors should leave it for a retry.
+                    if (res.status === 404) {
+                        clearResumeCode();
+                    } else if (!cancelled) {
+                        setBannerError("Could not load your saved progress. Please refresh to try again.");
+                    }
                     if (!cancelled) setHydrating(false);
                     return;
                 }
@@ -185,7 +192,8 @@ export default function OnboardClient() {
                 setFormStep(draft.formStep || 1);
                 setStep(2);
             } catch {
-                /* keep selector */
+                /* network error — keep the code around for a retry on next load */
+                if (!cancelled) setBannerError("Could not load your saved progress. Please refresh to try again.");
             } finally {
                 if (!cancelled) setHydrating(false);
             }
@@ -363,9 +371,13 @@ export default function OnboardClient() {
 
     const handleResume = async () => {
         setBannerError("");
-        const code = resumeInput.trim().toUpperCase();
+        const code = resumeInput.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
         if (!code) {
             setBannerError("Enter your resume code.");
+            return;
+        }
+        if (code.length !== 8) {
+            setBannerError("Resume codes are 8 characters.");
             return;
         }
         setResuming(true);
@@ -486,7 +498,7 @@ export default function OnboardClient() {
                                         }
                                         placeholder="e.g. AB3K7MPQ"
                                         className="w-44 shrink-0 font-mono tracking-wider uppercase"
-                                        maxLength={8}
+                                        // No maxLength: browser truncates before onChange, which breaks dashed pastes
                                         disabled={starting || resuming}
                                     />
                                     <Button

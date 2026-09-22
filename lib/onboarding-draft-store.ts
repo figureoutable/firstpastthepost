@@ -1,8 +1,9 @@
-import { list, put } from "@vercel/blob";
+import { head, put } from "@vercel/blob";
 import crypto from "crypto";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 8;
+const UPLOAD_KEYS = ["photoId", "proofOfAddress"] as const;
 
 export type OnboardingType = "business" | "self-assessment" | "both";
 
@@ -54,6 +55,23 @@ export function serializeOnboardingState(state: Record<string, unknown>): Record
   return out;
 }
 
+/**
+ * When the client has a pending File selected, sanitizeDraftState omits photo
+ * keys entirely. Keep any previously saved URL in that case; explicit null clears.
+ */
+export function mergeOnboardingState(
+  existing: Record<string, unknown>,
+  incoming: Record<string, unknown>
+): Record<string, unknown> {
+  const serialized = serializeOnboardingState(incoming);
+  for (const key of UPLOAD_KEYS) {
+    if (!(key in incoming) && typeof existing[key] === "string") {
+      serialized[key] = existing[key];
+    }
+  }
+  return serialized;
+}
+
 function parseJson(text: string): OnboardingDraftRecord {
   return JSON.parse(text) as OnboardingDraftRecord;
 }
@@ -100,16 +118,14 @@ export async function getDraft(code: string): Promise<OnboardingDraftRecord | nu
   if (normalized.length !== CODE_LENGTH) return null;
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  const { blobs } = await list({
-    prefix: pathnameFor(normalized),
-    ...(token ? { token } : {}),
-  });
-  if (!blobs.length) return null;
-
-  const blob = blobs[0]!;
-  const res = await fetch(blob.url);
-  if (!res.ok) return null;
-  return parseJson(await res.text());
+  try {
+    const meta = await head(pathnameFor(normalized), token ? { token } : undefined);
+    const res = await fetch(meta.url);
+    if (!res.ok) return null;
+    return parseJson(await res.text());
+  } catch {
+    return null;
+  }
 }
 
 export async function updateDraft(input: {
@@ -128,7 +144,7 @@ export async function updateDraft(input: {
     onboardingType: input.onboardingType,
     outerStep: input.outerStep,
     formStep: input.formStep,
-    state: serializeOnboardingState(input.state),
+    state: mergeOnboardingState(existing.state, input.state),
   };
   await saveDraft(record);
   return record;

@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { head, put } from "@vercel/blob";
 import crypto from "crypto";
 import type { IncorporationState } from "@/components/incorporation/state";
 
@@ -73,16 +73,14 @@ export async function getDraft(code: string): Promise<IncorporationDraftRecord |
   if (normalized.length !== CODE_LENGTH) return null;
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  const { blobs } = await list({
-    prefix: pathnameFor(normalized),
-    ...(token ? { token } : {}),
-  });
-  if (!blobs.length) return null;
-
-  const blob = blobs[0]!;
-  const res = await fetch(blob.url);
-  if (!res.ok) return null;
-  return parseJson(await res.text());
+  try {
+    const meta = await head(pathnameFor(normalized), token ? { token } : undefined);
+    const res = await fetch(meta.url);
+    if (!res.ok) return null;
+    return parseJson(await res.text());
+  } catch {
+    return null;
+  }
 }
 
 export async function updateDraft(input: {

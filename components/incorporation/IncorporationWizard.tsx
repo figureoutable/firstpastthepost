@@ -28,11 +28,18 @@ const SIC_LIST = sicData as { code: string; description: string }[];
 const SIC_LOOKUP = new Map(SIC_LIST.map((r) => [r.code, r.description]));
 
 function lookupSic(code: string) {
-  const cleaned = code.replace(/\D/g, "").slice(0, 5);
+  const cleaned = (code || "").replace(/\s+/g, "").toUpperCase().slice(0, 10);
+  const digits = cleaned.replace(/\D/g, "").slice(0, 5);
+  // Prefer canonical 5-digit form when available (e.g. "62.020" → "62020");
+  // otherwise keep whatever they typed so Next is never blocked on format.
   return {
-    code: cleaned,
-    description: cleaned.length === 5 ? SIC_LOOKUP.get(cleaned) || "" : "",
+    code: digits.length === 5 ? digits : cleaned,
+    description: digits.length === 5 ? SIC_LOOKUP.get(digits) || "" : "",
   };
+}
+
+function sicEntered(codes: { code: string }[]) {
+  return codes.filter((c) => (c.code || "").trim().length > 0);
 }
 
 function Note({ children }: { children: React.ReactNode }) {
@@ -87,6 +94,14 @@ function readResumeCode(): string {
   }
 }
 
+function clearResumeCode() {
+  try {
+    sessionStorage.removeItem(RESUME_CODE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function IncorporationWizard() {
   const [phase, setPhase] = useState<"banner" | "form">("banner");
   const [step, setStep] = useState(1);
@@ -128,6 +143,13 @@ export function IncorporationWizard() {
       try {
         const res = await fetch(`/api/incorporation/draft?code=${encodeURIComponent(code)}`);
         if (!res.ok) {
+          // Only forget the code when the server has confirmed it's gone.
+          // Transient 500s/network errors should leave it for a retry.
+          if (res.status === 404) {
+            clearResumeCode();
+          } else if (!cancelled) {
+            setBannerError("Could not load your saved progress. Please refresh to try again.");
+          }
           if (!cancelled) setHydrating(false);
           return;
         }
@@ -140,7 +162,8 @@ export function IncorporationWizard() {
         setPhase(draft.phase === "form" ? "form" : "banner");
         persistResumeCode(draft.code);
       } catch {
-        /* keep banner */
+        /* network error — keep the code around for a retry on next load */
+        if (!cancelled) setBannerError("Could not load your saved progress. Please refresh to try again.");
       } finally {
         if (!cancelled) setHydrating(false);
       }
@@ -210,9 +233,13 @@ export function IncorporationWizard() {
 
   const handleResume = async () => {
     setBannerError("");
-    const code = resumeInput.trim().toUpperCase();
+    const code = resumeInput.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!code) {
       setBannerError("Enter your resume code.");
+      return;
+    }
+    if (code.length !== 8) {
+      setBannerError("Resume codes are 8 characters.");
       return;
     }
     setResuming(true);
@@ -274,7 +301,9 @@ export function IncorporationWizard() {
           if (!s.step4.handoverPerson.trim()) e.handover = "Required";
         }
         if (s.step4.trading === "date" && !s.step4.tradingDate) e.tradeDate = "Pick a date";
-        // SIC codes are helpful but optional — odd/partial codes should not block.
+        // Need at least one SIC entry with something in it — format does not matter.
+        if (!s.step4.sicCodes.some((c) => (c.code || "").trim().length > 0))
+          e.sic = "Enter at least one SIC code";
         return e;
       }
       if (n === 5) {
@@ -341,7 +370,10 @@ export function IncorporationWizard() {
         return e;
       }
       if (n === 9) {
-        // Personal codes are optional — accept whatever was entered (or blank).
+        s.step5.directors.forEach((d) => {
+          const code = (s.step9.directorPersonalCodes[d.id] || "").trim();
+          if (!code) e[`dc${d.id}`] = "Enter a personal code (any format is fine)";
+        });
         if (!s.step9.acc1) e.a1 = "Required";
         return e;
       }
@@ -428,7 +460,7 @@ export function IncorporationWizard() {
         step3: s.step3,
         step4: {
           ...s.step4,
-          sicCodes: s.step4.sicCodes.filter((c) => c.code.length === 5),
+          sicCodes: sicEntered(s.step4.sicCodes),
         },
         step5: s.step5,
         step6: s.step6,
@@ -442,11 +474,8 @@ export function IncorporationWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      try {
-        sessionStorage.removeItem(RESUME_CODE_KEY);
-      } catch {
-        /* ignore */
-      }
+      clearResumeCode();
+      setResumeCode("");
       setSubmitted(true);
     } finally {
       setSubmitting(false);
@@ -511,8 +540,8 @@ export function IncorporationWizard() {
         </div>
         <div className="rounded-none border-2 border-amber-400 bg-yellow-100 px-3 py-2">
           <p className="text-sm text-stone-800">
-            If you already have Companies House personal codes for directors or PSCs, have them
-            ready. You can still continue and add them later if not.
+            Have Companies House personal codes ready for directors and any non-director PSCs.
+            Exact format does not matter — we just need something entered for each person.
           </p>
         </div>
 
@@ -545,7 +574,7 @@ export function IncorporationWizard() {
               }
               placeholder="e.g. AB3K7MPQ"
               className="font-mono tracking-wider uppercase sm:max-w-xs"
-              maxLength={8}
+              // No maxLength: browser truncates before onChange, which breaks dashed pastes
               disabled={starting || resuming}
             />
             <Button
@@ -1088,14 +1117,14 @@ export function IncorporationWizard() {
                 Check the Companies House SIC list and note the codes that match your business.
               </li>
               <li>
-                Enter up to 4 SIC codes below if you have them (optional).
+                Enter at least one SIC code below (any digits are fine).
               </li>
             </ol>
           </div>
           <div className="mt-8 space-y-3">
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                  <Label className="shrink-0">Enter your SIC codes</Label>
+                  <Label className="shrink-0">Enter your SIC codes *</Label>
                   <a
                     href="https://resources.companieshouse.gov.uk/sic/"
                     target="_blank"
@@ -1112,8 +1141,8 @@ export function IncorporationWizard() {
                     <div key={i} className="space-y-1">
                       <Input
                         inputMode="numeric"
-                        maxLength={5}
-                        placeholder={`SIC code ${i + 1}${i === 0 ? "" : " (optional)"}`}
+                        maxLength={10}
+                        placeholder={`SIC code ${i + 1}${i === 0 ? " *" : " (optional)"}`}
                         value={slot.code}
                         onChange={(e) => setSicSlot(i, e.target.value)}
                       />
@@ -1133,7 +1162,8 @@ export function IncorporationWizard() {
                 </div>
               </div>
             <p className="text-sm font-medium text-stone-700">
-              Entered: {s.step4.sicCodes.filter((c) => c.code.length > 0).length} of 4 (optional)
+              Entered: {s.step4.sicCodes.filter((c) => (c.code || "").trim().length > 0).length} of 4
+              (at least 1 required)
             </p>
             {errors.sic && <p className="text-xs text-red-600">{errors.sic}</p>}
           </div>
@@ -1931,14 +1961,14 @@ function Step9Review({
       <div className="rounded-none border-2 border-amber-400 bg-yellow-100 p-4 text-left">
         <h3 className="font-semibold text-stone-900">Director personal codes</h3>
         <p className="mt-1 text-sm text-stone-800">
-          Enter each director&apos;s Companies House personal code if you have it. Leave blank if
-          not — we can collect these later.
+          Enter each director&apos;s Companies House personal code. Any format is fine — the box
+          cannot be left blank.
         </p>
         <div className="mt-4 space-y-3">
           {s.step5.directors.map((d) => (
             <div key={d.id}>
               <Label className="text-stone-900">
-                {d.firstName || "Director"} {d.lastName || ""} - personal code
+                {d.firstName || "Director"} {d.lastName || ""} - personal code *
               </Label>
               <Input
                 className="mt-1 border-amber-300 bg-card font-mono tracking-widest"
@@ -1946,7 +1976,7 @@ function Step9Review({
                 autoComplete="off"
                 spellCheck={false}
                 maxLength={20}
-                placeholder="If you have one"
+                placeholder="Enter code (any format)"
                 value={s.step9.directorPersonalCodes[d.id] || ""}
                 onChange={(e) =>
                   update("step9", {
@@ -1958,13 +1988,7 @@ function Step9Review({
                   })
                 }
               />
-              {(s.step9.directorPersonalCodes[d.id] || "").length > 0 &&
-                (s.step9.directorPersonalCodes[d.id] || "").length !== 11 && (
-                  <p className="text-xs text-amber-800">
-                    Usually 11 characters — {(s.step9.directorPersonalCodes[d.id] || "").length}{" "}
-                    entered (you can still continue)
-                  </p>
-                )}
+              <p className="text-xs text-stone-600">Required — usually 11 characters, any format is fine</p>
               {errors[`dc${d.id}`] && (
                 <p className="text-xs text-red-700">{errors[`dc${d.id}`]}</p>
               )}
@@ -2039,8 +2063,7 @@ function Step9Review({
       {row("About the business", 4, (
         <p>
           SIC:{" "}
-          {s.step4.sicCodes
-            .filter((c) => c.code.length === 5)
+          {sicEntered(s.step4.sicCodes)
             .map((c) => c.code)
             .join(", ") || "—"}
         </p>

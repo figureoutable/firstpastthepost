@@ -4,95 +4,77 @@ export function hasAnyText(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-/** Company number: keep letters/digits; allow shorter/longer odd values. */
+/** Company number: strip spaces; keep letters/digits and common punctuation. */
 export function normalizeCompanyNumber(value: string): string {
-  return (value || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 16);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 /** Soft check only — used for hints, not gating. */
 export function isValidCompanyNumber(value: string): boolean {
-  const raw = normalizeCompanyNumber(value);
-  if (!raw) return false;
-  if (/^\d{1,8}$/.test(raw)) return true;
-  if (/^[A-Z]{2}\d{6}$/.test(raw)) return true;
-  // Accept any other alphanumeric CRN-like value clients may hold
-  return raw.length >= 2;
+  return hasAnyText(normalizeCompanyNumber(value));
 }
 
 export function normalizeAuthCode(value: string): string {
-  return (value || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 12);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidAuthCode(value: string): boolean {
-  const raw = normalizeAuthCode(value);
-  return raw.length >= 4;
+  return hasAnyText(normalizeAuthCode(value));
 }
 
-/** UTR: digits only; allow incomplete / odd lengths while typing. */
+/** UTR / similar: keep printable characters; spaces stripped. */
 export function normalizeUtr(value: string): string {
-  return (value || "").replace(/\D/g, "").slice(0, 14);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidUtr(value: string): boolean {
-  const raw = normalizeUtr(value);
-  return raw.length >= 8;
+  return hasAnyText(normalizeUtr(value));
 }
 
 /**
- * NI number: strip spaces/punctuation.
- * Soft shape check only — do not gate Next on this.
+ * NI number: strip spaces only; keep letters/digits/odd characters clients may type.
  */
 export function normalizeNi(value: string): string {
-  return (value || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 13);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidNi(value: string): boolean {
-  const raw = normalizeNi(value);
-  if (!raw) return false;
-  if (/^[A-Z]{2}\d{6}[A-Z]$/.test(raw)) return true;
-  return raw.length >= 5;
+  return hasAnyText(normalizeNi(value));
 }
 
 /**
- * VAT: strip GB prefix and spaces; keep digits.
+ * VAT: strip spaces; keep GB prefix or digits/letters as typed.
  */
 export function normalizeVatNumber(value: string): string {
-  let v = (value || "").toUpperCase().replace(/\s+/g, "");
-  if (v.startsWith("GB")) v = v.slice(2);
-  return v.replace(/\D/g, "").slice(0, 14);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidVatNumber(value: string): boolean {
-  const v = normalizeVatNumber(value);
-  return v.length >= 5;
+  return hasAnyText(normalizeVatNumber(value));
 }
 
 export function normalizeAccountsOfficeRef(value: string): string {
-  return (value || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 20);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidAccountsOfficeRef(value: string): boolean {
-  return normalizeAccountsOfficeRef(value).length >= 5;
+  return hasAnyText(normalizeAccountsOfficeRef(value));
 }
 
 export function normalizePayeRef(value: string): string {
-  return (value || "").toUpperCase().replace(/\s+/g, "").slice(0, 20);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidPayeRef(value: string): boolean {
-  const v = normalizePayeRef(value);
-  if (!v) return false;
-  if (/^\d{3}\/[A-Z0-9]{1,10}$/.test(v)) return true;
-  return v.length >= 3;
+  return hasAnyText(normalizePayeRef(value));
 }
 
 export function normalizePersonalCode(value: string): string {
-  return (value || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 20);
+  return (value || "").replace(/\s+/g, "").toUpperCase().slice(0, 20);
 }
 
 export function isValidPersonalCode(value: string): boolean {
-  const raw = normalizePersonalCode(value);
-  return raw.length === 0 || raw.length >= 6;
+  return hasAnyText(normalizePersonalCode(value));
 }
 
 /** True for a live File upload or a previously saved URL string. */

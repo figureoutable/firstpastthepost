@@ -68,11 +68,16 @@ export function BusinessForm({
 
     const canGoNext = () => {
         if (step === 1) {
-            // Codes are optional — only need a company name, PAYE/VAT answers, and ID uploads.
+            // Need something in each code field, but no strict format.
             return !!(
                 hasAnyText(data.companyName)
+                && hasAnyText(data.registrationNumber)
+                && hasAnyText(data.utrNumber)
+                && hasAnyText(data.companyAuthCode)
                 && (data.hasPaye === "yes" || data.hasPaye === "no")
                 && (data.isVatRegistered === "yes" || data.isVatRegistered === "no")
+                && (data.hasPaye !== "yes" || (hasAnyText(data.accountsOfficeRef) && hasAnyText(data.payeRef)))
+                && (data.isVatRegistered !== "yes" || hasAnyText(data.vatNumber))
                 && hasUpload(data.photoId)
                 && hasUpload(data.proofOfAddress)
             );
@@ -121,41 +126,41 @@ export function BusinessForm({
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="companyNumber" className="text-stone-900 text-sm">Company Number</Label>
+                                        <Label htmlFor="companyNumber" className="text-stone-900 text-sm">Company Number *</Label>
                                         <Input
                                             id="companyNumber"
-                                            placeholder="e.g. 01234567 or SC123456 (if you have one)"
+                                            placeholder="e.g. 01234567 or SC123456"
                                             maxLength={16}
                                             value={data.registrationNumber || ""}
                                             onChange={(e) =>
                                                 updateField("registrationNumber", normalizeCompanyNumber(e.target.value))
                                             }
                                         />
-                                        <p className="text-xs text-stone-500">Optional — leave blank if you do not have it yet</p>
+                                        <p className="text-xs text-stone-500">Any format is fine</p>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Business UTR</Label>
+                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Business UTR *</Label>
                                         <Input
                                             id="utrNumber"
-                                            placeholder="If you have one"
+                                            placeholder="Enter your UTR"
                                             maxLength={20}
                                             value={data.utrNumber || ""}
                                             onChange={(e) => updateField("utrNumber", normalizeUtr(e.target.value))}
                                         />
-                                        <p className="text-xs text-stone-500">Optional</p>
+                                        <p className="text-xs text-stone-500">Any format is fine</p>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="authCode" className="text-stone-900 text-sm">Auth Code</Label>
+                                        <Label htmlFor="authCode" className="text-stone-900 text-sm">Auth Code *</Label>
                                         <Input
                                             id="authCode"
-                                            placeholder="If you have one"
+                                            placeholder="Enter your auth code"
                                             maxLength={12}
                                             value={data.companyAuthCode || ""}
                                             onChange={(e) =>
                                                 updateField("companyAuthCode", normalizeAuthCode(e.target.value))
                                             }
                                         />
-                                        <p className="text-xs text-stone-500">Optional</p>
+                                        <p className="text-xs text-stone-500">Any format is fine</p>
                                     </div>
                                 </div>
                             </Section>
@@ -184,7 +189,7 @@ export function BusinessForm({
 
                                     <Expandable show={data.hasPaye === "yes"} contentKey="paye-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
                                             <div className="space-y-2">
-                                                <Label htmlFor="accountsOfficeRef" className="text-stone-900 text-sm">Accounts Office Ref</Label>
+                                                <Label htmlFor="accountsOfficeRef" className="text-stone-900 text-sm">Accounts Office Ref *</Label>
                                                 <Input
                                                     id="accountsOfficeRef"
                                                     placeholder="123PA01234567"
@@ -194,10 +199,10 @@ export function BusinessForm({
                                                         updateField("accountsOfficeRef", normalizeAccountsOfficeRef(e.target.value))
                                                     }
                                                 />
-                                                <p className="text-xs text-stone-500">13 characters (spaces optional)</p>
+                                                <p className="text-xs text-stone-500">Required if you have a PAYE scheme</p>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="payeRef" className="text-stone-900 text-sm">PAYE Reference</Label>
+                                                <Label htmlFor="payeRef" className="text-stone-900 text-sm">PAYE Reference *</Label>
                                                 <Input
                                                     id="payeRef"
                                                     placeholder="123/AB45678"
@@ -207,7 +212,7 @@ export function BusinessForm({
                                                         updateField("payeRef", normalizePayeRef(e.target.value))
                                                     }
                                                 />
-                                                <p className="text-xs text-stone-500">Office number / employer ref</p>
+                                                <p className="text-xs text-stone-500">Required if you have a PAYE scheme</p>
                                             </div>
                                     </Expandable>
 
@@ -233,7 +238,7 @@ export function BusinessForm({
 
                                     <Expandable show={data.isVatRegistered === "yes"} contentKey="vat-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
                                             <div className="space-y-2">
-                                                <Label htmlFor="vatNumber" className="text-stone-900 text-sm">VAT Number</Label>
+                                                <Label htmlFor="vatNumber" className="text-stone-900 text-sm">VAT Number *</Label>
                                                 <Input
                                                     id="vatNumber"
                                                     placeholder="GB123456789 or 123456789"
@@ -243,7 +248,7 @@ export function BusinessForm({
                                                         updateField("vatNumber", normalizeVatNumber(e.target.value))
                                                     }
                                                 />
-                                                <p className="text-xs text-stone-500">9 digits (GB prefix optional)</p>
+                                                <p className="text-xs text-stone-500">Required if VAT registered — any format is fine</p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="vatRegDate" className="text-stone-900 text-sm">Registration Date</Label>

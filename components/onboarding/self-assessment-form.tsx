@@ -10,6 +10,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { Expandable } from "@/components/ui/expandable";
 import GradientButton from "@/components/kokonutui/gradient-button";
 import {
+    hasAnyText,
     hasUpload,
     normalizeNi,
     normalizeUtr,
@@ -113,7 +114,11 @@ export function SelfAssessmentForm({
         });
     };
 
-    const canProceedStep1 = hasUpload(formData.photoId) && hasUpload(formData.proofOfAddress);
+    const canProceedStep1 =
+        hasAnyText(formData.utrNumber)
+        && hasAnyText(formData.niNumber)
+        && hasUpload(formData.photoId)
+        && hasUpload(formData.proofOfAddress);
 
     const canProceedStep2 = !!(
         (formData.incomeTypes || []).length >= 1
@@ -141,6 +146,8 @@ export function SelfAssessmentForm({
     const tryGoNext = () => {
         if (step === 1) {
             const errors: Record<string, string> = {};
+            if (!hasAnyText(formData.utrNumber)) errors.utrNumber = "Enter your UTR (any format is fine)";
+            if (!hasAnyText(formData.niNumber)) errors.niNumber = "Enter your NI number (any format is fine)";
             if (!hasUpload(formData.photoId)) errors.photoId = "Photo ID is required";
             if (!hasUpload(formData.proofOfAddress)) errors.proofOfAddress = "Proof of address is required";
             setFieldErrors(errors);
@@ -181,7 +188,7 @@ export function SelfAssessmentForm({
                             <Section title="Personal Tax Identifiers">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-3">
-                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Unique Tax Reference (UTR)</Label>
+                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Unique Tax Reference (UTR) *</Label>
                                         <Input
                                             id="utrNumber"
                                             value={formData.utrNumber}
@@ -189,17 +196,17 @@ export function SelfAssessmentForm({
                                                 setFieldErrors((prev) => ({ ...prev, utrNumber: "" }));
                                                 setFormData({ utrNumber: normalizeUtr(e.target.value) });
                                             }}
-                                            placeholder="If you have one"
+                                            placeholder="Enter your UTR"
                                             inputMode="numeric"
                                             maxLength={20}
                                             aria-invalid={!!fieldErrors.utrNumber}
                                         />
                                         <p className={`text-xs ${fieldErrors.utrNumber ? "text-red-600" : "text-stone-500"}`}>
-                                            {fieldErrors.utrNumber || "Optional — leave blank if you do not have it yet"}
+                                            {fieldErrors.utrNumber || "Required — any format is fine"}
                                         </p>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="niNumber" className="text-stone-900 text-sm">National Insurance Number</Label>
+                                        <Label htmlFor="niNumber" className="text-stone-900 text-sm">National Insurance Number *</Label>
                                         <Input
                                             id="niNumber"
                                             value={formData.niNumber}
@@ -207,12 +214,12 @@ export function SelfAssessmentForm({
                                                 setFieldErrors((prev) => ({ ...prev, niNumber: "" }));
                                                 setFormData({ niNumber: normalizeNi(e.target.value) });
                                             }}
-                                            placeholder="If you have one (e.g. QQ123456C)"
+                                            placeholder="e.g. QQ123456C"
                                             maxLength={13}
                                             aria-invalid={!!fieldErrors.niNumber}
                                         />
                                         <p className={`text-xs ${fieldErrors.niNumber ? "text-red-600" : "text-stone-500"}`}>
-                                            {fieldErrors.niNumber || "Optional — spaces are fine"}
+                                            {fieldErrors.niNumber || "Required — spaces are fine"}
                                         </p>
                                     </div>
                                 </div>

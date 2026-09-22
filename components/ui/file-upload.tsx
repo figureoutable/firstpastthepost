@@ -1,21 +1,41 @@
 "use client";
 
 import * as React from "react";
-import { Upload, X, FileText, CheckCircle2 } from "lucide-react";
+import { Upload, X, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { hasUpload } from "@/lib/onboarding-validation";
 
 interface FileUploadProps {
     label: string;
     accept?: string;
     onChange: (file: File | null) => void;
-    value?: File | null;
+    value?: File | string | null;
     required?: boolean;
     desc?: string;
+}
+
+function fileLabel(value: File | string): string {
+    if (typeof value === "string") {
+        try {
+            const path = new URL(value).pathname;
+            const name = path.split("/").filter(Boolean).pop();
+            return name ? decodeURIComponent(name) : "Uploaded file";
+        } catch {
+            return "Uploaded file";
+        }
+    }
+    return value.name;
+}
+
+function fileSizeLabel(value: File | string): string | null {
+    if (typeof value === "string") return "Saved";
+    return `${(value.size / 1024 / 1024).toFixed(2)} MB`;
 }
 
 export function FileUpload({ label, accept, onChange, value, required, desc }: FileUploadProps) {
     const [dragActive, setDragActive] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const hasFile = hasUpload(value);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -60,7 +80,7 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
                 className={cn(
                     "relative flex flex-col items-center justify-center w-full h-32 rounded-none border-2 border-dashed transition-all duration-200 cursor-pointer overflow-hidden",
                     dragActive ? "border-clay-400 bg-clay-50/50" : "border-stone-200 bg-stone-50/50 hover:bg-stone-50",
-                    value ? "border-clay-500/50 bg-clay-500/5" : ""
+                    hasFile ? "border-clay-500/50 bg-clay-500/5" : ""
                 )}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -76,16 +96,19 @@ export function FileUpload({ label, accept, onChange, value, required, desc }: F
                     onChange={handleChange}
                 />
 
-                {value ? (
+                {hasFile && value ? (
                     <div className="flex flex-col items-center gap-2 p-4 text-center animate-in fade-in zoom-in-95 duration-200">
                         <div className="w-10 h-10 rounded-full bg-clay-500/20 flex items-center justify-center text-clay-600">
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col max-w-[200px]">
-                            <p className="text-sm font-medium truncate">{value.name}</p>
-                            <p className="text-xs text-muted-foreground">{(value.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <p className="text-sm font-medium truncate">{fileLabel(value)}</p>
+                            {fileSizeLabel(value) && (
+                                <p className="text-xs text-muted-foreground">{fileSizeLabel(value)}</p>
+                            )}
                         </div>
                         <button
+                            type="button"
                             onClick={removeFile}
                             className="absolute top-2 right-2 p-1 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >

@@ -10,6 +10,16 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { Expandable } from "@/components/ui/expandable";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import GradientButton from "@/components/kokonutui/gradient-button";
+import {
+    hasAnyText,
+    hasUpload,
+    normalizeAccountsOfficeRef,
+    normalizeAuthCode,
+    normalizeCompanyNumber,
+    normalizePayeRef,
+    normalizeUtr,
+    normalizeVatNumber,
+} from "@/lib/onboarding-validation";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -58,13 +68,10 @@ export function CombinedOnboardingForm({
 
     const canGoNext = () => {
         if (step === 1) {
+            // Tax codes optional — need a name + company name to continue.
             return !!(
-                (data.fullNamePassport || "").trim()
-                && /^\d{10}$/.test(data.personalUtr || "")
-                && (data.companyName || "").trim()
-                && /^\d{8}$/.test(data.registrationNumber || "")
-                && /^\d{10}$/.test(data.businessUtr || "")
-                && /^[A-Z0-9]{6}$/.test(data.companyAuthCode || "")
+                hasAnyText(data.fullNamePassport)
+                && hasAnyText(data.companyName)
             );
         }
         if (step === 2) {
@@ -82,7 +89,7 @@ export function CombinedOnboardingForm({
             return (data.directors || []).length >= 1;
         }
         if (step === 5) {
-            return !!(data.photoId && data.proofOfAddress);
+            return !!(hasUpload(data.photoId) && hasUpload(data.proofOfAddress));
         }
         return true;
     };
@@ -119,14 +126,13 @@ export function CombinedOnboardingForm({
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Personal UTR *</Label>
+                                        <Label className="text-stone-900 text-sm">Personal UTR</Label>
                                         <Input
                                             value={data.personalUtr || ""}
-                                            onChange={(e) => updateField("personalUtr", e.target.value.replace(/\D/g, "").slice(0, 10))}
-                                            placeholder="10-digit UTR"
+                                            onChange={(e) => updateField("personalUtr", normalizeUtr(e.target.value))}
+                                            placeholder="If you have one"
                                             inputMode="numeric"
-                                            minLength={10}
-                                            maxLength={10}
+                                            maxLength={20}
                                         />
                                     </div>
                                 </div>
@@ -143,35 +149,35 @@ export function CombinedOnboardingForm({
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Company Number *</Label>
+                                        <Label className="text-stone-900 text-sm">Company Number</Label>
                                         <Input
                                             value={data.registrationNumber || ""}
-                                            onChange={(e) => updateField("registrationNumber", e.target.value.replace(/\D/g, "").slice(0, 8))}
-                                            placeholder="8-digits"
-                                            inputMode="numeric"
-                                            minLength={8}
-                                            maxLength={8}
+                                            onChange={(e) =>
+                                                updateField("registrationNumber", normalizeCompanyNumber(e.target.value))
+                                            }
+                                            placeholder="If you have one"
+                                            maxLength={16}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Business UTR *</Label>
+                                        <Label className="text-stone-900 text-sm">Business UTR</Label>
                                         <Input
                                             value={data.businessUtr || ""}
-                                            onChange={(e) => updateField("businessUtr", e.target.value.replace(/\D/g, "").slice(0, 10))}
-                                            placeholder="10-digit UTR"
+                                            onChange={(e) => updateField("businessUtr", normalizeUtr(e.target.value))}
+                                            placeholder="If you have one"
                                             inputMode="numeric"
-                                            minLength={10}
-                                            maxLength={10}
+                                            maxLength={20}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-stone-900 text-sm">Company Auth Code *</Label>
+                                        <Label className="text-stone-900 text-sm">Company Auth Code</Label>
                                         <Input
                                             value={data.companyAuthCode || ""}
-                                            onChange={(e) => updateField("companyAuthCode", e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6))}
-                                            placeholder="6 characters"
-                                            minLength={6}
-                                            maxLength={6}
+                                            onChange={(e) =>
+                                                updateField("companyAuthCode", normalizeAuthCode(e.target.value))
+                                            }
+                                            placeholder="If you have one"
+                                            maxLength={12}
                                         />
                                     </div>
                                 </div>
@@ -222,8 +228,8 @@ export function CombinedOnboardingForm({
                                     </div>
                                 </div>
                                 <Expandable show={data.hasPaye === "yes"} contentKey="paye-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
-                                        <div className="space-y-2"><Label className="text-stone-900 text-sm">Accounts Office Ref</Label><Input value={data.accountsOfficeRef || ""} onChange={(e) => updateField("accountsOfficeRef", e.target.value)} /></div>
-                                        <div className="space-y-2"><Label className="text-stone-900 text-sm">PAYE Reference</Label><Input value={data.payeRef || ""} onChange={(e) => updateField("payeRef", e.target.value)} /></div>
+                                        <div className="space-y-2"><Label className="text-stone-900 text-sm">Accounts Office Ref</Label><Input maxLength={16} value={data.accountsOfficeRef || ""} onChange={(e) => updateField("accountsOfficeRef", normalizeAccountsOfficeRef(e.target.value))} placeholder="123PA01234567" /></div>
+                                        <div className="space-y-2"><Label className="text-stone-900 text-sm">PAYE Reference</Label><Input maxLength={16} value={data.payeRef || ""} onChange={(e) => updateField("payeRef", normalizePayeRef(e.target.value))} placeholder="123/AB45678" /></div>
                                 </Expandable>
 
                                 <div className="flex flex-col gap-3 pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -246,7 +252,7 @@ export function CombinedOnboardingForm({
                                     </div>
                                 </div>
                                 <Expandable show={data.isVatRegistered === "yes"} contentKey="vat-fields" className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-clay-200">
-                                        <div className="space-y-2"><Label className="text-stone-900 text-sm">VAT Number</Label><Input maxLength={9} value={data.vatNumber || ""} onChange={(e) => updateField("vatNumber", e.target.value)} /></div>
+                                        <div className="space-y-2"><Label className="text-stone-900 text-sm">VAT Number</Label><Input maxLength={20} placeholder="GB123456789 or 123456789" value={data.vatNumber || ""} onChange={(e) => updateField("vatNumber", normalizeVatNumber(e.target.value))} /></div>
                                         <div className="space-y-2"><Label className="text-stone-900 text-sm">Registration Date</Label><Input type="date" value={data.vatRegDate || ""} onChange={(e) => updateField("vatRegDate", e.target.value)} /></div>
                                 </Expandable>
                             </div>

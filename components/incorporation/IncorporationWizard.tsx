@@ -18,6 +18,9 @@ import { type IncorporationState, type Director, type Shareholder, initialState,
 import { AddressFields, PostcodeInput, PostcodeLookupBlock } from "./AddressFields";
 import { Expandable } from "@/components/ui/expandable";
 import sicData from "@/lib/sic-codes-data.json";
+import {
+  normalizePersonalCode,
+} from "@/lib/onboarding-validation";
 
 const STEPS = 9;
 const RESUME_CODE_KEY = "incorporation-resume-code";
@@ -271,8 +274,7 @@ export function IncorporationWizard() {
           if (!s.step4.handoverPerson.trim()) e.handover = "Required";
         }
         if (s.step4.trading === "date" && !s.step4.tradingDate) e.tradeDate = "Pick a date";
-        if (s.step4.sicCodes.filter((c) => c.code.length === 5).length < 1)
-          e.sic = "Enter at least one SIC code";
+        // SIC codes are helpful but optional — odd/partial codes should not block.
         return e;
       }
       if (n === 5) {
@@ -339,11 +341,7 @@ export function IncorporationWizard() {
         return e;
       }
       if (n === 9) {
-        s.step5.directors.forEach((d) => {
-          const code = (s.step9.directorPersonalCodes[d.id] || "").replace(/\s/g, "");
-          if (code.length !== 11) e[`dc${d.id}`] = "Must be exactly 11 characters";
-          else if (!/^[A-Z0-9]{11}$/.test(code)) e[`dc${d.id}`] = "Letters and numbers only";
-        });
+        // Personal codes are optional — accept whatever was entered (or blank).
         if (!s.step9.acc1) e.a1 = "Required";
         return e;
       }
@@ -513,8 +511,8 @@ export function IncorporationWizard() {
         </div>
         <div className="rounded-none border-2 border-amber-400 bg-yellow-100 px-3 py-2">
           <p className="text-sm text-stone-800">
-            Only proceed if you have the Companies House personal codes for all directors and any
-            non-director PSCs.
+            If you already have Companies House personal codes for directors or PSCs, have them
+            ready. You can still continue and add them later if not.
           </p>
         </div>
 
@@ -1090,14 +1088,14 @@ export function IncorporationWizard() {
                 Check the Companies House SIC list and note the codes that match your business.
               </li>
               <li>
-                Enter up to 4 SIC codes below. You need at least one before you can continue.
+                Enter up to 4 SIC codes below if you have them (optional).
               </li>
             </ol>
           </div>
           <div className="mt-8 space-y-3">
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                  <Label className="shrink-0">Enter your SIC codes *</Label>
+                  <Label className="shrink-0">Enter your SIC codes</Label>
                   <a
                     href="https://resources.companieshouse.gov.uk/sic/"
                     target="_blank"
@@ -1115,7 +1113,7 @@ export function IncorporationWizard() {
                       <Input
                         inputMode="numeric"
                         maxLength={5}
-                        placeholder={`SIC code ${i + 1}${i === 0 ? " *" : " (optional)"}`}
+                        placeholder={`SIC code ${i + 1}${i === 0 ? "" : " (optional)"}`}
                         value={slot.code}
                         onChange={(e) => setSicSlot(i, e.target.value)}
                       />
@@ -1135,8 +1133,7 @@ export function IncorporationWizard() {
                 </div>
               </div>
             <p className="text-sm font-medium text-stone-700">
-              Entered: {s.step4.sicCodes.filter((c) => c.code.length === 5).length} of 4 (minimum 1
-              to continue)
+              Entered: {s.step4.sicCodes.filter((c) => c.code.length > 0).length} of 4 (optional)
             </p>
             {errors.sic && <p className="text-xs text-red-600">{errors.sic}</p>}
           </div>
@@ -1934,33 +1931,29 @@ function Step9Review({
       <div className="rounded-none border-2 border-amber-400 bg-yellow-100 p-4 text-left">
         <h3 className="font-semibold text-stone-900">Director personal codes</h3>
         <p className="mt-1 text-sm text-stone-800">
-          Enter each director&apos;s 11-character code (Manage account → Companies House). You
-          already entered yours at the start - re-enter each person below to confirm.
+          Enter each director&apos;s Companies House personal code if you have it. Leave blank if
+          not — we can collect these later.
         </p>
         <div className="mt-4 space-y-3">
           {s.step5.directors.map((d) => (
             <div key={d.id}>
               <Label className="text-stone-900">
-                {d.firstName || "Director"} {d.lastName || ""} - personal code *
+                {d.firstName || "Director"} {d.lastName || ""} - personal code
               </Label>
               <Input
                 className="mt-1 border-amber-300 bg-card font-mono tracking-widest"
                 inputMode="text"
                 autoComplete="off"
                 spellCheck={false}
-                maxLength={11}
-                minLength={11}
-                placeholder="11 characters"
+                maxLength={20}
+                placeholder="If you have one"
                 value={s.step9.directorPersonalCodes[d.id] || ""}
                 onChange={(e) =>
                   update("step9", {
                     ...s.step9,
                     directorPersonalCodes: {
                       ...s.step9.directorPersonalCodes,
-                      [d.id]: e.target.value
-                        .toUpperCase()
-                        .replace(/[^A-Z0-9]/g, "")
-                        .slice(0, 11),
+                      [d.id]: normalizePersonalCode(e.target.value),
                     },
                   })
                 }
@@ -1968,8 +1961,8 @@ function Step9Review({
               {(s.step9.directorPersonalCodes[d.id] || "").length > 0 &&
                 (s.step9.directorPersonalCodes[d.id] || "").length !== 11 && (
                   <p className="text-xs text-amber-800">
-                    {(s.step9.directorPersonalCodes[d.id] || "").length}/11 characters — must be
-                    exactly 11
+                    Usually 11 characters — {(s.step9.directorPersonalCodes[d.id] || "").length}{" "}
+                    entered (you can still continue)
                   </p>
                 )}
               {errors[`dc${d.id}`] && (

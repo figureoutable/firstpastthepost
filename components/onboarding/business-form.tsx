@@ -10,6 +10,16 @@ import { Expandable } from "@/components/ui/expandable";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import GradientButton from "@/components/kokonutui/gradient-button";
+import {
+    hasAnyText,
+    hasUpload,
+    normalizeAccountsOfficeRef,
+    normalizeAuthCode,
+    normalizeCompanyNumber,
+    normalizePayeRef,
+    normalizeUtr,
+    normalizeVatNumber,
+} from "@/lib/onboarding-validation";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -58,15 +68,13 @@ export function BusinessForm({
 
     const canGoNext = () => {
         if (step === 1) {
+            // Codes are optional — only need a company name, PAYE/VAT answers, and ID uploads.
             return !!(
-                (data.companyName || "").trim()
-                && /^\d{8}$/.test(data.registrationNumber || "")
-                && /^\d{10}$/.test(data.utrNumber || "")
-                && /^[A-Z0-9]{6}$/.test(data.companyAuthCode || "")
+                hasAnyText(data.companyName)
                 && (data.hasPaye === "yes" || data.hasPaye === "no")
                 && (data.isVatRegistered === "yes" || data.isVatRegistered === "no")
-                && data.photoId
-                && data.proofOfAddress
+                && hasUpload(data.photoId)
+                && hasUpload(data.proofOfAddress)
             );
         }
         if (step === 2) {
@@ -113,37 +121,41 @@ export function BusinessForm({
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="companyNumber" className="text-stone-900 text-sm">Company Number *</Label>
+                                        <Label htmlFor="companyNumber" className="text-stone-900 text-sm">Company Number</Label>
                                         <Input
                                             id="companyNumber"
-                                            placeholder="Exactly 8 digits"
-                                            minLength={8}
-                                            maxLength={8}
+                                            placeholder="e.g. 01234567 or SC123456 (if you have one)"
+                                            maxLength={16}
                                             value={data.registrationNumber || ""}
-                                            onChange={(e) => updateField("registrationNumber", e.target.value.replace(/\D/g, ""))}
+                                            onChange={(e) =>
+                                                updateField("registrationNumber", normalizeCompanyNumber(e.target.value))
+                                            }
                                         />
+                                        <p className="text-xs text-stone-500">Optional — leave blank if you do not have it yet</p>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Business UTR *</Label>
+                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Business UTR</Label>
                                         <Input
                                             id="utrNumber"
-                                            placeholder="Exactly 10 digits"
-                                            minLength={10}
-                                            maxLength={10}
+                                            placeholder="If you have one"
+                                            maxLength={20}
                                             value={data.utrNumber || ""}
-                                            onChange={(e) => updateField("utrNumber", e.target.value.replace(/\D/g, ""))}
+                                            onChange={(e) => updateField("utrNumber", normalizeUtr(e.target.value))}
                                         />
+                                        <p className="text-xs text-stone-500">Optional</p>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="authCode" className="text-stone-900 text-sm">Auth Code *</Label>
+                                        <Label htmlFor="authCode" className="text-stone-900 text-sm">Auth Code</Label>
                                         <Input
                                             id="authCode"
-                                            placeholder="Exactly 6 characters"
-                                            minLength={6}
-                                            maxLength={6}
+                                            placeholder="If you have one"
+                                            maxLength={12}
                                             value={data.companyAuthCode || ""}
-                                            onChange={(e) => updateField("companyAuthCode", e.target.value.toUpperCase())}
+                                            onChange={(e) =>
+                                                updateField("companyAuthCode", normalizeAuthCode(e.target.value))
+                                            }
                                         />
+                                        <p className="text-xs text-stone-500">Optional</p>
                                     </div>
                                 </div>
                             </Section>
@@ -176,24 +188,26 @@ export function BusinessForm({
                                                 <Input
                                                     id="accountsOfficeRef"
                                                     placeholder="123PA01234567"
-                                                    minLength={13}
-                                                    maxLength={13}
+                                                    maxLength={16}
                                                     value={data.accountsOfficeRef || ""}
-                                                    onChange={(e) => updateField("accountsOfficeRef", e.target.value.toUpperCase())}
+                                                    onChange={(e) =>
+                                                        updateField("accountsOfficeRef", normalizeAccountsOfficeRef(e.target.value))
+                                                    }
                                                 />
-                                                <p className="text-xs text-stone-500">13 characters</p>
+                                                <p className="text-xs text-stone-500">13 characters (spaces optional)</p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="payeRef" className="text-stone-900 text-sm">PAYE Reference</Label>
                                                 <Input
                                                     id="payeRef"
                                                     placeholder="123/AB45678"
-                                                    minLength={10}
-                                                    maxLength={12}
+                                                    maxLength={16}
                                                     value={data.payeRef || ""}
-                                                    onChange={(e) => updateField("payeRef", e.target.value.toUpperCase())}
+                                                    onChange={(e) =>
+                                                        updateField("payeRef", normalizePayeRef(e.target.value))
+                                                    }
                                                 />
-                                                <p className="text-xs text-stone-500">10-12 characters</p>
+                                                <p className="text-xs text-stone-500">Office number / employer ref</p>
                                             </div>
                                     </Expandable>
 
@@ -222,13 +236,14 @@ export function BusinessForm({
                                                 <Label htmlFor="vatNumber" className="text-stone-900 text-sm">VAT Number</Label>
                                                 <Input
                                                     id="vatNumber"
-                                                    placeholder="123456789"
-                                                    minLength={9}
-                                                    maxLength={9}
+                                                    placeholder="GB123456789 or 123456789"
+                                                    maxLength={20}
                                                     value={data.vatNumber || ""}
-                                                    onChange={(e) => updateField("vatNumber", e.target.value.replace(/\D/g, ""))}
+                                                    onChange={(e) =>
+                                                        updateField("vatNumber", normalizeVatNumber(e.target.value))
+                                                    }
                                                 />
-                                                <p className="text-xs text-stone-500">Exactly 9 digits</p>
+                                                <p className="text-xs text-stone-500">9 digits (GB prefix optional)</p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="vatRegDate" className="text-stone-900 text-sm">Registration Date</Label>

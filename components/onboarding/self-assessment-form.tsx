@@ -9,6 +9,11 @@ import { ArrowRight, ArrowLeft } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Expandable } from "@/components/ui/expandable";
 import GradientButton from "@/components/kokonutui/gradient-button";
+import {
+    hasUpload,
+    normalizeNi,
+    normalizeUtr,
+} from "@/lib/onboarding-validation";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -34,23 +39,6 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
             </span>
         </div>
     );
-}
-
-function hasUpload(value: unknown): boolean {
-    if (!value) return false;
-    if (typeof File !== "undefined" && value instanceof File) return true;
-    if (typeof value === "string") return value.trim().length > 0;
-    return false;
-}
-
-function isValidUtr(value: string): boolean {
-    return /^\d{10}$/.test((value || "").trim());
-}
-
-function isValidNi(value: string): boolean {
-    // Exact length/shape only (2 letters + 6 digits + 1 letter). Letter exclusions are not enforced here.
-    const cleaned = (value || "").replace(/\s/g, "").toUpperCase();
-    return cleaned.length === 9 && /^[A-Z]{2}\d{6}[A-Z]$/.test(cleaned);
 }
 
 interface SelfAssessmentFormProps {
@@ -125,10 +113,7 @@ export function SelfAssessmentForm({
         });
     };
 
-    const utrOk = isValidUtr(formData.utrNumber);
-    const niOk = isValidNi(formData.niNumber);
-    const canProceedStep1 =
-        utrOk && niOk && hasUpload(formData.photoId) && hasUpload(formData.proofOfAddress);
+    const canProceedStep1 = hasUpload(formData.photoId) && hasUpload(formData.proofOfAddress);
 
     const canProceedStep2 = !!(
         (formData.incomeTypes || []).length >= 1
@@ -156,8 +141,6 @@ export function SelfAssessmentForm({
     const tryGoNext = () => {
         if (step === 1) {
             const errors: Record<string, string> = {};
-            if (!utrOk) errors.utrNumber = "Enter exactly 10 digits";
-            if (!niOk) errors.niNumber = "Enter exactly 9 characters (e.g. QQ123456C)";
             if (!hasUpload(formData.photoId)) errors.photoId = "Photo ID is required";
             if (!hasUpload(formData.proofOfAddress)) errors.proofOfAddress = "Proof of address is required";
             setFieldErrors(errors);
@@ -198,44 +181,38 @@ export function SelfAssessmentForm({
                             <Section title="Personal Tax Identifiers">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-3">
-                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Unique Tax Reference (UTR) *</Label>
+                                        <Label htmlFor="utrNumber" className="text-stone-900 text-sm">Unique Tax Reference (UTR)</Label>
                                         <Input
                                             id="utrNumber"
                                             value={formData.utrNumber}
                                             onChange={(e) => {
                                                 setFieldErrors((prev) => ({ ...prev, utrNumber: "" }));
-                                                setFormData({ utrNumber: e.target.value.replace(/\D/g, "").slice(0, 10) });
+                                                setFormData({ utrNumber: normalizeUtr(e.target.value) });
                                             }}
-                                            placeholder="Exactly 10 digits"
+                                            placeholder="If you have one"
                                             inputMode="numeric"
-                                            minLength={10}
-                                            maxLength={10}
+                                            maxLength={20}
                                             aria-invalid={!!fieldErrors.utrNumber}
                                         />
                                         <p className={`text-xs ${fieldErrors.utrNumber ? "text-red-600" : "text-stone-500"}`}>
-                                            {fieldErrors.utrNumber || `Exactly 10 digits${formData.utrNumber ? ` (${formData.utrNumber.length}/10)` : ""}`}
+                                            {fieldErrors.utrNumber || "Optional — leave blank if you do not have it yet"}
                                         </p>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label htmlFor="niNumber" className="text-stone-900 text-sm">National Insurance Number *</Label>
+                                        <Label htmlFor="niNumber" className="text-stone-900 text-sm">National Insurance Number</Label>
                                         <Input
                                             id="niNumber"
                                             value={formData.niNumber}
                                             onChange={(e) => {
                                                 setFieldErrors((prev) => ({ ...prev, niNumber: "" }));
-                                                const cleaned = e.target.value
-                                                    .toUpperCase()
-                                                    .replace(/[^A-Z0-9]/g, "")
-                                                    .slice(0, 9);
-                                                setFormData({ niNumber: cleaned });
+                                                setFormData({ niNumber: normalizeNi(e.target.value) });
                                             }}
-                                            placeholder="QQ123456C"
-                                            minLength={9}
-                                            maxLength={9}
+                                            placeholder="If you have one (e.g. QQ123456C)"
+                                            maxLength={13}
                                             aria-invalid={!!fieldErrors.niNumber}
                                         />
                                         <p className={`text-xs ${fieldErrors.niNumber ? "text-red-600" : "text-stone-500"}`}>
-                                            {fieldErrors.niNumber || `Exactly 9 characters${formData.niNumber ? ` (${formData.niNumber.length}/9)` : " (e.g. QQ123456C)"}`}
+                                            {fieldErrors.niNumber || "Optional — spaces are fine"}
                                         </p>
                                     </div>
                                 </div>

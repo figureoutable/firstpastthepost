@@ -12,6 +12,7 @@ import { CombinedOnboardingForm } from "@/components/onboarding/combined-onboard
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { sanitizeDraftState } from "@/lib/onboarding-validation";
 
 type OnboardingType = "business" | "self-assessment" | "both";
 
@@ -177,7 +178,10 @@ export default function OnboardClient() {
                 setResumeCode(draft.code);
                 persistResumeCode(draft.code);
                 setOnboardingType(draft.onboardingType);
-                setBaseData({ ...emptyBaseData(), ...(draft.state || {}) });
+                setBaseData({
+                    ...emptyBaseData(),
+                    ...sanitizeDraftState((draft.state || {}) as Record<string, unknown>),
+                });
                 setFormStep(draft.formStep || 1);
                 setStep(2);
             } catch {
@@ -250,7 +254,7 @@ export default function OnboardClient() {
                     onboardingType,
                     outerStep: step,
                     formStep,
-                    state: baseData,
+                    state: sanitizeDraftState(baseData as Record<string, unknown>),
                 }),
             }).catch(() => {});
         }, 1000);
@@ -376,7 +380,10 @@ export default function OnboardClient() {
             setResumeCode(data.code);
             persistResumeCode(data.code);
             setOnboardingType(data.onboardingType);
-            setBaseData({ ...emptyBaseData(), ...(data.state || {}) });
+            setBaseData({
+                ...emptyBaseData(),
+                ...sanitizeDraftState((data.state || {}) as Record<string, unknown>),
+            });
             setFormStep(data.formStep || 1);
             setStep(2);
             setStatus("idle");

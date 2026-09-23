@@ -3,15 +3,7 @@ import { createSubmission } from '@/lib/submission-store';
 import { signSubmissionId } from '@/lib/aml-signature';
 import { sendInternalEmail } from '@/lib/notifications';
 import { appendOnboardingSubmission } from '@/lib/google-sheets';
-
-function escapeHtml(input: string): string {
-    return input
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+import { escapeHtml } from '@/lib/email-html';
 
 function toDisplayLabel(key: string): string {
     const customLabels: Record<string, string> = {
@@ -54,6 +46,9 @@ function toDisplayLabel(key: string): string {
         bankruptcyDescription: "Bankruptcy/Disqualification Details",
         directors: "Directors/Owners",
         confirmed: "Final Confirmation",
+        dob: "Date of Birth",
+        role: "Role",
+        address: "Address",
     };
 
     if (customLabels[key]) return customLabels[key];

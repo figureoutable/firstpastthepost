@@ -22,16 +22,25 @@ export interface OwnershipSlice {
   shares: number;
 }
 
+function roundCoord(n: number): number {
+  // Keep SSR and client SVG path `d` strings identical (float precision differs by runtime).
+  return Math.round(n * 1e4) / 1e4;
+}
+
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  return {
+    x: roundCoord(cx + r * Math.cos(rad)),
+    y: roundCoord(cy + r * Math.sin(rad)),
+  };
 }
 
 function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
   const start = polarToCartesian(cx, cy, r, endAngle);
   const end = polarToCartesian(cx, cy, r, startAngle);
   const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
+  const radius = roundCoord(r);
+  return `M ${roundCoord(cx)} ${roundCoord(cy)} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
 }
 
 export function OwnershipPie({

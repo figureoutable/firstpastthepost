@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const SLICE_COLORS = [
-  "#8B7FD6",
-  "#4C8DFF",
+  "#EA580C",
+  "#FDBA74",
   "#3DBE7A",
-  "#E0A458",
-  "#D2795A",
+  "#4C8DFF",
+  "#8B7FD6",
   "#5FA8A0",
   "#4F677A",
   "#F5C542",
@@ -45,6 +45,11 @@ export function OwnershipPie({
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
   const total = slices.reduce((sum, s) => sum + s.shares, 0);
+  const colorByName = new Map(
+    [...slices]
+      .sort((a, b) => b.shares - a.shares || a.name.localeCompare(b.name))
+      .map((s, i) => [s.name, SLICE_COLORS[i % SLICE_COLORS.length]])
+  );
   const cx = size / 2;
   const cy = size / 2;
   const r = size * 0.46;
@@ -64,21 +69,24 @@ export function OwnershipPie({
             ...slice,
             start,
             end: Math.min(end, 359.999),
+            mid: (start + end) / 2,
             pct,
-            color: SLICE_COLORS[i % SLICE_COLORS.length],
+            color: colorByName.get(slice.name) ?? SLICE_COLORS[i % SLICE_COLORS.length],
             isFull: sweep >= 359.999,
           };
         });
 
+  const labelR = (holeR + r) / 2;
+  const MIN_LABEL_PCT = 4.5;
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex flex-col items-center gap-8">
+      <div className="flex flex-col items-center gap-8 md:flex-row md:items-center md:justify-start md:gap-8">
         <motion.svg
           key={arcs.length === 0 ? "empty" : "chart"}
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          className="mx-auto h-auto w-full max-w-[380px] shrink-0 sm:max-w-[420px]"
+          className="mx-auto h-auto w-full max-w-[360px] shrink-0 sm:max-w-[400px] md:mx-0 md:max-w-[440px]"
           initial={{ opacity: 0, rotate: -12, scale: 0.9 }}
           animate={{ opacity: 1, rotate: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -129,6 +137,31 @@ export function OwnershipPie({
             </AnimatePresence>
           )}
           <circle cx={cx} cy={cy} r={holeR} fill="white" />
+          {arcs.map((arc) => {
+            if (arc.pct < MIN_LABEL_PCT && !arc.isFull) return null;
+            const pos = polarToCartesian(cx, cy, labelR, arc.isFull ? 0 : arc.mid);
+            const isActive = hovered === arc.name;
+            const dimmed = hovered != null && !isActive;
+            const label =
+              arc.pct >= 10 ? `${arc.pct.toFixed(0)}%` : `${arc.pct.toFixed(1)}%`;
+            return (
+              <motion.text
+                key={`${arc.name}-label`}
+                x={pos.x}
+                y={pos.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="pointer-events-none select-none font-semibold"
+                fill="#ffffff"
+                style={{ fontSize: size * (arc.pct >= 15 ? 0.045 : 0.035) }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: dimmed ? 0.25 : 1 }}
+                transition={{ duration: 0.2, delay: 0.35 }}
+              >
+                {label}
+              </motion.text>
+            );
+          })}
           <motion.text
             x={cx}
             y={cy - size * 0.03}
@@ -155,7 +188,7 @@ export function OwnershipPie({
           </text>
         </motion.svg>
 
-        <ul className="grid w-full grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
+        <ul className="grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 md:w-[min(100%,28rem)]">
           {arcs.map((arc, i) => {
             const isActive = hovered === arc.name;
             const dimmed = hovered != null && !isActive;
@@ -175,14 +208,14 @@ export function OwnershipPie({
                   scale: { type: "spring", stiffness: 300, damping: 20 },
                 }}
                 className={cn(
-                  "flex cursor-pointer items-start gap-2 rounded-none px-2 py-2 text-sm transition-colors",
+                  "flex cursor-pointer items-start gap-2 rounded-lg px-2 py-2 text-sm transition-colors",
                   isActive && "bg-stone-100 ring-1 ring-stone-200"
                 )}
                 onMouseEnter={() => setHovered(arc.name)}
                 onMouseLeave={() => setHovered(null)}
               >
                 <span
-                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-none"
+                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-sm"
                   style={{ backgroundColor: arc.color }}
                 />
                 <div className="min-w-0 flex-1">

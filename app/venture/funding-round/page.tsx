@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { TrendingUp, Plus, FileCheck } from "lucide-react";
-import { PageHeader } from "@/components/venture/page-header";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { WizardShell } from "@/components/venture/wizard-shell";
 import { FormSection } from "@/components/venture/form-section";
@@ -161,11 +160,6 @@ export default function FundingRoundPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Priced Funding Rounds"
-        subtitle="Pull in an accepted term sheet or start fresh, walk through the round details, and generate closing documents."
-      />
-
       {view === "intro" && (
         <ModuleIntro
           icon={TrendingUp}
@@ -182,7 +176,7 @@ export default function FundingRoundPage() {
 
       {view === "list" && (
         <div className="space-y-6">
-          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight text-stone-900">Funding rounds</h2>
               <Button
@@ -196,7 +190,7 @@ export default function FundingRoundPage() {
             </div>
 
             {rounds.length === 0 ? (
-              <p className="rounded-none border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
+              <p className="rounded-lg border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
                 No rounds started yet.
               </p>
             ) : (
@@ -208,7 +202,7 @@ export default function FundingRoundPage() {
                       setActiveRoundId(r.id);
                       setView("summary");
                     }}
-                    className="flex w-full flex-wrap items-center justify-between gap-3 rounded-none border border-stone-200 bg-stone-50/50 p-5 text-left transition-colors hover:border-forest-300"
+                    className="flex w-full flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-200 bg-stone-50/50 p-5 text-left transition-colors hover:border-forest-300"
                   >
                     <div>
                       <h3 className="font-semibold text-stone-900">{r.name}</h3>
@@ -248,7 +242,7 @@ export default function FundingRoundPage() {
                     {acceptedOrAnySheets.map((s) => (
                       <label
                         key={s.id}
-                        className={`flex cursor-pointer flex-col gap-1 rounded-none border p-4 text-sm transition-colors ${
+                        className={`flex cursor-pointer flex-col gap-1 rounded-lg border p-4 text-sm transition-colors ${
                           draft.termSheetId === s.id
                             ? "border-forest-400 bg-forest-50/60"
                             : "border-stone-200 bg-card hover:border-forest-300"
@@ -307,7 +301,7 @@ export default function FundingRoundPage() {
                 </div>
               </div>
               {Number(draft.amountRaised) > 0 && Number(draft.preMoneyValuation) > 0 && (
-                <div className="rounded-none bg-forest-50 px-4 py-3 text-sm font-semibold text-forest-700">
+                <div className="rounded-lg bg-forest-50 px-4 py-3 text-sm font-semibold text-forest-700">
                   Post-money valuation:{" "}
                   {GBP.format(Number(draft.amountRaised) + Number(draft.preMoneyValuation))}
                 </div>
@@ -319,7 +313,7 @@ export default function FundingRoundPage() {
 
       {view === "summary" && activeRound && (
         <div className="space-y-6">
-          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">{activeRound.name}</h2>
@@ -327,7 +321,7 @@ export default function FundingRoundPage() {
               </div>
               <StatusPill status={activeRound.status} />
             </div>
-            <div className="rounded-none border border-stone-200 bg-stone-50/50 p-6">
+            <div className="rounded-lg border border-stone-200 bg-stone-50/50 p-6">
               <SummaryRow label="Amount raised" value={GBP.format(activeRound.amountRaised)} />
               <SummaryRow label="Pre-money valuation" value={GBP.format(activeRound.preMoneyValuation)} />
               <SummaryRow
@@ -337,7 +331,7 @@ export default function FundingRoundPage() {
             </div>
           </div>
 
-          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
             <h3 className="mb-4 text-lg font-semibold text-stone-900">Closing documents</h3>
             <div className="space-y-3">
               {DOCUMENTS.map((doc) => {
@@ -345,7 +339,7 @@ export default function FundingRoundPage() {
                 return (
                   <div
                     key={doc}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-none border border-stone-200 bg-stone-50/50 p-4"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-200 bg-stone-50/50 p-4"
                   >
                     <span className="flex items-center gap-2 text-sm font-medium text-stone-800">
                       <FileCheck className={`h-4 w-4 ${generated ? "text-forest-600" : "text-stone-400"}`} />
@@ -363,7 +357,7 @@ export default function FundingRoundPage() {
             </div>
           </div>
 
-          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
             <h3 className="mb-2 text-lg font-semibold text-stone-900">Apply to cap table</h3>
             <p className="mb-4 text-sm text-stone-500">
               This will issue new shares to reflect this round and update ownership percentages.

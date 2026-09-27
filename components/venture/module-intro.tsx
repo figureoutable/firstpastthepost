@@ -27,6 +27,7 @@ export function ModuleIntro({
   onSecondaryStart,
   hideIcon: _hideIcon,
   hideStatus: _hideStatus,
+  logoSrc,
 }: {
   icon?: LucideIcon;
   eyebrow?: string;
@@ -43,69 +44,76 @@ export function ModuleIntro({
   onSecondaryStart?: () => void;
   hideIcon?: boolean;
   hideStatus?: boolean;
+  logoSrc?: string;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="w-full overflow-hidden rounded-none border border-stone-200 bg-card"
+      className="w-full overflow-hidden rounded-2xl border border-stone-200 bg-card"
     >
       <div className="flex flex-col gap-3 p-4 sm:p-5">
-        {eyebrow && (
-          <span className="-mb-1 text-xs font-semibold uppercase tracking-wide text-stone-400">
-            {eyebrow}
-          </span>
-        )}
-        <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-          {title}
-        </h2>
-        <p className="text-base leading-relaxed text-stone-600">
-          {description}
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            {eyebrow && (
+              <span className="-mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-400">
+                {eyebrow}
+              </span>
+            )}
+            <h2 className="mt-1 flex items-center gap-3 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+              {logoSrc && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`${logoSrc}?v=3`} alt="" className="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14" />
+              )}
+              {title}
+            </h2>
+            <p className="mt-3 text-base leading-relaxed text-stone-600">
+              {description}
+            </p>
+          </div>
+
+          {(ctaLabel || secondaryCtaLabel) && (
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              {secondaryCtaLabel && onSecondaryStart && (
+                <Button
+                  size="default"
+                  className="w-48 rounded-md"
+                  onClick={onSecondaryStart}
+                >
+                  {secondaryCtaLabel}
+                </Button>
+              )}
+              {ctaLabel && onStart && (
+                <Button
+                  size="default"
+                  className="w-48 rounded-md"
+                  onClick={onStart}
+                  disabled={ctaDisabled}
+                >
+                  {ctaLabel}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
 
         {visual}
 
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          {!visual && stats && stats.length > 0 ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-end gap-8">
-              {stats.map((s) => (
-                <div key={s.label} className="min-w-0">
-                  <div className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-                    {s.value}
-                  </div>
-                  <div className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-stone-400">
-                    {s.label}
-                  </div>
+        {!visual && stats && stats.length > 0 ? (
+          <div className="flex min-w-0 flex-wrap items-end gap-12 sm:gap-16">
+            {stats.map((s) => (
+              <div key={s.label} className="min-w-0">
+                <div className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+                  {s.value}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1" />
-          )}
-
-          <div className="flex shrink-0 flex-wrap justify-end gap-2">
-            {secondaryCtaLabel && onSecondaryStart && (
-              <Button
-                size="default"
-                className="rounded-none"
-                onClick={onSecondaryStart}
-              >
-                {secondaryCtaLabel}
-              </Button>
-            )}
-            {ctaLabel && onStart && (
-              <Button
-                size="default"
-                className="rounded-none"
-                onClick={onStart}
-                disabled={ctaDisabled}
-              >
-                {ctaLabel}
-              </Button>
-            )}
+                <div className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-stone-400">
+                  {s.label}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        ) : null}
       </div>
     </motion.div>
   );

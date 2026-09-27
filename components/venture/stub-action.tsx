@@ -52,7 +52,7 @@ export function StubAction({
         </Button>
       )}
       <Expandable show={activated} contentKey="stub-activated">
-        <div className="flex items-start gap-2 rounded-none border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs text-stone-500">
+        <div className="flex items-start gap-2 rounded-lg border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs text-stone-500">
           <Plug className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>{placeholderText}</span>
         </div>

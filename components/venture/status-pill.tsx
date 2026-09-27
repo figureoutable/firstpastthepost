@@ -9,6 +9,7 @@ type KnownStatus =
   | "borderline"
   | "outstanding"
   | "converted"
+  | "cancelled"
   | "draft"
   | "accepted"
   | "declined"
@@ -30,6 +31,7 @@ const STYLES: Record<KnownStatus, string> = {
   borderline: "bg-amber-50 text-amber-700 border-amber-200",
   outstanding: "bg-blue-50 text-blue-700 border-blue-200",
   converted: "bg-forest-50 text-forest-700 border-forest-200",
+  cancelled: "bg-stone-100 text-stone-500 border-stone-200",
   draft: "bg-stone-100 text-stone-500 border-stone-200",
   accepted: "bg-forest-50 text-forest-700 border-forest-200",
   declined: "bg-red-50 text-red-600 border-red-200",
@@ -46,12 +48,13 @@ const STYLES: Record<KnownStatus, string> = {
 const LABELS: Record<KnownStatus, string> = {
   not_started: "Not started",
   in_progress: "In progress",
-  complete: "Complete",
+  complete: "Completed",
   pass: "Pass",
   fail: "Fail",
   borderline: "Borderline",
   outstanding: "Outstanding",
   converted: "Converted",
+  cancelled: "Cancelled",
   draft: "Draft",
   accepted: "Accepted",
   declined: "Declined",
@@ -61,7 +64,7 @@ const LABELS: Record<KnownStatus, string> = {
   exercised: "Exercised",
   lapsed: "Lapsed",
   not_sent: "Not sent",
-  sent: "Sent",
+  sent: "Sent for signature",
   signed: "Signed",
 };
 
@@ -78,14 +81,15 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap",
+        (key === "sent" || key === "signed") && "min-w-[5.5rem] justify-start",
         STYLES[key],
         className
       )}
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-none",
+          "h-1.5 w-1.5 shrink-0 rounded-sm",
           key === "fail" || key === "declined"
             ? "bg-red-500"
             : key === "in_progress" || key === "borderline" || key === "sent" || key === "documents_generated"

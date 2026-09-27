@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { FlaskConical, Plus, Trash2, PoundSterling } from "lucide-react";
-import { PageHeader } from "@/components/venture/page-header";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { WizardShell } from "@/components/venture/wizard-shell";
 import { FormSection } from "@/components/venture/form-section";
@@ -94,11 +93,6 @@ export default function RdPage() {
 
   return (
     <div>
-      <PageHeader
-        title="R&D Tax Relief"
-        subtitle="Log each qualifying project with its advance, uncertainty, work done and cost breakdown."
-      />
-
       {view === "intro" && (
         <ModuleIntro
           icon={FlaskConical}
@@ -118,7 +112,7 @@ export default function RdPage() {
 
       {view === "list" && (
         <div className="space-y-6">
-          <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Projects</h2>
@@ -132,19 +126,19 @@ export default function RdPage() {
             </div>
 
             {projects.length === 0 ? (
-              <p className="rounded-none border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
+              <p className="rounded-lg border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
                 No projects logged yet.
               </p>
             ) : (
               <div className="space-y-4">
                 {projects.map((p) => (
-                  <div key={p.id} className="rounded-none border border-stone-200 bg-stone-50/50 p-5">
+                  <div key={p.id} className="rounded-lg border border-stone-200 bg-stone-50/50 p-5">
                     <div className="mb-2 flex items-start justify-between gap-3">
                       <h3 className="font-semibold text-stone-900">{p.name}</h3>
                       <button
                         onClick={() => removeProject(p.id)}
                         aria-label={`Remove ${p.name}`}
-                        className="rounded-none p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -168,7 +162,7 @@ export default function RdPage() {
           </div>
 
           {projects.length > 0 && (
-            <div className="rounded-none border border-border bg-card p-6 shadow-sm sm:p-8">
+            <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-stone-900">
                   {state.rd.submitted ? "Additional Information Form submitted" : "Ready to submit"}
@@ -274,7 +268,7 @@ export default function RdPage() {
                   </div>
                 ))}
               </div>
-              <div className="rounded-none bg-forest-50 px-4 py-3 text-sm font-semibold text-forest-700">
+              <div className="rounded-lg bg-forest-50 px-4 py-3 text-sm font-semibold text-forest-700">
                 Total qualifying spend: {GBP.format(totalCosts(draft.costs))}
               </div>
             </FormSection>

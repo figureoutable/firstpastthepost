@@ -34,7 +34,7 @@ export function WizardShell({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-none border border-border bg-card p-4 sm:p-5">
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
       <StepIndicator current={step} total={totalSteps} label={stepLabel} />
 
       <AnimatePresence mode="wait">

@@ -11,8 +11,8 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  GripVertical,
 } from "lucide-react";
-import { PageHeader } from "@/components/venture/page-header";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { OwnershipPie } from "@/components/venture/ownership-pie";
 import { FormSection } from "@/components/venture/form-section";
@@ -68,6 +68,53 @@ export default function CapTablePage() {
   const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
   const [removingClassId, setRemovingClassId] = useState<string | null>(null);
   const [reassignTarget, setReassignTarget] = useState("");
+  const [draggingClassId, setDraggingClassId] = useState<string | null>(null);
+  const [dragOverClassId, setDragOverClassId] = useState<string | null>(null);
+  const [savedClassId, setSavedClassId] = useState<string | null>(null);
+
+  const reorderShareClasses = (activeId: string, overId: string) => {
+    if (activeId === overId) return;
+    setState((prev) => {
+      const current = prev.capTable.shareClasses?.length
+        ? prev.capTable.shareClasses
+        : DEFAULT_SHARE_CLASSES;
+      const from = current.findIndex((sc) => sc.id === activeId);
+      const to = current.findIndex((sc) => sc.id === overId);
+      if (from < 0 || to < 0) return prev;
+      const next = [...current];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return {
+        ...prev,
+        capTable: {
+          ...prev.capTable,
+          shareClasses: next,
+        },
+      };
+    });
+  };
+
+  const moveShareClass = (id: string, direction: "up" | "down") => {
+    setState((prev) => {
+      const current = prev.capTable.shareClasses?.length
+        ? prev.capTable.shareClasses
+        : DEFAULT_SHARE_CLASSES;
+      const from = current.findIndex((sc) => sc.id === id);
+      if (from < 0) return prev;
+      const to = direction === "up" ? from - 1 : from + 1;
+      if (to < 0 || to >= current.length) return prev;
+      const next = [...current];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return {
+        ...prev,
+        capTable: {
+          ...prev.capTable,
+          shareClasses: next,
+        },
+      };
+    });
+  };
 
   const updateShareClass = (
     id: string,
@@ -335,11 +382,6 @@ export default function CapTablePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Cap Table Management"
-        subtitle="Track shareholders, share classes and ownership percentages - updated live as shares are issued or transferred."
-      />
-
       <ModuleIntro
         icon={PieChart}
         title="Your Cap Table"
@@ -350,13 +392,13 @@ export default function CapTablePage() {
         hideStatus
         visual={
           <OwnershipPie
-            size={400}
+            size={480}
             slices={shareholders.map((sh) => ({ name: sh.name, shares: sh.shares }))}
           />
         }
       />
 
-      <div className="rounded-none border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-stone-900">Shareholders</h2>
@@ -411,7 +453,7 @@ export default function CapTablePage() {
                   <Label htmlFor="addClass">Share class</Label>
                   <select
                     id="addClass"
-                    className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
+                    className="flex h-12 w-full rounded-lg border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
                     value={addForm.shareClass}
                     onChange={(e) => setAddForm((f) => ({ ...f, shareClass: e.target.value }))}
                   >
@@ -459,7 +501,7 @@ export default function CapTablePage() {
                 ].map((opt) => (
                   <label
                     key={opt.value}
-                    className="flex cursor-pointer items-center gap-3 rounded-none border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-stone-200 bg-card p-4 text-sm text-stone-700 transition-colors hover:border-forest-300"
                   >
                     <RadioGroupItem value={opt.value} id={`rec-${opt.value}`} />
                     {opt.label}
@@ -471,7 +513,7 @@ export default function CapTablePage() {
                 <div className="space-y-2">
                   <Label>From shareholder *</Label>
                   <select
-                    className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
+                    className="flex h-12 w-full rounded-lg border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
                     value={recordForm.fromId}
                     onChange={(e) => setRecordForm((f) => ({ ...f, fromId: e.target.value }))}
                   >
@@ -489,7 +531,7 @@ export default function CapTablePage() {
                 <div className="space-y-2">
                   <Label>To (existing shareholder)</Label>
                   <select
-                    className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
+                    className="flex h-12 w-full rounded-lg border border-stone-200 bg-card px-4 py-2 text-sm text-stone-700 focus-visible:border-forest-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-500/20"
                     value={recordForm.toExisting}
                     onChange={(e) => setRecordForm((f) => ({ ...f, toExisting: e.target.value, toName: "" }))}
                   >
@@ -535,7 +577,7 @@ export default function CapTablePage() {
           </div>
         )}
 
-        <div className="overflow-x-auto rounded-none border border-stone-200">
+        <div className="overflow-x-auto rounded-lg border border-stone-200">
           <table className="w-full text-left text-sm">
             <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
@@ -575,7 +617,7 @@ export default function CapTablePage() {
                     {sh.shares.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums text-forest-700">
-                    {totalShares > 0 ? ((sh.shares / totalShares) * 100).toFixed(2) : "0.00"}%
+                    {totalShares > 0 ? ((sh.shares / totalShares) * 100).toFixed(1) : "0.0"}%
                   </td>
                 </tr>
               ))}
@@ -594,7 +636,7 @@ export default function CapTablePage() {
                     Total
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{totalShares.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-right">100.00%</td>
+                  <td className="px-4 py-3 text-right">100.0%</td>
                 </tr>
               </tfoot>
             )}
@@ -602,12 +644,13 @@ export default function CapTablePage() {
         </div>
       </div>
 
-      <div className="rounded-none border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="mb-1 text-lg font-semibold text-stone-900">Share classes</h3>
             <p className="text-sm text-stone-500">
-              Click a class to see who holds it. Rename any class if you like.
+              Names save as you type. Drag the handle or use the arrows to reorder. Click a
+              class to see who holds it.
             </p>
           </div>
           <Button variant="outline" onClick={addShareClass}>
@@ -615,8 +658,8 @@ export default function CapTablePage() {
           </Button>
         </div>
 
-        <div className="divide-y divide-stone-200 rounded-none border border-stone-200">
-          {shareClasses.map((sc) => {
+        <div className="divide-y divide-stone-200 rounded-lg border border-stone-200">
+          {shareClasses.map((sc, index) => {
             const expanded = expandedClassId === sc.id;
             const holders = shareholders.filter((sh) => sh.shareClass === sc.name);
             const holderShares = holders.reduce((sum, sh) => sum + sh.shares, 0);
@@ -630,33 +673,119 @@ export default function CapTablePage() {
             const totalNominalValue = nominalValue * holderShares;
 
             return (
-              <div key={sc.id}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-stone-50"
-                  onClick={() => setExpandedClassId(expanded ? null : sc.id)}
-                >
-                  <Input
-                    value={sc.name}
+              <div
+                key={sc.id}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (draggingClassId && draggingClassId !== sc.id) {
+                    setDragOverClassId(sc.id);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggingClassId) {
+                    reorderShareClasses(draggingClassId, sc.id);
+                  }
+                  setDraggingClassId(null);
+                  setDragOverClassId(null);
+                }}
+                className={cn(
+                  dragOverClassId === sc.id && draggingClassId !== sc.id && "bg-clay-50",
+                  draggingClassId === sc.id && "opacity-60"
+                )}
+              >
+                <div className="flex w-full items-center gap-1 px-2 py-3 transition-colors hover:bg-stone-50 sm:gap-2 sm:px-4">
+                  <button
+                    type="button"
+                    title="Drag to reorder"
+                    draggable
+                    aria-label={`Drag to reorder ${sc.name}`}
+                    className="shrink-0 cursor-grab rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600 active:cursor-grabbing"
                     onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => updateShareClass(sc.id, { name: e.target.value })}
-                    className="h-9 max-w-[160px] shrink-0 rounded-none px-2 text-sm font-semibold"
-                  />
-                  <p className="min-w-0 flex-1 truncate text-sm text-stone-500">{definition}</p>
-                  <span className="hidden shrink-0 text-xs text-stone-400 sm:inline">
-                    {holderShares.toLocaleString()} shares issued
-                  </span>
-                  <span className="hidden shrink-0 text-xs text-stone-400 sm:inline">
-                    {GBP.format(totalNominalValue)} nominal
-                  </span>
-                  <span className="shrink-0 text-xs text-stone-400">
-                    {holders.length} holder{holders.length === 1 ? "" : "s"}
-                  </span>
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      setDraggingClassId(sc.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", sc.id);
+                    }}
+                    onDragEnd={() => {
+                      setDraggingClassId(null);
+                      setDragOverClassId(null);
+                    }}
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </button>
+
+                  <div className="flex shrink-0 flex-col">
+                    <button
+                      type="button"
+                      title="Move up"
+                      aria-label={`Move ${sc.name} up`}
+                      disabled={index === 0}
+                      className="rounded-sm p-0.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 disabled:cursor-not-allowed disabled:opacity-30"
+                      onClick={() => moveShareClass(sc.id, "up")}
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Move down"
+                      aria-label={`Move ${sc.name} down`}
+                      disabled={index === shareClasses.length - 1}
+                      className="rounded-sm p-0.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 disabled:cursor-not-allowed disabled:opacity-30"
+                      onClick={() => moveShareClass(sc.id, "down")}
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="relative shrink-0">
+                    <Input
+                      value={sc.name}
+                      onChange={(e) => {
+                        updateShareClass(sc.id, { name: e.target.value });
+                        setSavedClassId(sc.id);
+                        window.setTimeout(() => {
+                          setSavedClassId((cur) => (cur === sc.id ? null : cur));
+                        }, 1200);
+                      }}
+                      className="h-9 max-w-[160px] rounded-lg px-2 text-sm font-semibold"
+                      aria-label={`Rename ${sc.name}`}
+                    />
+                    {savedClassId === sc.id && (
+                      <span className="pointer-events-none absolute -bottom-4 left-0 text-[10px] font-medium text-forest-600">
+                        Saved
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-4 text-left"
+                    onClick={() => setExpandedClassId(expanded ? null : sc.id)}
+                  >
+                    <p className="min-w-0 flex-1 truncate text-sm text-stone-500">{definition}</p>
+                    <span className="hidden shrink-0 text-xs text-stone-400 sm:inline">
+                      {holderShares.toLocaleString()} shares issued
+                    </span>
+                    <span className="hidden shrink-0 text-xs text-stone-400 sm:inline">
+                      {GBP.format(totalNominalValue)} nominal
+                    </span>
+                    <span className="shrink-0 text-xs text-stone-400">
+                      {holders.length} holder{holders.length === 1 ? "" : "s"}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-stone-400 transition-transform",
+                        expanded && "rotate-180"
+                      )}
+                    />
+                  </button>
                   <button
                     type="button"
                     title={canRemove ? "Remove class" : "You need at least one share class"}
                     disabled={!canRemove}
-                    className="shrink-0 rounded-none p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-stone-400"
+                    className="shrink-0 rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-stone-400"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!canRemove) return;
@@ -671,13 +800,7 @@ export default function CapTablePage() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-stone-400 transition-transform",
-                      expanded && "rotate-180"
-                    )}
-                  />
-                </button>
+                </div>
 
                 <Expandable show={removing} contentKey={`removing-${sc.id}`}>
                   <div className="space-y-3 border-t border-stone-100 bg-red-50/60 px-4 py-4">
@@ -687,7 +810,7 @@ export default function CapTablePage() {
                     </p>
                     <div className="flex flex-wrap items-center gap-3">
                       <select
-                        className="flex h-10 min-w-[180px] rounded-none border border-stone-200 bg-card px-3 text-sm text-stone-700"
+                        className="flex h-10 min-w-[180px] rounded-lg border border-stone-200 bg-card px-3 text-sm text-stone-700"
                         value={reassignTarget}
                         onChange={(e) => setReassignTarget(e.target.value)}
                       >
@@ -714,11 +837,11 @@ export default function CapTablePage() {
 
                 <Expandable show={expanded} contentKey={`expanded-${sc.id}`}>
                   <div className="space-y-3 border-t border-stone-100 bg-stone-50/60 px-4 py-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,11rem)_minmax(0,11rem)_minmax(0,1fr)_minmax(0,1fr)]">
                       <div className="space-y-1.5">
                         <Label className="text-xs">Class type</Label>
                         <select
-                          className="flex h-10 w-full rounded-none border border-stone-200 bg-card px-3 text-sm text-stone-700"
+                          className="flex h-10 w-full rounded-lg border border-stone-200 bg-card px-3 text-sm text-stone-700"
                           value={sc.classType}
                           onChange={(e) => updateShareClass(sc.id, { classType: e.target.value })}
                         >
@@ -742,26 +865,24 @@ export default function CapTablePage() {
                           }
                         />
                       </div>
-                      <div className="flex flex-col justify-end gap-0.5 text-sm text-stone-500">
-                        <span>
-                          <span className="font-semibold text-stone-900">
-                            {holderShares.toLocaleString()}
-                          </span>{" "}
-                          shares issued
-                        </span>
-                        <span>
-                          <span className="font-semibold text-stone-900">
-                            {GBP.format(totalNominalValue)}
-                          </span>{" "}
-                          total nominal value
-                        </span>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Shares issued</Label>
+                        <div className="flex h-10 items-center text-sm font-semibold text-stone-900">
+                          {holderShares.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Total nominal value</Label>
+                        <div className="flex h-10 items-center text-sm font-semibold text-stone-900">
+                          {GBP.format(totalNominalValue)}
+                        </div>
                       </div>
                     </div>
 
                     {holders.length === 0 ? (
                       <p className="text-sm text-stone-400">No holders in this class yet.</p>
                     ) : (
-                      <div className="overflow-x-auto rounded-none border border-stone-200 bg-card">
+                      <div className="overflow-x-auto rounded-lg border border-stone-200 bg-card">
                         <table className="w-full text-left text-sm">
                           <thead className="bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
                             <tr>
@@ -788,7 +909,7 @@ export default function CapTablePage() {
                                 </td>
                                 <td className="px-3 py-2">
                                   <select
-                                    className="flex h-8 rounded-none border border-stone-200 bg-card px-2 text-xs text-stone-700"
+                                    className="flex h-8 rounded-lg border border-stone-200 bg-card px-2 text-xs text-stone-700"
                                     value={sc.name}
                                     onChange={(e) => moveHolderToClass(sh.id, e.target.value)}
                                   >
@@ -814,7 +935,7 @@ export default function CapTablePage() {
       </div>
 
       {events.length > 0 && (
-        <div className="rounded-none border border-border bg-card p-6 sm:p-8">
+        <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
           <div className="mb-4 flex items-center gap-2">
             <History className="h-4 w-4 text-stone-400" />
             <h3 className="text-lg font-semibold text-stone-900">Share history</h3>
@@ -835,7 +956,7 @@ export default function CapTablePage() {
         </div>
       )}
 
-      <div className="rounded-none border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
         <h3 className="mb-4 text-lg font-semibold text-stone-900">Companies House filing</h3>
         <StubAction
           emphasized

@@ -2,50 +2,42 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ArrowLeft,
-  LayoutGrid,
-  ShieldCheck,
-  FlaskConical,
-  PieChart,
-  FileSignature,
-  Gift,
-} from "lucide-react";
+import { ArrowLeft, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MODULES: {
   href: string;
-  icon: typeof ShieldCheck;
+  imageSrc: string;
   title: string;
   color: string;
 }[] = [
   {
     href: "/venture/seis-eis",
-    icon: ShieldCheck,
+    imageSrc: "/icons/seis-eis.png",
     title: "SEIS / EIS",
     color: "#4C8DFF",
   },
   {
     href: "/venture/safe",
-    icon: FileSignature,
+    imageSrc: "/icons/future-equity.png",
     title: "Future Equity Agreements",
     color: "#D2795A",
   },
   {
     href: "/venture/cap-table",
-    icon: PieChart,
+    imageSrc: "/icons/cap-table.png",
     title: "Cap Table Management",
     color: "#8B7FD6",
   },
   {
     href: "/venture/emi",
-    icon: Gift,
+    imageSrc: "/icons/emi.png",
     title: "EMI Share Options",
     color: "#E0A458",
   },
   {
     href: "/venture/rd",
-    icon: FlaskConical,
+    imageSrc: "/icons/rd.png",
     title: "R&D Tax Relief",
     color: "#3DBE7A",
   },
@@ -55,15 +47,8 @@ export function VentureSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-full shrink-0 border-b border-stone-200 bg-background px-4 py-5 sm:px-6 md:sticky md:top-0 md:h-screen md:w-64 md:overflow-y-auto md:border-b-0 md:border-r md:px-4 md:py-6 lg:w-72">
-      <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-1.5 px-1 text-sm font-medium text-forest-700 hover:text-forest-800"
-      >
-        <ArrowLeft className="h-4 w-4" /> Home
-      </Link>
-
-      <div className="mb-2 mt-2 hidden md:block">
+    <aside className="flex w-full shrink-0 flex-col border-b border-stone-200 bg-background px-4 py-5 sm:px-6 md:sticky md:top-0 md:h-screen md:w-64 md:overflow-y-auto md:border-b-0 md:border-r md:px-4 md:py-6 lg:w-72">
+      <div className="mb-2 hidden md:block">
         <p className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-400">
           Modules
         </p>
@@ -72,7 +57,6 @@ export function VentureSidebar() {
       <nav className="flex gap-2 overflow-x-auto pb-2 md:flex-col md:gap-1 md:overflow-visible md:pb-0">
         <NavItem
           href="/venture"
-          icon={LayoutGrid}
           title="Overview"
           color="#57534e"
           active={pathname === "/venture"}
@@ -81,26 +65,33 @@ export function VentureSidebar() {
           <NavItem
             key={m.href}
             href={m.href}
-            icon={m.icon}
+            imageSrc={m.imageSrc}
             title={m.title}
             color={m.color}
-            active={pathname === m.href}
+            active={pathname === m.href || (m.href !== "/venture" && pathname.startsWith(m.href))}
           />
         ))}
       </nav>
+
+      <Link
+        href="/"
+        className="mt-4 inline-flex items-center gap-1.5 px-1 text-sm font-medium text-forest-700 hover:text-forest-800 md:mt-auto md:pt-6"
+      >
+        <ArrowLeft className="h-4 w-4" /> Home
+      </Link>
     </aside>
   );
 }
 
 function NavItem({
   href,
-  icon: Icon,
+  imageSrc,
   title,
   color,
   active,
 }: {
   href: string;
-  icon: typeof ShieldCheck;
+  imageSrc?: string;
   title: string;
   color: string;
   active: boolean;
@@ -109,20 +100,19 @@ function NavItem({
     <Link
       href={href}
       className={cn(
-        "group flex shrink-0 items-center gap-3 rounded-none px-3 py-2.5 text-sm transition-colors md:shrink md:w-full",
+        "group flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors md:shrink md:w-full",
         active
           ? "bg-stone-900 text-white shadow-sm"
           : "text-stone-600 hover:bg-stone-100"
       )}
     >
-      <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none"
-        style={{
-          backgroundColor: active ? "rgba(255,255,255,0.15)" : `${color}1F`,
-          color: active ? "#ffffff" : color,
-        }}
-      >
-        <Icon className="h-4 w-4" />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-transparent">
+        {imageSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageSrc} alt="" className="h-[22px] w-[22px] object-contain" />
+        ) : (
+          <LayoutGrid className="h-4 w-4" />
+        )}
       </span>
       <span className="flex-1 whitespace-nowrap font-medium md:whitespace-normal">
         {title}

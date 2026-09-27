@@ -23,7 +23,9 @@ export function getCapTableStatus(state: VentureState): ModuleStatus {
 }
 
 export function getSafeStatus(state: VentureState): ModuleStatus {
-  return state.safe.instruments.length > 0 ? "in_progress" : "not_started";
+  return state.safe.raises.some((r) => r.investors.length > 0)
+    ? "in_progress"
+    : "not_started";
 }
 
 export function getTermSheetsStatus(state: VentureState): ModuleStatus {

@@ -1,0 +1,169 @@
+{
+  "_note": "Anonymised fixtures modelled on the two Lanterne SeedFAST rounds (Round A = discount + cap, 2024; Round B = fixed valuation, 2025). Do not put real investor data in the repo.",
+  "companies": {
+    "acme": {
+      "legalName": "Acme Robotics Ltd",
+      "shortName": "Acme",
+      "jurisdiction": "England and Wales",
+      "registeredNumber": "12345678",
+      "registeredOffice": "1 Example Street, London, EC1A 1AA, United Kingdom",
+      "signatory": { "name": "Jane Founder", "title": "Director" },
+      "bankDetails": {
+        "accountName": "Acme Robotics Ltd",
+        "sortCode": "60-16-13",
+        "accountNumber": "31926819",
+        "iban": "GB29NWBK60161331926819",
+        "swift": "NWBKGB2L"
+      }
+    }
+  },
+  "raises": {
+    "roundA": {
+      "companyId": "acme",
+      "name": "Pre-seed FEA round 2024",
+      "instrumentName": "Future Equity Agreement",
+      "currency": "GBP",
+      "paymentDeadlineBusinessDays": 5,
+      "includeInvestorStatusClause": true,
+      "mostFavouredNation": false,
+      "taxRelief": { "enabled": false },
+      "defaultTerms": {
+        "valuationMechanism": "DISCOUNT_AND_CAP",
+        "discountPercent": 20,
+        "valuationCap": 3000000,
+        "fixedValuation": null,
+        "longstopValuation": null,
+        "qualifyingRoundThreshold": 200000,
+        "longstop": { "type": "MONTHS_FROM_AGREEMENT", "months": 6 },
+        "conversionShareClass": "B Ordinary (Non-Voting) Shares",
+        "fullyDilutedIncludesOptionPool": true,
+        "nomineeConversionEnabled": false
+      }
+    },
+    "roundB": {
+      "companyId": "acme",
+      "name": "Bridge FEA round 2025",
+      "instrumentName": "Future Equity Agreement",
+      "currency": "GBP",
+      "paymentDeadlineBusinessDays": 5,
+      "includeInvestorStatusClause": true,
+      "mostFavouredNation": true,
+      "taxRelief": { "enabled": false },
+      "currentFullyDilutedShares": 1413434,
+      "defaultTerms": {
+        "valuationMechanism": "FIXED_VALUATION",
+        "discountPercent": null,
+        "valuationCap": null,
+        "fixedValuation": 2268420.23,
+        "longstopValuation": null,
+        "qualifyingRoundThreshold": 500000,
+        "longstop": { "type": "FIXED_DATE", "date": "2025-07-01" },
+        "conversionShareClass": "Preferred Shares",
+        "fullyDilutedIncludesOptionPool": true,
+        "nomineeConversionEnabled": true
+      }
+    },
+    "roundSeis": {
+      "companyId": "acme",
+      "name": "SEIS FEA round",
+      "instrumentName": "Future Equity Agreement",
+      "currency": "GBP",
+      "paymentDeadlineBusinessDays": 5,
+      "includeInvestorStatusClause": true,
+      "mostFavouredNation": false,
+      "taxRelief": { "enabled": true, "scheme": "SEIS", "schemeLongName": "Seed Enterprise Investment Scheme" },
+      "defaultTerms": {
+        "valuationMechanism": "DISCOUNT_ONLY",
+        "discountPercent": 15,
+        "valuationCap": null,
+        "fixedValuation": null,
+        "longstopValuation": 2500000,
+        "qualifyingRoundThreshold": 250000,
+        "longstop": { "type": "MONTHS_FROM_AGREEMENT", "months": 6 },
+        "conversionShareClass": "Ordinary Shares",
+        "fullyDilutedIncludesOptionPool": false,
+        "nomineeConversionEnabled": false
+      }
+    }
+  },
+  "investors": [
+    {
+      "id": "inv-consultant-eur",
+      "raiseId": "roundA",
+      "type": "INDIVIDUAL",
+      "name": "Sam Consultant",
+      "address": "Musterstrasse 1, 10115 Berlin, Germany",
+      "email": "sam@example.com",
+      "investmentAmount": 5800.00,
+      "consideration": {
+        "type": "SERVICES_IN_LIEU",
+        "underlyingAgreement": "consultancy agreement",
+        "itemDescription": "the monthly consultancy fees",
+        "amountPerPeriod": 3390,
+        "currency": "EUR",
+        "periods": ["February 2024", "March 2024"],
+        "fxRateToGbp": 0.855452,
+        "fxSource": "rate agreed between the parties"
+      },
+      "overrides": {},
+      "customTerms": [],
+      "signatures": { "investorSignedAt": "2024-03-20", "companySignedAt": "2024-03-24" }
+    },
+    {
+      "id": "inv-employee",
+      "raiseId": "roundA",
+      "type": "INDIVIDUAL",
+      "name": "Alex Employee",
+      "address": "1 Sample Road, Canberra ACT 2600, Australia",
+      "investmentAmount": 5000,
+      "consideration": {
+        "type": "SALARY_SACRIFICE",
+        "underlyingAgreement": "employment agreement",
+        "itemDescription": "the monthly salary",
+        "amountPerPeriod": 2500,
+        "currency": "GBP",
+        "periods": ["February 2024", "March 2024"]
+      },
+      "overrides": {},
+      "customTerms": [],
+      "signatures": {}
+    },
+    {
+      "id": "inv-company-fixed",
+      "raiseId": "roundB",
+      "type": "COMPANY",
+      "name": "Example Software S.R.L.",
+      "jurisdiction": "Romania",
+      "registeredNumber": "J22/0000/2020",
+      "address": "Strada Exemplu 1, Iasi, 700000, Romania",
+      "signatory": { "name": "Ana Director", "title": "Administrator" },
+      "investmentAmount": 10500,
+      "consideration": {
+        "type": "SERVICES_IN_LIEU",
+        "underlyingAgreement": "consultancy agreement",
+        "itemDescription": "the monthly consultancy fees",
+        "amountPerPeriod": 5250,
+        "currency": "GBP",
+        "periods": ["January 2025", "February 2025"]
+      },
+      "overrides": { "longstop": { "type": "FIXED_DATE", "date": "2025-03-01" } },
+      "customTerms": [
+        { "title": "Information rights", "body": "Until the Conversion Date the Company will send the Investor a copy of its annual accounts within 30 days of their approval by the board." }
+      ],
+      "signatures": { "investorSignedAt": "2024-08-02", "companySignedAt": "2024-08-01" }
+    },
+    {
+      "id": "inv-cash-angel",
+      "raiseId": "roundSeis",
+      "type": "INDIVIDUAL",
+      "name": "Priya Angel",
+      "address": "2 Demo Lane, Manchester, M1 1AA, United Kingdom",
+      "email": "priya@example.com",
+      "investmentAmount": 25000,
+      "consideration": { "type": "CASH" },
+      "overrides": {},
+      "customTerms": [],
+      "signatures": {}
+    }
+  ]
+}

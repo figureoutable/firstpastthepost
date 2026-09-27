@@ -1,3 +1,11 @@
+import type {
+  FeaEconomicTerms,
+  FeaGeneratedAgreement,
+  FeaInvestor,
+  FeaRaise,
+  FeaState,
+} from "@/lib/fea/types";
+
 export type ModuleStatus = "not_started" | "in_progress" | "complete";
 
 export type SchemeResult = "pass" | "fail" | "borderline";
@@ -91,9 +99,20 @@ export interface CapTableState {
   shareClasses: ShareClassDefinition[];
 }
 
+/** @deprecated Use FeaEconomicTerms — kept as alias during FEA Step 1 migration. */
+export type SafeRaiseTerms = FeaEconomicTerms;
+/** @deprecated Use FeaInvestor */
+export type SafeAgreement = FeaInvestor;
+/** @deprecated Use FeaRaise */
+export type SafeRaise = FeaRaise;
+
+export type { FeaEconomicTerms, FeaGeneratedAgreement, FeaInvestor, FeaRaise, FeaState };
+
+export type SafeState = FeaState;
+
+/** @deprecated Kept for localStorage migration from flat instruments. */
 export interface SafeInstrument {
   id: string;
-  /** Subscriber / investor name */
   investorName: string;
   subscriberAddress: string;
   companyName: string;
@@ -118,10 +137,6 @@ export interface SafeInstrument {
   status: "outstanding" | "converted";
   signatureStatus: "not_sent" | "sent" | "signed";
   issuedAt: string;
-}
-
-export interface SafeState {
-  instruments: SafeInstrument[];
 }
 
 export interface TermSheet {

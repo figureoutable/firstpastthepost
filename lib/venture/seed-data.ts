@@ -1,5 +1,6 @@
 import type { VentureState } from "./types";
 import { computeEligibility } from "./eligibility-rules";
+import { createSeedFeaState } from "@/lib/fea/seed";
 
 const seedAnswers = {
   tradingActivity: "qualifying" as const,
@@ -102,64 +103,7 @@ export function createSeedVentureState(): VentureState {
       ],
     },
 
-    safe: {
-      instruments: [
-        {
-          id: "safe-1",
-          investorName: "Northbound Seed Fund",
-          subscriberAddress: "1 Bishopsgate, London EC2N 4AG",
-          companyName: "MoonShot AI",
-          companyNumber: "14827391",
-          companyRegisteredOffice: "71-75 Shelton Street, London WC2H 9JQ",
-          amount: 100_000,
-          financingRoundThreshold: 500_000,
-          discountRate: 20,
-          valuationCap: 4_000_000,
-          longstopDate: futureDays(210),
-          bankName: "Barclays Bank UK PLC",
-          bankAccountName: "MoonShot AI Ltd",
-          bankAccountNumber: "12345678",
-          bankSortCode: "20-00-00",
-          companySignatoryName: "Alex Chen",
-          companySignatoryCapacity: "Director",
-          companySignatoryDate: daysAgo(60),
-          subscriberSignatoryName: "Priya Shah",
-          subscriberSignatoryCapacity: "Partner",
-          subscriberSignatoryDate: daysAgo(58),
-          agreementDate: daysAgo(60),
-          status: "outstanding",
-          signatureStatus: "signed",
-          issuedAt: daysAgo(60),
-        },
-        {
-          id: "safe-2",
-          investorName: "Riverside Angels Syndicate",
-          subscriberAddress: "42 King Street, Manchester M2 6BA",
-          companyName: "MoonShot AI",
-          companyNumber: "14827391",
-          companyRegisteredOffice: "71-75 Shelton Street, London WC2H 9JQ",
-          amount: 50_000,
-          financingRoundThreshold: 500_000,
-          discountRate: 15,
-          valuationCap: 4_500_000,
-          longstopDate: futureDays(240),
-          bankName: "Barclays Bank UK PLC",
-          bankAccountName: "MoonShot AI Ltd",
-          bankAccountNumber: "12345678",
-          bankSortCode: "20-00-00",
-          companySignatoryName: "Alex Chen",
-          companySignatoryCapacity: "Director",
-          companySignatoryDate: daysAgo(9),
-          subscriberSignatoryName: "James Okonkwo",
-          subscriberSignatoryCapacity: "Lead Angel",
-          subscriberSignatoryDate: "",
-          agreementDate: daysAgo(9),
-          status: "outstanding",
-          signatureStatus: "sent",
-          issuedAt: daysAgo(9),
-        },
-      ],
-    },
+    safe: createSeedFeaState(),
 
     termSheets: {
       sheets: [

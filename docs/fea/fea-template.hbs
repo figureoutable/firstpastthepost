@@ -1,0 +1,262 @@
+{{!--
+  FUTURE EQUITY AGREEMENT (FEA) TEMPLATE  v1.0.0
+  ------------------------------------------------------------------
+  Original drafting for variable-driven generation. Renders to Markdown,
+  which the app converts to PDF/DOCX.
+
+  Render context (built by resolveAgreementContext(), never by hand):
+    company   : issuing company (raise-level)
+    raise     : raise-level settings that are never overridden per investor
+    investor  : investor-level data
+    terms     : EFFECTIVE economic terms = investor.overrides ?? raise.defaultTerms
+    computed  : derived values (agreementDate, longstopDate, share estimate, etc.)
+
+  Helpers required: clause, sub, ref, money, date, pct, eq, ne, and, or, not, join, concat
+    signatures: { investorSignedAt, companySignedAt } for this agreement
+  Clause numbers are assigned at render time (two-pass) so omitting an optional
+  clause never leaves gaps or broken cross-references. Never hard-code a number.
+
+  DRAFT FOR SOLICITOR REVIEW. Not legal advice.
+--}}
+# {{company.legalName}}
+
+## Investment Summary
+
+**To:** {{investor.name}}
+
+Thank you for investing in {{company.shortName}}. Your investment is made under a {{raise.instrumentName}} (an "FEA").
+
+This summary explains the key points in plain English. It is not part of the legal agreement and is not legally binding. If anything in this summary differs from the agreement that follows, the agreement applies.
+
+**What is an FEA?** You provide funds (or agreed value) to the Company now. Instead of receiving shares straight away, you receive shares later, usually when the Company completes its next equity funding round, at a price set by the rules in the agreement.
+
+**Your investment:** {{money investor.investmentAmount}}{{#if (ne investor.consideration.type "CASH")}}, provided by way of {{investor.consideration.summaryLabel}} rather than a cash transfer (see the Investor Specific Terms){{/if}}.
+
+**What counts as the next funding round?** The Company raising at least {{money terms.qualifyingRoundThreshold}} in equity (counting FEAs and similar instruments), in one or more closings, before {{computed.longstopText}}.
+
+**The price you convert at:**
+{{#if (eq terms.valuationMechanism "DISCOUNT_AND_CAP")}}
+If a funding round or a sale happens before {{computed.longstopText}}, your investment converts at whichever gives you the lower price: (i) a {{pct terms.discountPercent}} discount to the price paid by new investors, or (ii) a company valuation of {{money terms.valuationCap}}.
+{{/if}}
+{{#if (eq terms.valuationMechanism "DISCOUNT_ONLY")}}
+If a funding round or a sale happens before {{computed.longstopText}}, your investment converts at a {{pct terms.discountPercent}} discount to the price paid by new investors.
+{{/if}}
+{{#if (eq terms.valuationMechanism "CAP_ONLY")}}
+If a funding round or a sale happens before {{computed.longstopText}}, your investment converts at the price paid by new investors, but never at a company valuation higher than {{money terms.valuationCap}}.
+{{/if}}
+{{#if (eq terms.valuationMechanism "FIXED_VALUATION")}}
+If a funding round or a sale happens before {{computed.longstopText}}, your investment converts at a fixed company valuation of {{money terms.fixedValuation}}, whatever valuation new investors pay.
+{{/if}}
+
+**If no funding round happens:** your investment converts on {{computed.longstopText}} (or earlier if the Company becomes insolvent or is wound up) at a company valuation of {{money terms.longstopValuation}}.
+{{#if terms.nomineeConversionEnabled}}
+
+**Nominee holding:** the Company may ask that your shares are held for you by a nominee company. If so, you will sign a nominee agreement. This does not change the economic value of your investment.
+{{/if}}
+{{#if computed.shareEstimate}}
+
+**Illustration only:** at the current fully diluted share count, your investment would convert into approximately {{computed.shareEstimate.shares}} {{terms.conversionShareClass}} at {{money computed.shareEstimate.pricePerShare 4}} per share. The actual number is fixed at conversion.
+{{/if}}
+
+**Next steps:** read the agreement, sign it{{#if (eq investor.consideration.type "CASH")}}, and transfer your funds to the account in the Schedule within {{raise.paymentDeadlineBusinessDays}} Business Days{{/if}}. Keep a copy. The Company will contact you when it is time to convert.
+
+---
+
+# {{company.legalName}}
+## {{raise.instrumentName}}
+
+**This agreement is dated** {{#if computed.agreementDate}}{{date computed.agreementDate}}{{else}}the date on which it has been signed by both parties{{/if}}.
+
+### Parties
+
+1. {{#if (eq investor.type "INDIVIDUAL")}}**{{investor.name}}** of {{investor.address}} (the "**Investor**"); and{{else}}**{{investor.name}}**, a company incorporated in {{investor.jurisdiction}}{{#if investor.registeredNumber}} (registered number {{investor.registeredNumber}}){{/if}}, whose registered office is at {{investor.address}} (the "**Investor**"); and{{/if}}
+2. **{{company.legalName}}**, a company incorporated and registered in {{company.jurisdiction}} (registered number {{company.registeredNumber}}), whose registered office is at {{company.registeredOffice}} (the "**Company**").
+
+### Background
+
+The Investor wishes to provide the Investment Amount to the Company in exchange for the right to receive shares in the Company in the future, on the terms of this agreement.
+
+**The parties agree as follows:**
+
+{{#clause "definitions" "Definitions and interpretation"}}
+{{#sub "def-list"}}In this agreement the following terms have the meanings below:
+
+"**Articles**" means the Company's articles of association in force from time to time.
+
+"**Business Day**" means a day other than a Saturday, Sunday or public holiday in England and Wales.
+
+"**Control**" has the meaning given in section 1124 of the Corporation Tax Act 2010, and "**Change of Control**" means any person, together with persons acting in concert with them (as defined in the City Code on Takeovers and Mergers), acquiring Control of the Company.
+
+"**Conversion Date**" means the date on which a Conversion Event occurs in accordance with {{ref "conversion"}}.
+
+"**Conversion Event**" means a Qualifying Financing, an Exit, the Longstop Date or an Insolvency Event.
+
+"**Conversion Price**" has the meaning given in {{ref "price"}}.
+
+"**Conversion Shares**" means fully paid {{terms.conversionShareClass}} in the capital of the Company, having the rights set out in the Articles.
+
+"**Exit**" means (a) a Change of Control; (b) a sale by the Company of all or substantially all of its business and assets (including an exclusive licence of all or substantially all of its intellectual property outside the ordinary course of business); or (c) an IPO.
+
+{{#if (or (eq terms.valuationMechanism "DISCOUNT_AND_CAP") (eq terms.valuationMechanism "DISCOUNT_ONLY") (eq terms.valuationMechanism "CAP_ONLY"))}}
+"**Exit Price**" means the price per share paid or attributed to each share in the Company on an Exit (and, on a sale of business and assets, the net proceeds distributable per share).
+
+{{/if}}
+"**Fully Diluted Share Capital**" means the total number of shares in issue immediately before the relevant Conversion Event{{#if terms.fullyDilutedIncludesOptionPool}}, plus all shares reserved for or subject to options, warrants or other rights granted or to be granted under any employee or adviser share scheme{{/if}}, but excluding the Conversion Shares and any shares issued in the Qualifying Financing.
+
+"**Insolvency Event**" means, other than for the purposes of a solvent reorganisation or where the Company is contesting the step in good faith: the Company ceasing all or substantially all of its operations; proposing or entering into any compromise or arrangement with its creditors; passing a resolution for, or a court making an order for, its winding up; the appointment of a liquidator, administrator, receiver or similar officer over the Company or all or substantially all of its assets; or any step being taken to strike the Company off the register; in each case not including an Exit.
+
+"**Investment Amount**" means {{money investor.investmentAmount}}.
+
+"**IPO**" means the admission of any of the Company's shares (or those of a holding company) to trading on a recognised investment exchange, as defined in section 285 of the Financial Services and Markets Act 2000.
+
+"**Longstop Date**" means {{#if (eq terms.longstop.type "MONTHS_FROM_AGREEMENT")}}the date falling {{terms.longstop.months}} months after the date of this agreement{{#if computed.longstopDate}} (being {{date computed.longstopDate}}){{/if}}{{else}}{{date terms.longstop.date}}{{/if}}.
+
+"**Qualifying Financing**" means one or more issues of equity shares by the Company for cash, completed on or before the Longstop Date, which together (including the Investment Amount and all other amounts invested under future equity agreements, advance subscription agreements and convertible instruments converting at that time) raise at least {{money terms.qualifyingRoundThreshold}}.
+
+{{#if (ne terms.valuationMechanism "FIXED_VALUATION")}}
+"**Round Price**" means the lowest price per share at which shares are issued for cash to new investors in the Qualifying Financing.
+
+{{/if}}
+{{/sub}}
+{{#sub "interp"}}Headings do not affect interpretation. References to a party include its permitted successors and assigns. Words such as "including" do not limit the words that come before them.{{/sub}}
+{{/clause}}
+
+{{#clause "investment" "Investment"}}
+{{#sub "commitment"}}The Investor agrees to provide the Investment Amount to the Company on the terms of this agreement.{{/sub}}
+{{#if (eq investor.consideration.type "CASH")}}
+{{#sub "payment"}}The Investor will pay the Investment Amount in cleared funds to the account set out in the Schedule within {{raise.paymentDeadlineBusinessDays}} Business Days of the date of this agreement. The Company is not obliged to issue any Conversion Shares in respect of any part of the Investment Amount it has not received.{{/sub}}
+{{else}}
+{{#sub "noncash"}}The Investment Amount is provided in the manner set out in the Investor Specific Terms in {{ref "investor-terms"}} rather than by transfer of funds, and the Investment Amount is treated as having been provided in full on the date on which the relevant amounts would otherwise have become payable to the Investor.{{/sub}}
+{{/if}}
+{{#sub "use"}}The Company will use the Investment Amount for its general working capital and business purposes. The Investor is not required to monitor how the Investment Amount is used.{{/sub}}
+{{#sub "nature"}}The Investment Amount is not a loan. It carries no interest and is not repayable in any circumstances. The Investor's only right in respect of it is to receive Conversion Shares under this agreement.{{/sub}}
+{{/clause}}
+
+{{#clause "conversion" "Conversion"}}
+{{#sub "events"}}The Investment Amount will convert automatically into Conversion Shares at the Conversion Price on the first to occur of:
+
+(a) **a Qualifying Financing**, on and at the same time as completion of that Qualifying Financing;
+
+(b) **an Exit**, immediately before completion of that Exit;
+
+(c) **the Longstop Date**, if neither of the events above has occurred by then; and
+
+(d) **an Insolvency Event**, immediately before it occurs, if it occurs before any of the events above.{{/sub}}
+{{#sub "number"}}The number of Conversion Shares will be the Investment Amount divided by the Conversion Price, rounded down to the nearest whole share. No payment will be made for any fraction.{{/sub}}
+{{#sub "documents"}}The Investor will sign and deliver the documents reasonably required to complete the conversion. On a Qualifying Financing these will be on the same (or substantially the same) terms as those signed by the new investors in that Qualifying Financing.{{/sub}}
+{{#if terms.nomineeConversionEnabled}}
+{{#sub "nominee"}}The Company may require the Conversion Shares to be issued to a nominee chosen by the Company to hold them on the Investor's behalf, provided that the Investor's economic interest in the Conversion Shares is unaffected. If the Company does so, the Investor will enter into a nominee agreement on reasonable terms.{{/sub}}
+{{/if}}
+{{#sub "discharge"}}Once the Conversion Shares have been issued, the Company's obligations under this agreement are fully discharged and this agreement ends.{{/sub}}
+{{/clause}}
+
+{{#clause "price" "Conversion Price"}}
+{{#if (eq terms.valuationMechanism "DISCOUNT_AND_CAP")}}
+{{#sub "price-event"}}On a Qualifying Financing or an Exit, the Conversion Price is the lower of: (a) the Round Price or Exit Price (as applicable) reduced by {{pct terms.discountPercent}}; and (b) {{money terms.valuationCap}} divided by the Fully Diluted Share Capital.{{/sub}}
+{{/if}}
+{{#if (eq terms.valuationMechanism "DISCOUNT_ONLY")}}
+{{#sub "price-event"}}On a Qualifying Financing or an Exit, the Conversion Price is the Round Price or Exit Price (as applicable) reduced by {{pct terms.discountPercent}}.{{/sub}}
+{{/if}}
+{{#if (eq terms.valuationMechanism "CAP_ONLY")}}
+{{#sub "price-event"}}On a Qualifying Financing or an Exit, the Conversion Price is the lower of: (a) the Round Price or Exit Price (as applicable); and (b) {{money terms.valuationCap}} divided by the Fully Diluted Share Capital.{{/sub}}
+{{/if}}
+{{#if (eq terms.valuationMechanism "FIXED_VALUATION")}}
+{{#sub "price-event"}}On a Qualifying Financing or an Exit, the Conversion Price is {{money terms.fixedValuation}} divided by the Fully Diluted Share Capital, regardless of the Round Price or Exit Price.{{/sub}}
+{{/if}}
+{{#sub "price-longstop"}}On the Longstop Date or an Insolvency Event, the Conversion Price is {{money terms.longstopValuation}} divided by the Fully Diluted Share Capital.{{/sub}}
+{{/clause}}
+
+{{#clause "company-undertakings" "Company undertakings"}}
+{{#sub "consents"}}The Company will obtain all shareholder consents, waivers of pre-emption rights and resolutions needed under the Articles or otherwise to issue the Conversion Shares when required by this agreement.{{/sub}}
+{{#sub "register"}}Within 30 days of issuing the Conversion Shares, the Company will update its register of members, make any required filing at Companies House and deliver a share certificate (or equivalent) to the Investor{{#if terms.nomineeConversionEnabled}} or its nominee{{/if}}.{{/sub}}
+{{/clause}}
+
+{{#clause "warranties" "Company warranties"}}
+{{#sub "warranty-list"}}The Company warrants to the Investor, on the date of this agreement, that: (a) it is validly incorporated and existing under the laws of {{company.jurisdiction}}; (b) it has the power and authority to enter into and perform this agreement; (c) its entry into this agreement has been duly authorised; and (d) this agreement is binding on it and enforceable in accordance with its terms.{{/sub}}
+{{/clause}}
+
+{{#if raise.includeInvestorStatusClause}}
+{{#clause "investor-status" "Investor status"}}
+{{#sub "category"}}The Investor confirms that, when this investment was promoted to them, they fell within at least one of the following categories under the Financial Services and Markets Act 2000 (Financial Promotion) Order 2005: a certified high net worth individual, a certified sophisticated investor, a self-certified sophisticated investor, an investment professional, a high net worth company or association, or another person to whom the promotion could lawfully be communicated.{{/sub}}
+{{#sub "information"}}The Investor confirms that they have received the information they consider necessary to make this investment, have had the opportunity to ask questions of the Company, and have the knowledge and experience to evaluate its risks and merits or have taken independent professional advice. The Investor understands that they may lose the whole of the Investment Amount.{{/sub}}
+{{/clause}}
+{{/if}}
+
+{{#if raise.taxRelief.enabled}}
+{{#clause "tax-relief" (concat raise.taxRelief.scheme " relief")}}
+{{#sub "tax-intent"}}The Company intends that the Conversion Shares will qualify for relief under the {{raise.taxRelief.schemeLongName}}. The Company will use reasonable endeavours to obtain advance assurance (if not already obtained) and, following issue of the Conversion Shares, to submit the relevant compliance statement to HM Revenue & Customs and provide the Investor with a compliance certificate.{{/sub}}
+{{#sub "tax-no-guarantee"}}The Company does not guarantee that relief will be available, and this agreement may not be varied, cancelled or refunded in a way that would prevent relief from being available.{{/sub}}
+{{/clause}}
+{{/if}}
+
+{{#if raise.mostFavouredNation}}
+{{#clause "mfn" "Most favoured nation"}}
+{{#sub "mfn-body"}}If, before the Conversion Date, the Company enters into another future equity agreement or similar instrument in connection with the same raise on terms more favourable to that investor than the economic terms of this agreement, the Company will notify the Investor and, at the Investor's election, amend this agreement to include those more favourable terms.{{/sub}}
+{{/clause}}
+{{/if}}
+
+{{#if computed.hasInvestorSpecificTerms}}
+{{#clause "investor-terms" "Investor specific terms"}}
+{{#if (ne investor.consideration.type "CASH")}}
+{{#sub "consideration"}}This agreement is to be read together with the {{investor.consideration.underlyingAgreement}} between the Investor and the Company{{#if investor.consideration.underlyingAgreementDate}} dated {{date investor.consideration.underlyingAgreementDate}}{{/if}}. The parties agree that {{investor.consideration.itemDescription}} of {{money investor.consideration.amountPerPeriod investor.consideration.currency}} for each of {{join investor.consideration.periods}} {{#if (eq investor.consideration.type "SALARY_SACRIFICE")}}will not be paid to the Investor{{else}}will not be invoiced by or paid to the Investor{{/if}}, and that the total of those amounts ({{money computed.consideration.totalInSourceCurrency investor.consideration.currency}}) will be applied as the Investment Amount.{{#if computed.consideration.fxApplied}} That total has been converted into pounds sterling at a rate of 1 {{investor.consideration.currency}} = £{{investor.consideration.fxRateToGbp}}{{#if investor.consideration.fxSource}} ({{investor.consideration.fxSource}}){{/if}}.{{/if}}{{/sub}}
+{{/if}}
+{{#each investor.customTerms}}
+{{#sub (concat "custom-" @index)}}**{{this.title}}.** {{this.body}}{{/sub}}
+{{/each}}
+{{/clause}}
+{{/if}}
+
+{{#clause "notices" "Notices"}}
+{{#sub "notice-form"}}Notices under this agreement must be in writing and may be delivered by hand or sent by email to the address most recently notified by the recipient{{#if investor.email}} (for the Investor, initially {{investor.email}}){{/if}}.{{/sub}}
+{{#sub "notice-receipt"}}A notice is treated as received: if delivered by hand, on delivery; and if sent by email, one hour after sending, unless the sender receives a notice that delivery failed.{{/sub}}
+{{/clause}}
+
+{{#clause "general" "General"}}
+{{#sub "entire"}}**Entire agreement.** This agreement is the entire agreement between the parties about its subject matter and replaces all earlier discussions, agreements and understandings about it.{{/sub}}
+{{#sub "variation"}}**Variation.** This agreement may only be varied in writing signed by both parties.{{/sub}}
+{{#sub "assignment"}}**Assignment.** Neither party may assign or transfer its rights under this agreement without the other's prior written consent.{{/sub}}
+{{#sub "costs"}}**Costs.** Each party bears its own costs in connection with this agreement.{{/sub}}
+{{#sub "counterparts"}}**Counterparts and electronic signature.** This agreement may be signed in counterparts and by electronic signature, and delivery of a signed copy by email or through an electronic signing platform is effective.{{/sub}}
+{{#sub "effective"}}**Effect.** This agreement takes effect when signed by both parties, and the date of this agreement is the date of the later signature.{{/sub}}
+{{#sub "third-parties"}}**Third party rights.** No one other than the parties has any right to enforce this agreement under the Contracts (Rights of Third Parties) Act 1999.{{/sub}}
+{{#sub "severance"}}**Severance.** If any provision is found invalid or unenforceable, it will apply with the minimum modification needed to make it valid, and the rest of this agreement is unaffected.{{/sub}}
+{{/clause}}
+
+{{#clause "law" "Governing law and jurisdiction"}}
+{{#sub "law-body"}}This agreement and any non-contractual obligations arising out of or in connection with it are governed by the law of England and Wales, and the courts of England and Wales have exclusive jurisdiction.{{/sub}}
+{{/clause}}
+
+{{#if (eq investor.consideration.type "CASH")}}
+### Schedule: Payment details
+
+| | |
+|---|---|
+| Account name | {{company.bankDetails.accountName}} |
+| Sort code | {{company.bankDetails.sortCode}} |
+| Account number | {{company.bankDetails.accountNumber}} |
+{{#if company.bankDetails.iban}}| IBAN | {{company.bankDetails.iban}} |
+{{/if}}{{#if company.bankDetails.swift}}| SWIFT/BIC | {{company.bankDetails.swift}} |
+{{/if}}| Payment reference | {{computed.paymentReference}} |
+{{/if}}
+
+---
+
+### Signatures
+
+**Signed by the Investor**
+
+{{#if (eq investor.type "INDIVIDUAL")}}
+Name: {{investor.name}}
+{{else}}
+Signed by {{investor.signatory.name}}{{#if investor.signatory.title}}, {{investor.signatory.title}},{{/if}} for and on behalf of {{investor.name}}
+{{/if}}
+
+Signature: ______________________ Date: {{#if signatures.investorSignedAt}}{{date signatures.investorSignedAt}}{{else}}______________{{/if}}
+
+**Signed by the Company**
+
+Signed by {{company.signatory.name}}{{#if company.signatory.title}}, {{company.signatory.title}},{{/if}} for and on behalf of {{company.legalName}}
+
+Signature: ______________________ Date: {{#if signatures.companySignedAt}}{{date signatures.companySignedAt}}{{else}}______________{{/if}}
+
+<sub>{{raise.instrumentName}} · template {{computed.templateVersion}} · ref {{computed.documentReference}}</sub>

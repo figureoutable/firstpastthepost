@@ -61,7 +61,7 @@ export function ModuleIntro({
                 {eyebrow}
               </span>
             )}
-            <h2 className="mt-1 flex items-center gap-3 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+            <h2 className="mt-1 flex items-center gap-3 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
               {logoSrc && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={`${logoSrc}?v=3`} alt="" className="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14" />
@@ -78,7 +78,7 @@ export function ModuleIntro({
               {secondaryCtaLabel && onSecondaryStart && (
                 <Button
                   size="default"
-                  className="w-48 rounded-md"
+                  className="w-48 rounded-lg"
                   onClick={onSecondaryStart}
                 >
                   {secondaryCtaLabel}
@@ -87,7 +87,7 @@ export function ModuleIntro({
               {ctaLabel && onStart && (
                 <Button
                   size="default"
-                  className="w-48 rounded-md"
+                  className="w-48 rounded-lg"
                   onClick={onStart}
                   disabled={ctaDisabled}
                 >
@@ -104,7 +104,7 @@ export function ModuleIntro({
           <div className="flex min-w-0 flex-wrap items-end gap-12 sm:gap-16">
             {stats.map((s) => (
               <div key={s.label} className="min-w-0">
-                <div className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+                <div className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
                   {s.value}
                 </div>
                 <div className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-stone-400">

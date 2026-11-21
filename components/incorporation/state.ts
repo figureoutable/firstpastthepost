@@ -1,5 +1,3 @@
-import { FIGURES_ADDRESS } from "@/lib/figures-config";
-
 export type Address = {
   line1: string;
   line2: string;
@@ -17,17 +15,6 @@ export const emptyAddress = (): Address => ({
   postcode: "",
   country: "United Kingdom",
 });
-
-export function figuresAddress(): Address {
-  return {
-    line1: FIGURES_ADDRESS.line1,
-    line2: FIGURES_ADDRESS.line2,
-    town: FIGURES_ADDRESS.town,
-    county: FIGURES_ADDRESS.county,
-    postcode: FIGURES_ADDRESS.postcode,
-    country: FIGURES_ADDRESS.country,
-  };
-}
 
 export type Director = {
   id: string;

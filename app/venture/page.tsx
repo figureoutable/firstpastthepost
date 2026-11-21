@@ -156,7 +156,7 @@ export default function VentureOverviewPage() {
               {totalShares.toLocaleString()} shares
             </p>
           </div>
-          <Button asChild variant="outline" className="rounded-md">
+          <Button asChild variant="outline" className="rounded-lg">
             <Link href="/venture/cap-table">
               Open cap table <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
@@ -183,7 +183,7 @@ export default function VentureOverviewPage() {
               {allInvestors.length === 1 ? "" : "s"}
             </p>
           </div>
-          <Button asChild variant="outline" className="rounded-md">
+          <Button asChild variant="outline" className="rounded-lg">
             <Link href="/venture/safe">
               Open FEA register <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>

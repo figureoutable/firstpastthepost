@@ -1,132 +1,141 @@
 "use client";
 
 import * as React from "react";
-import { Upload, X, CheckCircle2 } from "lucide-react";
+import { Upload, X, FileCheck2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasUpload } from "@/lib/onboarding-validation";
+import { ACCEPTED_UPLOADS, isAcceptedUpload } from "@/lib/compress-image";
 
 interface FileUploadProps {
     label: string;
-    accept?: string;
     onChange: (file: File | null) => void;
     value?: File | string | null;
     required?: boolean;
     desc?: string;
+    error?: string;
 }
 
 function fileLabel(value: File | string): string {
-    if (typeof value === "string") {
-        try {
-            const path = new URL(value).pathname;
-            const name = path.split("/").filter(Boolean).pop();
-            return name ? decodeURIComponent(name) : "Uploaded file";
-        } catch {
-            return "Uploaded file";
-        }
+    if (typeof value !== "string") return value.name;
+    const last = value.split("/").filter(Boolean).pop();
+    try {
+        return last ? decodeURIComponent(last.split("?")[0]) : "Uploaded file";
+    } catch {
+        return "Uploaded file";
     }
-    return value.name;
 }
 
-function fileSizeLabel(value: File | string): string | null {
-    if (typeof value === "string") return "Saved";
-    return `${(value.size / 1024 / 1024).toFixed(2)} MB`;
+function fileSizeLabel(value: File | string): string {
+    if (typeof value === "string") return "Uploaded";
+    const mb = value.size / 1024 / 1024;
+    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(value.size / 1024))} KB`;
 }
 
-export function FileUpload({ label, accept, onChange, value, required, desc }: FileUploadProps) {
+export function FileUpload({ label, onChange, value, required, desc, error }: FileUploadProps) {
     const [dragActive, setDragActive] = React.useState(false);
+    const [localError, setLocalError] = React.useState("");
     const inputRef = React.useRef<HTMLInputElement>(null);
     const hasFile = hasUpload(value);
+    const shownError = localError || error;
+
+    const accept = (file: File | undefined) => {
+        if (!file) return;
+        if (!isAcceptedUpload(file)) {
+            setLocalError("Please choose a PDF or a photo (JPG, PNG, HEIC or WEBP).");
+            return;
+        }
+        setLocalError("");
+        onChange(file);
+    };
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
-            setDragActive(true);
-        } else if (e.type === "dragleave") {
-            setDragActive(false);
-        }
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            onChange(e.dataTransfer.files[0]);
-        }
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        e.preventDefault();
-        if (e.target.files && e.target.files[0]) {
-            onChange(e.target.files[0]);
-        }
+        setDragActive(e.type === "dragenter" || e.type === "dragover");
     };
 
     const removeFile = (e: React.MouseEvent) => {
         e.stopPropagation();
         onChange(null);
-        if (inputRef.current) {
-            inputRef.current.value = "";
-        }
+        if (inputRef.current) inputRef.current.value = "";
     };
 
     return (
-        <div className="w-full space-y-2">
-            <label className="text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                {label} {required && <span className="text-destructive">*</span>}
-            </label>
+        <div className="w-full space-y-1.5">
+            <p className="text-sm font-medium leading-snug text-stone-800">
+                {label}
+                {!required && <span className="ml-1 font-normal text-stone-400">(optional)</span>}
+            </p>
             <div
+                role="button"
+                tabIndex={0}
+                aria-label={hasFile ? `${label}: ${fileLabel(value as File | string)}. Choose a different file` : `Upload ${label}`}
                 className={cn(
-                    "relative flex flex-col items-center justify-center w-full h-32 rounded-none border-2 border-dashed transition-all duration-200 cursor-pointer overflow-hidden",
-                    dragActive ? "border-clay-400 bg-clay-50/50" : "border-stone-200 bg-stone-50/50 hover:bg-stone-50",
-                    hasFile ? "border-clay-500/50 bg-clay-500/5" : ""
+                    "relative flex min-h-28 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed px-4 py-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/40",
+                    hasFile
+                        ? "border-forest-300 bg-forest-50/60"
+                        : dragActive
+                          ? "border-clay-400 bg-clay-50/60"
+                          : shownError
+                            ? "border-red-300 bg-white hover:bg-stone-50"
+                            : "border-stone-300 bg-white hover:bg-stone-50"
                 )}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
-                onDrop={handleDrop}
+                onDrop={(e) => {
+                    handleDrag(e);
+                    setDragActive(false);
+                    accept(e.dataTransfer.files?.[0]);
+                }}
                 onClick={() => inputRef.current?.click()}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        inputRef.current?.click();
+                    }
+                }}
             >
                 <input
                     ref={inputRef}
                     className="hidden"
                     type="file"
-                    accept={accept}
-                    onChange={handleChange}
+                    accept={ACCEPTED_UPLOADS}
+                    onChange={(e) => {
+                        e.preventDefault();
+                        accept(e.target.files?.[0]);
+                    }}
                 />
 
                 {hasFile && value ? (
-                    <div className="flex flex-col items-center gap-2 p-4 text-center animate-in fade-in zoom-in-95 duration-200">
-                        <div className="w-10 h-10 rounded-full bg-clay-500/20 flex items-center justify-center text-clay-600">
-                            <CheckCircle2 className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col max-w-[200px]">
-                            <p className="text-sm font-medium truncate">{fileLabel(value)}</p>
-                            {fileSizeLabel(value) && (
-                                <p className="text-xs text-muted-foreground">{fileSizeLabel(value)}</p>
-                            )}
-                        </div>
+                    <div className="flex w-full items-center gap-3 text-left">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-forest-100 text-forest-700">
+                            <FileCheck2 className="h-5 w-5" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium text-stone-900">{fileLabel(value)}</span>
+                            <span className="block text-xs text-stone-500">{fileSizeLabel(value)} · click to change</span>
+                        </span>
                         <button
                             type="button"
                             onClick={removeFile}
-                            className="absolute top-2 right-2 p-1 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            aria-label={`Remove ${label}`}
+                            className="rounded-full p-1.5 text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
-                            <X className="w-4 h-4" />
+                            <X className="h-4 w-4" />
                         </button>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center gap-2 p-4 text-center text-muted-foreground">
-                        <div className={`p-2 rounded-full transition-colors ${dragActive ? 'bg-clay-100 text-clay-600' : 'bg-stone-100'}`}>
-                            <Upload className="w-5 h-5" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <p className="text-sm font-medium text-stone-600">Click to upload or drag and drop</p>
-                            <p className="text-xs">{desc || "SVG, PNG, JPG or PDF (max 5MB)"}</p>
-                        </div>
+                    <div className="flex flex-col items-center gap-2 text-stone-500">
+                        <span className={cn("rounded-full p-2", dragActive ? "bg-clay-100 text-clay-700" : "bg-stone-100")}>
+                            <Upload className="h-4 w-4" />
+                        </span>
+                        <span className="text-sm font-medium text-stone-700">Click to upload or drag a file here</span>
+                        <span className="text-xs">{desc || "PDF or photo. Large photos are resized automatically."}</span>
                     </div>
                 )}
             </div>
+            {shownError && <p className="text-xs text-red-600">{shownError}</p>}
         </div>
     );
 }

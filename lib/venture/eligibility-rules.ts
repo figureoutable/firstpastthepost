@@ -7,9 +7,12 @@ const GBP = new Intl.NumberFormat("en-GB", {
 });
 
 /**
- * Simplified rule-of-thumb thresholds for demo purposes only - not a substitute
- * for real HMRC guidance. Mirrors the shape of the real qualifying conditions
- * for SEIS, EIS, R&D relief and EMI so results feel credible.
+ * Simplified rule-of-thumb checks, not a substitute for HMRC guidance.
+ * Limits reflect the rules for shares and options issued from 6 April 2026
+ * (Finance Act 2026: EIS gross assets £30m before / £35m after issue; EMI gross
+ * assets £120m and fewer than 500 employees). Some "specified companies" keep
+ * the older, lower limits, so results near a threshold are flagged.
+ * Last reviewed: November 2026.
  */
 export function computeEligibility(
   answers: EligibilityAnswers
@@ -52,11 +55,12 @@ export function computeEligibility(
       excludedTrade && fail("Your trading activity falls under HMRC's excluded activities list for EIS."),
       unsureTrade && borderline("Trading activity needs confirming against HMRC's excluded activities list."),
       !independent && fail("The company must not be controlled by another company - independence test failed."),
-      assets > 15_000_000 && fail(`Gross assets of ${GBP.format(assets)} exceed the £15m EIS limit.`),
+      assets > 30_000_000 && fail(`Gross assets of ${GBP.format(assets)} exceed the £30m EIS limit for shares issued from 6 April 2026.`),
       employees >= 250 && fail(`${employees} employees exceeds the EIS limit of fewer than 250 full-time equivalents.`),
       ageMonths > 84 && fail(`Trade age of ${ageMonths} months exceeds the general 7-year EIS trading limit.`),
       ageMonths > 72 && borderline(`Trade age of ${ageMonths} months is approaching the 7-year EIS limit - knowledge-intensive status may extend this to 10 years.`),
-      assets > 12_000_000 && borderline(`Gross assets of ${GBP.format(assets)} are approaching the £15m EIS limit.`),
+      assets > 25_000_000 && borderline(`Gross assets of ${GBP.format(assets)} are approaching the £30m EIS limit.`),
+      assets > 15_000_000 && borderline(`Gross assets of ${GBP.format(assets)} are within the new £30m EIS limit but above the old £15m limit, which still applies to some companies. Worth confirming.`),
       pass("Trading activity, assets, headcount and trading age all sit within EIS limits."),
     ])
   );
@@ -66,8 +70,8 @@ export function computeEligibility(
     evaluate("R&D", [
       excludedTrade && borderline("Confirm the specific project work counts as a qualifying R&D activity resolving scientific or technological uncertainty."),
       unsureTrade && borderline("Confirm the specific project work counts as a qualifying R&D activity resolving scientific or technological uncertainty."),
-      employees >= 500 && borderline(`${employees} employees - check whether the large-company R&D expenditure credit (RDEC) rate applies instead of the SME-enhanced rate.`),
-      pass("A UK-trading company undertaking qualifying R&D can claim under the merged R&D scheme, regardless of size."),
+      employees >= 500 && borderline(`With ${employees} employees the company is not an SME, so the extra support for loss-making R&D-intensive SMEs is not available. The merged R&D scheme still applies.`),
+      pass("For accounting periods starting on or after 1 April 2024, a company doing qualifying R&D claims under the merged R&D scheme, whatever its size."),
     ])
   );
 
@@ -77,9 +81,10 @@ export function computeEligibility(
       excludedTrade && fail("Your trading activity falls under HMRC's excluded activities list for EMI."),
       unsureTrade && borderline("Trading activity needs confirming against HMRC's excluded activities list for EMI."),
       !independent && fail("The company must not be a 51%+ subsidiary of another company to grant EMI options."),
-      assets > 30_000_000 && fail(`Gross assets of ${GBP.format(assets)} exceed the £30m EMI limit.`),
-      employees >= 250 && fail(`${employees} employees exceeds the EMI limit of fewer than 250 full-time equivalents.`),
-      assets > 25_000_000 && borderline(`Gross assets of ${GBP.format(assets)} are approaching the £30m EMI limit.`),
+      assets > 120_000_000 && fail(`Gross assets of ${GBP.format(assets)} exceed the £120m EMI limit for options granted from 6 April 2026.`),
+      employees >= 500 && fail(`${employees} employees exceeds the EMI limit of fewer than 500 full-time equivalents for options granted from 6 April 2026.`),
+      assets > 100_000_000 && borderline(`Gross assets of ${GBP.format(assets)} are approaching the £120m EMI limit.`),
+      (assets > 30_000_000 || employees >= 250) && borderline("Above the old EMI limits (£30m gross assets, 250 employees). The higher limits apply from 6 April 2026, but not to every company. Worth confirming."),
       pass("Trading activity, assets and headcount all sit within EMI limits."),
     ])
   );

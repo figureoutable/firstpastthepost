@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { Copy, Check, ArrowLeft, ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,10 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import GradientButton from "@/components/kokonutui/gradient-button";
-import {
-  COMPANIES_HOUSE_IDENTITY_URL,
-  FIGURES_WHATSAPP_URL,
-} from "@/lib/figures-config";
+import { COMPANIES_HOUSE_IDENTITY_URL, FIRM } from "@/lib/figures-config";
+import { StepProgress } from "@/components/onboarding/form-kit";
+import { NextStepsList } from "@/components/site/next-steps-list";
+import { incorporationNextSteps } from "@/lib/next-steps";
 import { type IncorporationState, type Director, type Shareholder, initialState, newDirector, newShareholder } from "./state";
 import { AddressFields, PostcodeInput, PostcodeLookupBlock } from "./AddressFields";
 import { Expandable } from "@/components/ui/expandable";
@@ -22,7 +22,20 @@ import {
   normalizePersonalCode,
 } from "@/lib/onboarding-validation";
 
+const PANEL =
+  "rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:p-8";
 const STEPS = 9;
+const STEP_TITLES = [
+  "Company type",
+  "Company name",
+  "Registered office",
+  "Business details",
+  "Directors",
+  "Shareholders",
+  "Share capital",
+  "People with significant control",
+  "Review and submit",
+];
 const RESUME_CODE_KEY = "incorporation-resume-code";
 const SIC_LIST = sicData as { code: string; description: string }[];
 const SIC_LOOKUP = new Map(SIC_LIST.map((r) => [r.code, r.description]));
@@ -44,7 +57,7 @@ function sicEntered(codes: { code: string }[]) {
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-none border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800">
+    <p className="rounded-lg border border-clay-200 bg-clay-50 px-4 py-3 text-sm leading-relaxed text-stone-800">
       {children}
     </p>
   );
@@ -52,28 +65,9 @@ function Note({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-none border border-stone-200 bg-stone-50/50 p-3 space-y-3 sm:p-4">
-      <h3 className="text-base font-semibold text-stone-900 tracking-tight">{title}</h3>
+    <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
+      <h3 className="text-base font-semibold tracking-tight text-stone-900">{title}</h3>
       {children}
-    </div>
-  );
-}
-
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="mb-8 flex items-center gap-2">
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} className="flex flex-1 items-center gap-2">
-          <div
-            className={`h-1 w-full rounded-full transition-all duration-500 ${
-              i < current ? "bg-clay-500" : i === current ? "bg-clay-300" : "bg-stone-200"
-            }`}
-          />
-        </div>
-      ))}
-      <span className="ml-1 whitespace-nowrap text-[11px] tabular-nums text-stone-400">
-        {current + 1}/{total}
-      </span>
     </div>
   );
 }
@@ -117,6 +111,9 @@ export function IncorporationWizard() {
   const [resuming, setResuming] = useState(false);
   const [copied, setCopied] = useState(false);
   const [hydrating, setHydrating] = useState(true);
+  const [submitError, setSubmitError] = useState("");
+  const [special, setSpecial] = useState({ name: "", email: "", phone: "" });
+  const [specialState, setSpecialState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const skipNextAutosave = useRef(false);
 
   const started = phase === "form" && !submitted;
@@ -413,16 +410,10 @@ export function IncorporationWizard() {
     return out;
   }
 
-  const canProceed = Object.keys(validateStep(step)).length === 0;
-
+  
   const next = () => {
     if (step === 1) {
       if (s.step1.cic === "yes" || s.step1.limitedByGuarantee === "yes") {
-        fetch("/api/incorporation/notify-special", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(s.step1),
-        });
         setStep1Blocked(true);
         return;
       }
@@ -469,14 +460,23 @@ export function IncorporationWizard() {
         step9: s.step9,
         pscSummary: computePscs(),
       };
-      await fetch("/api/incorporation", {
+      setSubmitError("");
+      const res = await fetch("/api/incorporation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, resumeCode }),
       });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        setSubmitError(result.error || "We could not send your request. Your progress is saved, so please try again.");
+        return;
+      }
       clearResumeCode();
       setResumeCode("");
       setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setSubmitError("We could not send your request. Please check your connection and try again. Your progress is saved.");
     } finally {
       setSubmitting(false);
     }
@@ -484,76 +484,79 @@ export function IncorporationWizard() {
 
   if (hydrating) {
     return (
-      <div className="mx-auto max-w-2xl rounded-none border border-stone-200 bg-card p-6 text-center text-sm text-stone-600 md:p-10">
-        Loading your saved progress…
-      </div>
+      <p className="py-24 text-center text-sm text-stone-500">Loading your saved progress…</p>
     );
   }
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-stone-200 bg-card p-8 text-center shadow-sm">
-        <h2 className="text-xl font-semibold text-stone-900">Thank you</h2>
-        <p className="mt-4 text-sm text-stone-600">
-          We have received your incorporation request. The Figures team will be in touch shortly.
+      <div className="space-y-4">
+        <div className={PANEL}>
+          <h2 className="text-xl font-semibold tracking-tight text-stone-900">Thank you, we have your request</h2>
+          <p className="mt-2 text-[15px] leading-relaxed text-stone-600">
+            Our team will check everything and be in touch. Here is what happens next.
+          </p>
+        </div>
+        <div className={PANEL}>
+          <NextStepsList steps={incorporationNextSteps()} />
+        </div>
+        <p className="text-center text-sm text-stone-500">
+          Questions? Email{" "}
+          <a href={`mailto:${FIRM.contactEmail}`} className="font-medium text-clay-700 underline underline-offset-2">
+            {FIRM.contactEmail}
+          </a>{" "}
+          or go back to the{" "}
+          <Link href="/" className="font-medium text-stone-700 underline underline-offset-2">
+            home page
+          </Link>
+          .
         </p>
-        <Link href="/" className="mt-6 inline-block text-sm text-forest-600 underline">
-          Back to home
-        </Link>
       </div>
     );
   }
 
   if (phase === "banner") {
     return (
-      <div className="mx-auto max-w-2xl space-y-6 rounded-none border border-stone-200 bg-card p-6 md:p-10">
-        <h1 className="text-2xl font-semibold text-stone-900">Company Incorporation</h1>
-        <div className="space-y-4 text-sm text-stone-700 leading-relaxed">
+      <div className={PANEL}>
+        <div className="space-y-4 text-[15px] leading-relaxed text-stone-700">
           <p>
-            This form takes approximately 25-30 minutes to complete. Your progress{" "}
-            <span className="font-semibold text-stone-900">saves automatically</span>, and you will
-            get a short resume code so you can continue later on any device.
+            This form takes about 25 to 30 minutes. Your progress <span className="font-medium text-stone-900">saves automatically</span>, and
+            we give you a short code so you can carry on later on any device.
           </p>
-          <p>
-            Before you start: all directors and anyone who owns more than 25% of the company must
-            verify their identity with Companies House. You will need a passport or UK driving
-            licence and a GOV.UK One Login account.
-          </p>
-          <p>
-            Companies House requires identity verification for all directors and anyone who owns
-            more than 25% of the company (PSCs).
-          </p>
-          <p>
+          <div className="rounded-xl border border-clay-200 bg-clay-50 p-4">
+            <p className="font-medium text-stone-900">Before you start</p>
+            <p className="mt-1 text-sm">
+              Companies House requires every director, and anyone who will own more than 25% of the company, to verify their
+              identity first. You will need a passport or UK driving licence and a GOV.UK One Login account. Each person then gets
+              a personal code, which you enter at the end of this form.
+            </p>
             <a
               href={COMPANIES_HOUSE_IDENTITY_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold text-red-600 underline"
+              className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-clay-700 underline underline-offset-2"
             >
-              Verify your identity here
+              <ShieldCheck className="h-4 w-4" /> Verify identity with Companies House
             </a>
-          </p>
-          <p>
-            If you have any questions at any point, take a screenshot and send it to us on{" "}
-            <span className="font-medium text-stone-900">WhatsApp</span>.
-          </p>
-        </div>
-        <div className="rounded-none border-2 border-amber-400 bg-yellow-100 px-3 py-2">
-          <p className="text-sm text-stone-800">
-            Have Companies House personal codes ready for directors and any non-director PSCs.
-            Exact format does not matter — we just need something entered for each person.
+          </div>
+          <p className="text-sm text-stone-500">
+            Questions at any point? Email{" "}
+            <a href={`mailto:${FIRM.contactEmail}`} className="font-medium text-stone-700 underline underline-offset-2">
+              {FIRM.contactEmail}
+            </a>
+            .
           </p>
         </div>
 
         {bannerError && (
-          <p className="rounded-none border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {bannerError}
           </p>
         )}
 
         <GradientButton
           type="button"
-          className="w-full sm:w-auto"
+          className="mt-6 w-full sm:w-auto"
           onClick={handleStart}
           disabled={starting || resuming}
           loading={starting}
@@ -561,10 +564,8 @@ export function IncorporationWizard() {
           Start <ArrowRight className="h-4 w-4" />
         </GradientButton>
 
-        <div className="space-y-3 border-t border-stone-200 pt-6">
-          <Label htmlFor="resume-code" className="text-stone-900">
-            Already started? Resume with your code
-          </Label>
+        <div className="mt-8 space-y-3 border-t border-stone-200 pt-6">
+          <Label htmlFor="resume-code">Already started? Enter your resume code</Label>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               id="resume-code"
@@ -572,17 +573,12 @@ export function IncorporationWizard() {
               onChange={(e) =>
                 setResumeInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8))
               }
-              placeholder="e.g. AB3K7MPQ"
-              className="font-mono tracking-wider uppercase sm:max-w-xs"
-              // No maxLength: browser truncates before onChange, which breaks dashed pastes
+              onKeyDown={(e) => e.key === "Enter" && handleResume()}
+              placeholder="AB3K7MPQ"
+              className="font-mono uppercase tracking-wider sm:max-w-xs"
               disabled={starting || resuming}
             />
-            <Button
-              variant="outline"
-              onClick={handleResume}
-              disabled={starting || resuming}
-              className="border-stone-300"
-            >
+            <Button variant="outline" onClick={handleResume} disabled={starting || resuming}>
               {resuming ? "Loading…" : "Resume"}
             </Button>
           </div>
@@ -592,15 +588,69 @@ export function IncorporationWizard() {
   }
 
   if (step1Blocked) {
+    const sendSpecial = async () => {
+      if (!special.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(special.email.trim())) {
+        setSpecialState("error");
+        return;
+      }
+      setSpecialState("sending");
+      try {
+        const res = await fetch("/api/incorporation/notify-special", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...s.step1, ...special }),
+        });
+        setSpecialState(res.ok ? "sent" : "error");
+      } catch {
+        setSpecialState("error");
+      }
+    };
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-stone-200 bg-card p-8 text-center">
-        <p className="text-stone-800">
-          Thank you - one of our team will be in touch shortly to discuss the right structure for
-          you.
-        </p>
-        <Link href="/" className="mt-6 inline-block text-forest-600 underline">
-          Home
-        </Link>
+      <div className={PANEL}>
+        {specialState === "sent" ? (
+          <div className="text-center">
+            <h2 className="text-xl font-semibold tracking-tight text-stone-900">Thank you</h2>
+            <p className="mt-2 text-[15px] text-stone-600">We will be in touch shortly to talk through the right structure for you.</p>
+            <Link href="/" className="mt-6 inline-block text-sm font-medium text-clay-700 underline underline-offset-2">
+              Back to home
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-stone-900">Let&apos;s talk about your structure</h2>
+              <p className="mt-2 text-[15px] leading-relaxed text-stone-600">
+                Community interest companies and companies limited by guarantee need a few extra decisions, so we set these up
+                with you directly. Leave your details and we will get in touch.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="special-name">Your name</Label>
+                <Input id="special-name" value={special.name} onChange={(e) => setSpecial({ ...special, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="special-email">Email</Label>
+                <Input id="special-email" type="email" value={special.email} onChange={(e) => setSpecial({ ...special, email: e.target.value.trim() })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="special-phone">Phone <span className="font-normal text-stone-400">(optional)</span></Label>
+                <Input id="special-phone" type="tel" value={special.phone} onChange={(e) => setSpecial({ ...special, phone: e.target.value })} />
+              </div>
+            </div>
+            {specialState === "error" && (
+              <p role="alert" className="text-sm text-red-600">Please enter your name and a valid email, then try again.</p>
+            )}
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+              <GradientButton type="button" appearance="outline" onClick={() => setStep1Blocked(false)}>
+                <ArrowLeft className="h-4 w-4" /> Back
+              </GradientButton>
+              <GradientButton type="button" onClick={sendSpecial} loading={specialState === "sending"}>
+                Send my details <ArrowRight className="h-4 w-4" />
+              </GradientButton>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -608,7 +658,7 @@ export function IncorporationWizard() {
   return (
     <div className="mx-auto w-full max-w-3xl">
       {resumeCode && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-none border border-clay-200 bg-clay-50 px-3 py-2">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-clay-200 bg-clay-50 px-3 py-2">
           <div className="min-w-0 text-xs text-stone-700 sm:text-sm">
             <span className="font-medium text-stone-900">Resume code: </span>
             <span className="font-mono tracking-wider text-clay-800">{resumeCode}</span>
@@ -636,14 +686,8 @@ export function IncorporationWizard() {
         </div>
       )}
 
-      <div className="rounded-none border border-border bg-card p-6 sm:p-10">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Company Incorporation
-          </h2>
-        </div>
-
-        <StepIndicator current={step - 1} total={STEPS} />
+      <div className={PANEL}>
+        <StepProgress steps={STEP_TITLES} current={step - 1} />
 
         <div className="space-y-4">
       {step === 1 && (
@@ -663,7 +707,7 @@ export function IncorporationWizard() {
                     key={value}
                     type="button"
                     onClick={() => update("step1", { ...s.step1, cic: value })}
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -689,7 +733,7 @@ export function IncorporationWizard() {
                     onClick={() =>
                       update("step1", { ...s.step1, limitedByGuarantee: value })
                     }
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -718,7 +762,7 @@ export function IncorporationWizard() {
               href="https://find-and-update.company-information.service.gov.uk/company-name-availability"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-full items-center justify-center rounded-none border border-clay-500 bg-clay-500 px-3 py-2 text-center text-sm font-medium text-white transition hover:border-clay-600 hover:bg-clay-600"
+              className="inline-flex h-full items-center justify-center rounded-lg border border-clay-500 bg-clay-500 px-3 py-2 text-center text-sm font-medium text-white transition hover:border-clay-600 hover:bg-clay-600"
             >
               Check name availability on Companies House
             </a>
@@ -744,7 +788,7 @@ export function IncorporationWizard() {
                       key={ending}
                       type="button"
                       onClick={() => update("step2", { ...s.step2, ending })}
-                      className={`flex h-12 items-center justify-center rounded-none border text-sm font-medium transition ${
+                      className={`flex h-12 items-center justify-center rounded-lg border text-sm font-medium transition ${
                         selected
                           ? "border-clay-500 bg-clay-50 text-clay-800"
                           : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -774,7 +818,7 @@ export function IncorporationWizard() {
                         confirmedAvailable: value === "yes",
                       })
                     }
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -821,7 +865,7 @@ export function IncorporationWizard() {
                         region: k,
                       })
                     }
-                    className={`flex min-h-12 items-center justify-center rounded-none border px-3 py-2 text-center text-sm font-medium transition ${
+                    className={`flex min-h-12 items-center justify-center rounded-lg border px-3 py-2 text-center text-sm font-medium transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -833,7 +877,7 @@ export function IncorporationWizard() {
               })}
             </div>
           </div>
-          <div className="rounded-none border border-stone-200 bg-stone-50/70 p-4">
+          <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
             <p className="mb-2 text-xs text-stone-500">
               Enter the registered office address manually - this will appear on the public register.
             </p>
@@ -867,7 +911,7 @@ export function IncorporationWizard() {
                         principal: value,
                       })
                     }
-                    className={`flex min-h-12 items-center justify-center rounded-none border px-3 py-2 text-center text-sm font-medium transition ${
+                    className={`flex min-h-12 items-center justify-center rounded-lg border px-3 py-2 text-center text-sm font-medium transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -880,7 +924,7 @@ export function IncorporationWizard() {
             </div>
           </div>
           <Expandable show={s.step3.principal === "different"} contentKey="principal-different">
-            <div className="rounded-none border border-stone-200 bg-stone-50/70 p-4">
+            <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
               <p className="mb-2 text-xs text-stone-500">
                 Enter the address manually - this is where day-to-day business will happen.
               </p>
@@ -931,7 +975,7 @@ export function IncorporationWizard() {
                     key={value}
                     type="button"
                     onClick={() => update("step4", { ...s.step4, replacing: value })}
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -979,7 +1023,7 @@ export function IncorporationWizard() {
                 ] as const
               ).map(([value, label]) => {
                 const selected = s.step4.trading === value;
-                const boxClass = `relative flex min-h-12 items-center justify-center rounded-none border px-3 py-2 text-center text-sm font-medium transition ${
+                const boxClass = `relative flex min-h-12 items-center justify-center rounded-lg border px-3 py-2 text-center text-sm font-medium transition ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1067,7 +1111,7 @@ export function IncorporationWizard() {
                     key={value}
                     type="button"
                     onClick={() => update("step4", { ...s.step4, loansOverseas: value })}
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1098,7 +1142,7 @@ export function IncorporationWizard() {
                     key={value}
                     type="button"
                     onClick={() => update("step4", { ...s.step4, protectedDetails: value })}
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1110,7 +1154,7 @@ export function IncorporationWizard() {
               })}
             </div>
           </div>
-          <div className="rounded-none border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800 space-y-2">
+          <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800 space-y-2">
             <p className="font-semibold text-stone-900">SIC codes - what to do</p>
             <ol className="list-decimal list-inside space-y-1 font-normal text-stone-700 leading-relaxed">
               <li>
@@ -1129,7 +1173,7 @@ export function IncorporationWizard() {
                     href="https://resources.companieshouse.gov.uk/sic/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-12 w-full items-center justify-center rounded-none border border-clay-500 bg-clay-50 px-4 text-center text-sm font-medium text-clay-800 transition hover:border-clay-600 hover:bg-clay-100 sm:w-[calc(50%-0.375rem)]"
+                    className="flex h-12 w-full items-center justify-center rounded-lg border border-clay-500 bg-clay-50 px-4 text-center text-sm font-medium text-clay-800 transition hover:border-clay-600 hover:bg-clay-100 sm:w-[calc(50%-0.375rem)]"
                   >
                     Open Companies House SIC list
                   </a>
@@ -1269,30 +1313,34 @@ export function IncorporationWizard() {
 
         </div>
 
-        <div className="flex gap-3 border-t border-stone-200 pt-6">
-          <GradientButton type="button" appearance="outline" className="flex-1" onClick={back}>
+        {Object.keys(errors).length > 0 && (
+          <p role="alert" className="mt-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0" /> Please complete the fields marked in red above.
+          </p>
+        )}
+        {submitError && (
+          <p role="alert" className="mt-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0" /> {submitError}
+          </p>
+        )}
+
+        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-stone-200 pt-6 sm:flex-row sm:justify-between">
+          <GradientButton type="button" appearance="outline" className="sm:w-40" onClick={back}>
             <ArrowLeft className="h-4 w-4" /> Back
           </GradientButton>
           {step < STEPS ? (
-            <GradientButton
-              type="button"
-              className="flex-1"
-              disabled={!canProceed}
-              title={!canProceed ? "Complete all required fields on this step" : undefined}
-              onClick={next}
-            >
-              Next <ArrowRight className="h-4 w-4" />
+            <GradientButton type="button" className="sm:min-w-48" onClick={next}>
+              Continue <ArrowRight className="h-4 w-4" />
             </GradientButton>
           ) : (
             <GradientButton
               type="button"
-              className="flex-1"
-              disabled={submitting || !canProceed}
+              className="sm:min-w-48"
+              disabled={submitting}
               loading={submitting}
-              title={!canProceed ? "Complete all required fields on this step" : undefined}
               onClick={submit}
             >
-              Submit incorporation request <ArrowRight className="h-4 w-4" />
+              Submit request <ArrowRight className="h-4 w-4" />
             </GradientButton>
           )}
         </div>
@@ -1317,7 +1365,7 @@ function DirectorCard({
   canRemove: boolean;
 }) {
   return (
-    <div className="space-y-6 rounded-none border border-stone-200 p-4 sm:space-y-8">
+    <div className="space-y-6 rounded-lg border border-stone-200 p-4 sm:space-y-8">
       <div className="flex justify-between">
         <span className="font-medium">Director {i + 1}</span>
         {canRemove && (
@@ -1356,7 +1404,7 @@ function DirectorCard({
                 key={value}
                 type="button"
                 onClick={() => onChange({ ...d, differentName: value })}
-                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1381,7 +1429,7 @@ function DirectorCard({
           <Label>Date of birth *</Label>
           <div className="grid grid-cols-3 gap-2">
             <select
-              className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-2 text-sm text-stone-700 focus-visible:border-clay-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20"
+              className="flex h-12 w-full rounded-lg border border-stone-200 bg-card px-2 text-sm text-stone-700 focus-visible:border-clay-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20"
               value={d.dobDay}
               onChange={(e) => onChange({ ...d, dobDay: e.target.value })}
             >
@@ -1396,7 +1444,7 @@ function DirectorCard({
               })}
             </select>
             <select
-              className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-2 text-sm text-stone-700 focus-visible:border-clay-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20"
+              className="flex h-12 w-full rounded-lg border border-stone-200 bg-card px-2 text-sm text-stone-700 focus-visible:border-clay-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20"
               value={d.dobMonth}
               onChange={(e) => onChange({ ...d, dobMonth: e.target.value })}
             >
@@ -1421,7 +1469,7 @@ function DirectorCard({
               ))}
             </select>
             <select
-              className="flex h-12 w-full rounded-none border border-stone-200 bg-card px-2 text-sm text-stone-700 focus-visible:border-clay-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20"
+              className="flex h-12 w-full rounded-lg border border-stone-200 bg-card px-2 text-sm text-stone-700 focus-visible:border-clay-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20"
               value={d.dobYear}
               onChange={(e) => onChange({ ...d, dobYear: e.target.value })}
             >
@@ -1460,7 +1508,7 @@ function DirectorCard({
                 key={value}
                 type="button"
                 onClick={() => onChange({ ...d, corrType: value })}
-                className={`flex min-h-10 items-center justify-center rounded-none border px-2 py-2 text-center text-xs font-medium transition sm:text-sm ${
+                className={`flex min-h-10 items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-medium transition sm:text-sm ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1496,7 +1544,7 @@ function DirectorCard({
                 key={value}
                 type="button"
                 onClick={() => onChange({ ...d, homeType: value })}
-                className={`flex min-h-10 items-center justify-center rounded-none border px-2 py-2 text-center text-xs font-medium transition sm:text-sm ${
+                className={`flex min-h-10 items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-medium transition sm:text-sm ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1509,7 +1557,7 @@ function DirectorCard({
         </div>
       </div>
       <Expandable show={d.homeType === "other"} contentKey={`home-other-${i}`}>
-        <div className="rounded-none border border-stone-200 bg-stone-50/70 p-4">
+        <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4">
           <p className="mb-2 text-xs text-stone-600">Enter the home address manually.</p>
           <AddressFields
             value={d.homeAddress}
@@ -1541,7 +1589,7 @@ function DirectorCard({
                 key={value}
                 type="button"
                 onClick={() => onChange({ ...d, agreesDirector: value === "yes" })}
-                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1576,7 +1624,7 @@ function ShareholderCard({
   canRemove: boolean;
 }) {
   return (
-    <div className="space-y-3 rounded-none border border-stone-200 p-4">
+    <div className="space-y-3 rounded-lg border border-stone-200 p-4">
       <div className="flex justify-between">
         <span className="font-medium">Shareholder {i + 1}</span>
         {canRemove && (
@@ -1598,7 +1646,7 @@ function ShareholderCard({
               key={value}
               type="button"
               onClick={() => onChange({ ...sh, kind: value })}
-              className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium transition ${
+              className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium transition ${
                 selected
                   ? "border-clay-500 bg-clay-50 text-clay-800"
                   : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1621,7 +1669,7 @@ function ShareholderCard({
                     key={value}
                     type="button"
                     onClick={() => onChange({ ...sh, isDirector: value })}
-                    className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                    className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1635,7 +1683,7 @@ function ShareholderCard({
           </div>
           {sh.isDirector === "yes" ? (
             <select
-              className="h-12 w-full rounded-none border border-stone-200 bg-card px-3 text-sm text-stone-700"
+              className="h-12 w-full rounded-lg border border-stone-200 bg-card px-3 text-sm text-stone-700"
               value={sh.directorId}
               onChange={(e) => onChange({ ...sh, directorId: e.target.value })}
             >
@@ -1667,7 +1715,7 @@ function ShareholderCard({
                     key={value}
                     type="button"
                     onClick={() => onChange({ ...sh, addrType: value })}
-                    className={`flex min-h-10 items-center justify-center rounded-none border px-2 py-2 text-center text-xs font-medium transition sm:text-sm ${
+                    className={`flex min-h-10 items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-medium transition sm:text-sm ${
                       selected
                         ? "border-clay-500 bg-clay-50 text-clay-800"
                         : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1730,7 +1778,7 @@ function Step7({
                 onClick={() =>
                   update("step7", { ...s.step7, standard: value === "yes" })
                 }
-                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1743,13 +1791,13 @@ function Step7({
         </div>
       </div>
       <Expandable show={!s.step7.standard} contentKey="custom-share-structure">
-        <p className="rounded-none border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800">
+        <p className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-stone-800">
           Please email us at{" "}
           <a
-            href="mailto:joshua@tryfigures.com"
+            href={`mailto:${FIRM.contactEmail}`}
             className="font-medium text-clay-700 underline"
           >
-            joshua@tryfigures.com
+            {FIRM.contactEmail}
           </a>{" "}
           and we&apos;ll help set up a custom share structure.
         </p>
@@ -1865,7 +1913,7 @@ function Step8View({
         {pscs.map((p) => (
           <li
             key={p.id}
-            className="flex flex-wrap items-baseline justify-between gap-2 rounded-none border border-stone-200 bg-stone-50/80 px-4 py-3"
+            className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-stone-200 bg-stone-50/80 px-4 py-3"
           >
             <span className="font-medium text-stone-900">{p.name}</span>
             <span className="text-lg font-semibold tabular-nums text-stone-900">
@@ -1878,7 +1926,7 @@ function Step8View({
         Companies House will need each PSC&apos;s personal code - directors enter theirs on the final
         step. If any PSC is not a director, we&apos;ll confirm details with you after submission.
       </p>
-      <div className="flex flex-col gap-3 rounded-none border border-amber-200 bg-amber-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <Label className="min-w-0 flex-1 font-normal leading-snug text-stone-800">
           I confirm these people are correct as PSCs and match the shareholdings I entered earlier
         </Label>
@@ -1892,7 +1940,7 @@ function Step8View({
                 onClick={() =>
                   update("step8", { ...s.step8, pscListConfirm: value === "yes" })
                 }
-                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -1945,7 +1993,7 @@ function Step9Review({
   );
 
   const row = (label: string, edit: number, children: React.ReactNode) => (
-    <div className="rounded-none border border-stone-200 p-4 text-left">
+    <div className="rounded-lg border border-stone-200 p-4 text-left">
       <div className="mb-2 flex justify-between">
         <span className="font-medium">{label}</span>
         <button type="button" className="text-sm text-forest-600 underline" onClick={() => setStep(edit)}>
@@ -1958,7 +2006,7 @@ function Step9Review({
   return (
     <div className="space-y-4">
       <Section title="Companies House personal codes">
-      <div className="rounded-none border-2 border-amber-400 bg-yellow-100 p-4 text-left">
+      <div className="rounded-lg border-2 border-amber-400 bg-yellow-100 p-4 text-left">
         <h3 className="font-semibold text-stone-900">Director personal codes</h3>
         <p className="mt-1 text-sm text-stone-800">
           Enter each director&apos;s Companies House personal code. Any format is fine — the box
@@ -2103,14 +2151,14 @@ function Step9Review({
         </>
       )}
       {row("PSC", 8, <p>See step 8</p>)}
-      <div className="flex flex-col gap-3 rounded-none border border-stone-200 p-4 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="flex flex-col gap-3 rounded-lg border border-stone-200 p-4 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <Label className="min-w-0 flex-1 font-normal leading-snug text-stone-800">
           <span className="block">I confirm the information I have provided is accurate.</span>
           <span className="block">
             I understand Figures will check everything before submitting to Companies House.
           </span>
           <span className="block">
-            I agree to Figures&apos; terms of engagement and identity verification.
+            I understand Figures will check the identity of each director and send me an engagement letter to sign.
           </span>
         </Label>
         <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">
@@ -2124,7 +2172,7 @@ function Step9Review({
                   const on = value === "yes";
                   update("step9", { ...s.step9, acc1: on, acc2: on, acc3: on });
                 }}
-                className={`flex h-10 items-center justify-center rounded-none border text-sm font-medium capitalize transition ${
+                className={`flex h-10 items-center justify-center rounded-lg border text-sm font-medium capitalize transition ${
                   selected
                     ? "border-clay-500 bg-clay-50 text-clay-800"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"

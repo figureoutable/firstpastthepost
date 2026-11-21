@@ -1,5 +1,5 @@
-import { head, put } from "@vercel/blob";
 import crypto from "crypto";
+import { deleteFiles, putJson, readJson } from "@/lib/private-blob";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 8;
@@ -17,8 +17,10 @@ export type OnboardingDraftRecord = {
   state: Record<string, unknown>;
 };
 
+export const ONBOARDING_DRAFT_PREFIX = "onboarding-drafts/";
+
 function pathnameFor(code: string): string {
-  return `onboarding-drafts/${normalizeCode(code)}.json`;
+  return `${ONBOARDING_DRAFT_PREFIX}${normalizeCode(code)}.json`;
 }
 
 export function normalizeCode(code: string): string {
@@ -72,24 +74,9 @@ export function mergeOnboardingState(
   return serialized;
 }
 
-function parseJson(text: string): OnboardingDraftRecord {
-  return JSON.parse(text) as OnboardingDraftRecord;
-}
-
 export async function saveDraft(record: OnboardingDraftRecord): Promise<void> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not configured");
-
   const code = normalizeCode(record.code);
-  await put(
-    pathnameFor(code),
-    JSON.stringify({ ...record, code }, null, 2),
-    {
-      access: "public",
-      allowOverwrite: true,
-      token,
-    }
-  );
+  await putJson(pathnameFor(code), { ...record, code });
 }
 
 export async function createDraft(initial: {
@@ -116,16 +103,14 @@ export async function createDraft(initial: {
 export async function getDraft(code: string): Promise<OnboardingDraftRecord | null> {
   const normalized = normalizeCode(code);
   if (normalized.length !== CODE_LENGTH) return null;
+  return readJson<OnboardingDraftRecord>(pathnameFor(normalized));
+}
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  try {
-    const meta = await head(pathnameFor(normalized), token ? { token } : undefined);
-    const res = await fetch(meta.url);
-    if (!res.ok) return null;
-    return parseJson(await res.text());
-  } catch {
-    return null;
-  }
+/** Called once a draft has been submitted, so personal data is not kept twice. */
+export async function deleteDraft(code: string): Promise<void> {
+  const normalized = normalizeCode(code);
+  if (normalized.length !== CODE_LENGTH) return;
+  await deleteFiles([pathnameFor(normalized)]);
 }
 
 export async function updateDraft(input: {

@@ -28,9 +28,9 @@ export default function GradientButton({
       {...props}
       disabled={isDisabled}
       className={cn(
-        "group relative h-12 overflow-hidden rounded-none px-6 text-sm font-medium transition-colors duration-200",
+        "group relative h-11 overflow-hidden rounded-lg px-5 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/40 focus-visible:ring-offset-2",
         isOutline
-          ? "border border-stone-300 bg-card text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+          ? "border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 hover:text-stone-900"
           : "bg-clay-500 text-white hover:bg-clay-600",
         isDisabled && "cursor-not-allowed opacity-50 pointer-events-none",
         className

@@ -1,6 +1,8 @@
 import { createSign } from "crypto";
 import { sendInternalEmail } from "@/lib/notifications";
 import { escapeHtml } from "@/lib/email-html";
+import { documentHref } from "@/lib/document-links";
+import { isProduction } from "@/lib/env";
 
 const ONBOARDING_SHEET = "Onboarding";
 const INCORPORATION_SHEET = "Incorporation";
@@ -34,6 +36,9 @@ const ONBOARDING_HEADERS = [
     "Photo ID URL",
     "Proof of Address URL",
     "Full Payload (JSON)",
+    "Date of Birth",
+    "Previous Accountant",
+    "AML Answers",
 ] as const;
 
 const INCORPORATION_HEADERS = [
@@ -55,6 +60,7 @@ const INCORPORATION_HEADERS = [
     "PSCs",
     "Director Personal Codes",
     "Full Payload (JSON)",
+    "Submission ID",
 ] as const;
 
 type ServiceAccountCredentials = {
@@ -307,6 +313,8 @@ async function safeAppend(
 ): Promise<void> {
     if (!isGoogleSheetsConfigured()) {
         console.error("[google-sheets] Not configured - skipping row append");
+        // Previews and local builds have no sheet on purpose: no alert email needed.
+        if (!isProduction()) return;
         await notifySheetsFailure(
             sheetName,
             values,
@@ -379,9 +387,19 @@ function resolveShareholderName(
     return `${cell(shareholder.firstName)} ${cell(shareholder.lastName)}`.trim();
 }
 
+const AML_FIELDS = [
+    "isPep",
+    "hasSanctions",
+    "hasHighRiskIncome",
+    "hasComplexStructure",
+    "hasBankruptcy",
+    "financialDifficulty",
+];
+
 export async function appendOnboardingSubmission(
     submissionId: string,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
+    request?: Request
 ): Promise<void> {
     const submittedAt = new Date().toISOString();
     const fullName =
@@ -400,8 +418,8 @@ export async function appendOnboardingSubmission(
         cell(payload.companyName),
         cell(payload.registrationNumber),
         cell(payload.companyAuthCode),
-        cell(payload.businessUtr ?? payload.utrNumber),
-        cell(payload.personalUtr),
+        cell(payload.businessUtr ?? (payload.onboardingType === "business" ? payload.utrNumber : "")),
+        cell(payload.personalUtr ?? (payload.onboardingType === "self-assessment" ? payload.utrNumber : "")),
         cell(payload.niNumber),
         cell(payload.hasPaye),
         cell(payload.accountsOfficeRef),
@@ -415,13 +433,26 @@ export async function appendOnboardingSubmission(
         cell(payload.servicesRequired),
         cell(payload.incomeTypes),
         formatDirectorsList(payload.directors),
-        cell(payload.photoId),
-        cell(payload.proofOfAddress),
+        documentHref(payload.photoId, request),
+        documentHref(payload.proofOfAddress, request),
         JSON.stringify(payload),
+        cell(payload.dob),
+        payload.previousAccountant === "yes"
+            ? [payload.previousAccountantName, payload.previousAccountantFirm, payload.previousAccountantEmail]
+                  .map(cell)
+                  .filter(Boolean)
+                  .join(", ")
+            : cell(payload.previousAccountant),
+        AML_FIELDS.filter((key) => payload[key] === "yes" || payload[key] === "no")
+            .map((key) => `${key}: ${payload[key]}`)
+            .join("; "),
     ]);
 }
 
-export async function appendIncorporationSubmission(payload: Record<string, unknown>): Promise<void> {
+export async function appendIncorporationSubmission(
+    payload: Record<string, unknown>,
+    submissionId = ""
+): Promise<void> {
     const step2 = (payload.step2 ?? {}) as Record<string, unknown>;
     const step3 = (payload.step3 ?? {}) as Record<string, unknown>;
     const step4 = (payload.step4 ?? {}) as Record<string, unknown>;
@@ -581,6 +612,7 @@ export async function appendIncorporationSubmission(payload: Record<string, unkn
         pscs || "None over 25%",
         personalCodes,
         JSON.stringify(payload),
+        submissionId,
     ]);
 }
 
@@ -590,12 +622,12 @@ export async function appendSpecialIncorporationLead(payload: Record<string, unk
         "Special structure lead",
         "",
         "",
+        cell(payload.email),
+        cell(payload.phone),
         "",
         "",
         "",
-        "",
-        "",
-        `CIC: ${cell(payload.cic)}; Limited by guarantee: ${cell(payload.limitedByGuarantee)}`,
+        `${cell(payload.name)}. CIC: ${cell(payload.cic)}; Limited by guarantee: ${cell(payload.limitedByGuarantee)}`,
         "",
         "",
         "",
@@ -604,5 +636,6 @@ export async function appendSpecialIncorporationLead(payload: Record<string, unk
         "Needs team follow-up",
         "",
         JSON.stringify(payload),
+        "",
     ]);
 }

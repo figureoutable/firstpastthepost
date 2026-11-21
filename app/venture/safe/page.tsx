@@ -499,7 +499,7 @@ export default function SafePage() {
             color="#D2795A"
             status={status}
             visual={
-              <p className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+              <p className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
                 <span>{raises.length}</span>{" "}
                 <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
                   raises
@@ -531,7 +531,7 @@ export default function SafePage() {
                   {allInvestors.length === 1 ? "" : "s"}
                 </p>
               </div>
-              <Button size="default" className="w-48 rounded-md" onClick={startNewRaise}>
+              <Button size="default" className="w-48 rounded-lg" onClick={startNewRaise}>
                 <Plus className="mr-1.5 h-4 w-4" /> New raise
               </Button>
             </div>
@@ -652,7 +652,7 @@ export default function SafePage() {
                             </p>
                             <Button
                               size="sm"
-                              className="rounded-md"
+                              className="rounded-lg"
                               onClick={() => startAddInvestor(raise)}
                             >
                               <UserPlus className="mr-1.5 h-4 w-4" />
@@ -704,7 +704,7 @@ export default function SafePage() {
                     <Label htmlFor="investorType">Subscriber type</Label>
                     <select
                       id="investorType"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                       value={investorDraft.type}
                       onChange={(e) =>
                         updateInvestor("type", e.target.value as FeaInvestorType)
@@ -718,7 +718,7 @@ export default function SafePage() {
                     <Label htmlFor="considerationType">Consideration</Label>
                     <select
                       id="considerationType"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                       value={investorDraft.considerationType}
                       onChange={(e) =>
                         updateInvestor(
@@ -836,7 +836,7 @@ export default function SafePage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="rounded-md"
+                      className="rounded-lg"
                       onClick={() => setEditingRaiseTerms(true)}
                     >
                       Edit raise terms
@@ -960,7 +960,7 @@ export default function SafePage() {
                           <Label htmlFor="longstopType">Longstop type *</Label>
                           <select
                             id="longstopType"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             value={termsDraft.longstopType}
                             onChange={(e) =>
                               updateTerms(
@@ -1071,7 +1071,7 @@ export default function SafePage() {
                       <Button
                         type="button"
                         variant="ghost"
-                        className="rounded-md text-stone-500"
+                        className="rounded-lg text-stone-500"
                         onClick={() => {
                           if (targetRaise) {
                             setCompanyDraft(companyFromRaise(targetRaise));
@@ -1326,7 +1326,7 @@ export default function SafePage() {
             <div className="flex flex-wrap gap-3 border-t border-stone-200 pt-6">
               {createdIds && (
                 <Button
-                  className="rounded-md"
+                  className="rounded-lg"
                   onClick={() => {
                     const raise = state.safe.raises.find(
                       (r) => r.id === createdIds.raiseId
@@ -1338,7 +1338,7 @@ export default function SafePage() {
                   Add another investor
                 </Button>
               )}
-              <Button variant="outline" className="rounded-md" onClick={() => setView("list")}>
+              <Button variant="outline" className="rounded-lg" onClick={() => setView("list")}>
                 Back to register
               </Button>
             </div>
@@ -1368,7 +1368,7 @@ export default function SafePage() {
             </p>
             <div className="mt-6 flex flex-col gap-2">
               <Button
-                className="h-auto justify-start rounded-md px-4 py-3 text-left"
+                className="h-auto justify-start rounded-lg px-4 py-3 text-left"
                 onClick={() => {
                   persistAddInvestor(
                     targetRaise.id,
@@ -1389,7 +1389,7 @@ export default function SafePage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-auto justify-start rounded-md px-4 py-3 text-left"
+                className="h-auto justify-start rounded-lg px-4 py-3 text-left"
                 onClick={() => {
                   persistAddInvestor(
                     targetRaise.id,
@@ -1410,7 +1410,7 @@ export default function SafePage() {
               </Button>
               <Button
                 variant="ghost"
-                className="rounded-md"
+                className="rounded-lg"
                 onClick={() => setScopeDialog(null)}
               >
                 Cancel

@@ -4,24 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-    "inline-flex items-center justify-center whitespace-nowrap rounded-none text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
     {
         variants: {
             variant: {
-                default: "bg-clay-500 text-white hover:bg-clay-600 shadow-md hover:shadow-lg transition-all duration-300",
+                default: "bg-clay-500 text-white hover:bg-clay-600",
                 destructive:
                     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
                 outline:
-                    "border border-stone-200 bg-card text-stone-700 hover:bg-stone-50 hover:text-stone-900",
+                    "border border-stone-300 bg-white text-stone-800 hover:bg-stone-50",
                 secondary:
                     "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                ghost: "hover:bg-accent hover:text-accent-foreground",
+                ghost: "text-stone-700 hover:bg-stone-100",
                 link: "text-primary underline-offset-4 hover:underline",
             },
             size: {
-                default: "h-12 px-6 py-3",
-                sm: "h-9 rounded-none px-3",
-                lg: "h-14 rounded-none px-10 text-base",
+                default: "h-11 px-5",
+                sm: "h-9 px-3",
+                lg: "h-12 px-8 text-base",
                 icon: "h-10 w-10",
             },
         },
@@ -40,10 +40,6 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant, size, asChild = false, ...props }, ref) => {
-        // Note: I am not installing @radix-ui/react-slot just yet, will switch to simple button if preferred or install it. 
-        // Actually, shadcn uses Slot. I will create a simple version if Slot is missing or install it.
-        // For now, I'll fallback to just standard button if asChild is not used, but Slot is good for composition.
-        // I will install @radix-ui/react-slot to be safe as it's standard.
         const Comp = asChild ? Slot : "button"
         return (
             <Comp

@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { IncorporationWizard } from "@/components/incorporation/IncorporationWizard";
+import { PageShell, PageTitle } from "@/components/site/site-chrome";
+
+export const metadata: Metadata = { title: "Form a new company" };
 
 export default function IncorporatePage() {
   return (
-    <div className="min-h-screen bg-background py-6 md:py-10">
+    <PageShell>
+      <PageTitle eyebrow="New company" title="Form a UK limited company" className="mb-5" />
       <IncorporationWizard />
-    </div>
+    </PageShell>
   );
 }

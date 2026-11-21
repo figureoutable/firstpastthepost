@@ -3,7 +3,10 @@
     {
       "path": "/api/firmcheck/poll",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cleanup",
+      "schedule": "30 3 * * *"
     }
   ]
 }
-

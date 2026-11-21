@@ -25,7 +25,7 @@ export function PageHeader({
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-forest-700 hover:text-forest-800"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-stone-900"
         >
           <ArrowLeft className="h-4 w-4" /> {backLabel}
         </Link>
@@ -43,7 +43,7 @@ export function PageHeader({
                 />
               )}
               {title && (
-                <h1 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+                <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
                   {title}
                 </h1>
               )}

@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { sendInternalEmail, sendClientEmail } from "@/lib/notifications";
 import { appendIncorporationSubmission } from "@/lib/google-sheets";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/email-html";
+import { createSubmission, type AmlPerson } from "@/lib/submission-store";
+import { signSubmissionId } from "@/lib/aml-signature";
+import { deleteDraft } from "@/lib/incorporation-draft-store";
+import { appOrigin, isPreview } from "@/lib/env";
+import { incorporationNextSteps, nextStepsEmailHtml } from "@/lib/next-steps";
+import { FIRM } from "@/lib/figures-config";
 
 type Address = {
   line1?: string;
@@ -12,6 +18,35 @@ type Address = {
   country?: string;
 };
 
+function plainAddress(addr: Address | undefined | null): string {
+  return [addr?.line1, addr?.line2, addr?.town, addr?.county, addr?.postcode, addr?.country]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** Directors to run individual AML checks on (the company has no number yet). */
+function amlPeopleFrom(payload: any, registeredEmail: string): AmlPerson[] {
+  const directors: any[] = Array.isArray(payload?.step5?.directors) ? payload.step5.directors : [];
+  const registered = payload?.step3?.registered;
+  return directors
+    .map((d, index) => {
+      const fullName = [d.firstName, d.middleName, d.lastName].filter(Boolean).join(" ").trim();
+      const dob =
+        d.dobYear && d.dobMonth && d.dobDay
+          ? `${d.dobYear}-${String(d.dobMonth).padStart(2, "0")}-${String(d.dobDay).padStart(2, "0")}`
+          : undefined;
+      const home =
+        d.homeType === "other" ? d.homeAddress : d.corrType === "other" ? d.corrAddress : registered;
+      return {
+        fullName,
+        email: (d.emailReminders || "").trim() || (index === 0 ? registeredEmail : undefined),
+        dob,
+        address: plainAddress(home) || undefined,
+      };
+    })
+    .filter((person) => person.fullName);
+}
+
 function formatAddress(addr: Address | undefined | null): string {
   return [addr?.line1, addr?.line2, addr?.town, addr?.county, addr?.postcode, addr?.country]
     .filter(Boolean)
@@ -21,7 +56,10 @@ function formatAddress(addr: Address | undefined | null): string {
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json();
+    const body = await request.json();
+    const resumeCode = typeof body?.resumeCode === "string" ? body.resumeCode : "";
+    const payload = { ...body };
+    delete payload.resumeCode;
     const registeredEmail = String(payload?.step3?.registeredEmail || "").trim();
     if (!registeredEmail) {
       return NextResponse.json({ error: "Registered email missing" }, { status: 400 });
@@ -62,6 +100,15 @@ export async function POST(request: Request) {
       : 0;
 
     const registeredAddr: Address = step3?.registered || {};
+
+    const amlPeople = amlPeopleFrom(payload, registeredEmail);
+    const submission = await createSubmission(payload, { kind: "incorporation", amlPeople });
+    await appendIncorporationSubmission(payload as Record<string, unknown>, submission.id);
+
+    const amlSection = isPreview()
+      ? `<p style="color:#9a3412;">This is a test submission from a preview build, so the paid Firmcheck AML button is hidden.</p>`
+      : `<p>Forming a company is AML-regulated work. Use the button below to run individual checks on the ${amlPeople.length} director(s). You will be asked to confirm first.</p>
+         <a href="${appOrigin(request)}/api/firmcheck/initiate?submissionId=${encodeURIComponent(submission.id)}&sig=${signSubmissionId(submission.id)}" style="display:inline-block;padding:10px 16px;background:#ea580c;color:#fff;text-decoration:none;border-radius:8px;">Review and start AML check</a>`;
 
     const html = `
       <h2 style="font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;">New incorporation request</h2>
@@ -176,29 +223,35 @@ export async function POST(request: Request) {
           .join("") || "<li>None (confirmed no one controls more than 25%)</li>"}
       </ul>
 
-      <h3 style="margin-top:24px;">Raw payload (for debugging)</h3>
-      <pre style="font-size:12px;white-space:pre-wrap;max-height:500px;overflow:auto;border:1px solid #eee;padding:8px;border-radius:4px;">
-${JSON.stringify(payload, null, 2)}
-      </pre>
+      <h3 style="margin-top:24px;">Firmcheck AML</h3>
+      ${amlSection}
     `;
-    await appendIncorporationSubmission(payload as Record<string, unknown>);
-    await sendInternalEmail("Incorporation request submitted", html);
 
-    const clientBody = `
-      <p>Congrats on the first step to your new Limited company!</p>
-      <p>We have received everything we need and will be in touch with you shortly.</p>
-      <p>Kind regards,<br/>The Figures Team</p>
-    `;
+    try {
+      await sendInternalEmail(`New company formation: ${step2?.name || ""} ${step2?.ending || ""}`.trim(), html);
+    } catch (error) {
+      console.error("[incorporation] Internal email failed", error);
+    }
+
+    const firstName = String(step5?.directors?.[0]?.firstName || "").trim() || "there";
     await sendClientEmail(
       registeredEmail,
-      "Your company incorporation request - next steps",
-      clientBody
+      "We've received your company formation request",
+      nextStepsEmailHtml(
+        `Hi ${escapeHtml(firstName)}, thank you for asking Figures to form ${escapeHtml(`${step2?.name || "your company"} ${step2?.ending || ""}`.trim())}. Here is what happens next.`,
+        incorporationNextSteps(),
+        FIRM.contactEmail
+      )
     );
 
-    return NextResponse.json({ ok: true });
+    if (resumeCode) {
+      await deleteDraft(resumeCode).catch((error) => console.error("[incorporation] Draft cleanup failed", error));
+    }
+
+    return NextResponse.json({ ok: true, submissionId: submission.id });
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Submit failed" },
+      { error: "We could not save your request. Please try again in a moment." },
       { status: 500 }
     );
   }

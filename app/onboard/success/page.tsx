@@ -1,43 +1,43 @@
-"use client";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { PageShell, Panel } from "@/components/site/site-chrome";
+import { NextStepsList } from "@/components/site/next-steps-list";
+import { onboardingNextSteps } from "@/lib/next-steps";
+import { FIRM } from "@/lib/figures-config";
 
-import { ShieldCheck } from "lucide-react";
-import { motion } from "framer-motion";
+export const metadata: Metadata = { title: "Thank you" };
 
-export default function OnboardSuccessPage() {
+export default async function OnboardSuccessPage({
+    searchParams,
+}: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+    const params = await searchParams;
+    const steps = onboardingNextSteps({ hasPreviousAccountant: params.handover === "1" });
+
     return (
-        <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-4">
-            <div className="pointer-events-none absolute inset-0">
-                <div className="absolute bottom-[-20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-clay-50/80 blur-[120px]" />
-            </div>
+        <PageShell width="narrow">
+            <Panel className="text-center">
+                <Image src="/images/thumbs-up.jpg" alt="" width={744} height={763} className="mx-auto mb-4 h-24 w-auto" />
+                <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Thank you, we have your details</h1>
+                <p className="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-stone-600">
+                    Our team will look through everything shortly. Here is what happens now.
+                </p>
+            </Panel>
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="z-10 w-full max-w-lg"
-            >
-                <div className="rounded-none border border-border bg-card p-10 text-center">
-                    <div className="mx-auto mb-4 w-28">
-                        <img
-                            src="/images/thumbs-up.jpg"
-                            alt=""
-                            className="block h-auto w-full"
-                        />
-                    </div>
+            <Panel className="mt-4">
+                <h2 className="mb-5 text-base font-semibold text-stone-900">What happens next</h2>
+                <NextStepsList steps={steps} />
+            </Panel>
 
-                    <h2 className="mb-3 text-2xl font-semibold text-foreground">Ready, Set, Go!</h2>
-                    <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-                        We have received your details and our team is now performing the final
-                        administrative reviews to get you up and running.
-                    </p>
-                </div>
-
-                <div className="mt-6 flex justify-center">
-                    <span className="flex items-center gap-1 text-xs text-stone-400">
-                        <ShieldCheck className="h-3 w-3" /> Encrypted & Secure
-                    </span>
-                </div>
-            </motion.div>
-        </div>
+            <p className="mt-6 text-center text-sm text-stone-500">
+                Questions? Email{" "}
+                <a href={`mailto:${FIRM.contactEmail}`} className="font-medium text-clay-700 underline underline-offset-2">
+                    {FIRM.contactEmail}
+                </a>{" "}
+                or go back to the <Link href="/" className="font-medium text-stone-700 underline underline-offset-2">home page</Link>.
+            </p>
+        </PageShell>
     );
 }

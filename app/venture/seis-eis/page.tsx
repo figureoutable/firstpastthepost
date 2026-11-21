@@ -47,7 +47,7 @@ export default function SeisEisPage() {
         <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
           Fundraising
         </span>
-        <h2 className="mt-1 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
           Prepare your advance assurance application
         </h2>
         <p className="mt-3 text-base leading-relaxed text-stone-600">

@@ -1,5 +1,5 @@
-import { head, put } from "@vercel/blob";
 import crypto from "crypto";
+import { deleteFiles, putJson, readJson } from "@/lib/private-blob";
 import type { IncorporationState } from "@/components/incorporation/state";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -14,8 +14,10 @@ export type IncorporationDraftRecord = {
   state: IncorporationState;
 };
 
+export const INCORPORATION_DRAFT_PREFIX = "incorporation-drafts/";
+
 function pathnameFor(code: string): string {
-  return `incorporation-drafts/${normalizeCode(code)}.json`;
+  return `${INCORPORATION_DRAFT_PREFIX}${normalizeCode(code)}.json`;
 }
 
 export function normalizeCode(code: string): string {
@@ -31,24 +33,9 @@ export function generateResumeCode(): string {
   return out;
 }
 
-function parseJson(text: string): IncorporationDraftRecord {
-  return JSON.parse(text) as IncorporationDraftRecord;
-}
-
 export async function saveDraft(record: IncorporationDraftRecord): Promise<void> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not configured");
-
   const code = normalizeCode(record.code);
-  await put(
-    pathnameFor(code),
-    JSON.stringify({ ...record, code }, null, 2),
-    {
-      access: "public",
-      allowOverwrite: true,
-      token,
-    }
-  );
+  await putJson(pathnameFor(code), { ...record, code });
 }
 
 export async function createDraft(
@@ -71,16 +58,13 @@ export async function createDraft(
 export async function getDraft(code: string): Promise<IncorporationDraftRecord | null> {
   const normalized = normalizeCode(code);
   if (normalized.length !== CODE_LENGTH) return null;
+  return readJson<IncorporationDraftRecord>(pathnameFor(normalized));
+}
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  try {
-    const meta = await head(pathnameFor(normalized), token ? { token } : undefined);
-    const res = await fetch(meta.url);
-    if (!res.ok) return null;
-    return parseJson(await res.text());
-  } catch {
-    return null;
-  }
+export async function deleteDraft(code: string): Promise<void> {
+  const normalized = normalizeCode(code);
+  if (normalized.length !== CODE_LENGTH) return;
+  await deleteFiles([pathnameFor(normalized)]);
 }
 
 export async function updateDraft(input: {

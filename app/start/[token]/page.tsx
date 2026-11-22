@@ -6,8 +6,9 @@ import { canSimulatePayment, markOpened } from "@/lib/engagements/actions";
 import { currentStep, visibleSteps } from "@/lib/engagements/flow";
 import { formatPence } from "@/lib/engagements/letter";
 import { getEngagementByToken } from "@/lib/engagements/store";
+import { LINK_LIFETIME_DAYS } from "@/lib/engagements/types";
 import { FIRM } from "@/lib/figures-config";
-import { onboardingNextSteps } from "@/lib/next-steps";
+import { incorporationNextSteps, onboardingNextSteps } from "@/lib/next-steps";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Getting started", robots: { index: false, follow: false } };
@@ -33,6 +34,14 @@ export default async function StartPage({ params }: { params: Promise<{ token: s
 
   const step = currentStep(e);
   if (step === "cancelled") return <Message title="This link is no longer active" text="It may have been replaced by a newer one." />;
+  if (step === "expired") {
+    return (
+      <Message
+        title="This link has expired"
+        text={`For your security, links last ${LINK_LIFETIME_DAYS} days. We can send you a new one.`}
+      />
+    );
+  }
   await markOpened(e);
 
   const view: StartView = {
@@ -49,8 +58,9 @@ export default async function StartPage({ params }: { params: Promise<{ token: s
       amount: e.payment.method === "card" ? formatPence(e.cardAmountPence || 0) : undefined,
       canSimulate: canSimulatePayment(e.payment.method),
     },
-    nextSteps: step === "done" ? onboardingNextSteps({ letterSigned: true }) : [],
+    nextSteps: step !== "done" ? [] : e.client.type === "formation" ? incorporationNextSteps({ letterSigned: true }) : onboardingNextSteps({ letterSigned: true }),
     contactEmail: FIRM.contactEmail,
+    formation: e.client.type === "formation",
   };
 
   return (

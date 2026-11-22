@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminLink, confirmPayment } from "@/lib/engagements/actions";
 import { teamEmail } from "@/lib/engagements/emails";
-import { addFlag, getEngagementByGoCardlessId, logEvent, saveEngagement } from "@/lib/engagements/store";
+import { addFlag, getEngagementByGoCardlessId, logEvent, updateEngagement } from "@/lib/engagements/store";
 import { sendInternalEmail } from "@/lib/notifications";
 import { verifyGoCardlessWebhook } from "@/lib/payments/gocardless";
 
@@ -44,27 +44,30 @@ export async function POST(request: Request) {
         continue;
       }
       if (event.resource_type !== "mandates" || !event.links?.mandate) continue;
-      const e = await getEngagementByGoCardlessId(event.links.mandate);
-      if (!e) continue;
+      const found = await getEngagementByGoCardlessId(event.links.mandate);
+      if (!found) continue;
 
-      e.payment.gocardless = { ...(e.payment.gocardless || {}), mandateStatus: event.action };
-      if (event.action === "active" || event.action === "reinstated") {
-        e.payment.status = "active";
-        logEvent(e, "system", "Direct Debit is now active");
-      } else if (PROBLEMS[event.action]) {
-        e.payment.status = event.action === "failed" ? "failed" : "cancelled";
-        const message = `${PROBLEMS[event.action]}${event.details?.description ? `: ${event.details.description}` : ""}`;
-        logEvent(e, "system", message);
-        if (addFlag(e, "payment", message)) {
-          await sendInternalEmail(
-            `Direct Debit problem: ${e.client.companyName || e.client.name}`,
-            teamEmail(e, adminLink(e), message, "Nothing has been cancelled or changed by the app. Please check GoCardless and decide what to do.")
-          );
+      let problem = "";
+      const { record, changed } = await updateEngagement(found.id, (e) => {
+        e.payment.gocardless = { ...(e.payment.gocardless || {}), mandateStatus: event.action };
+        if (event.action === "active" || event.action === "reinstated") {
+          e.payment.status = "active";
+          logEvent(e, "system", "Direct Debit is now active");
+        } else if (PROBLEMS[event.action]) {
+          e.payment.status = event.action === "failed" ? "failed" : "cancelled";
+          const message = `${PROBLEMS[event.action]}${event.details?.description ? `: ${event.details.description}` : ""}`;
+          logEvent(e, "system", message);
+          if (addFlag(e, "payment", message)) problem = message;
+        } else {
+          logEvent(e, "system", `Direct Debit ${event.action}`);
         }
-      } else {
-        logEvent(e, "system", `Direct Debit ${event.action}`);
+      });
+      if (changed && problem) {
+        await sendInternalEmail(
+          `Direct Debit problem: ${record.client.companyName || record.client.name}`,
+          teamEmail(record, adminLink(record), problem, "Nothing has been cancelled or changed by the app. Please check GoCardless and decide what to do.")
+        );
       }
-      await saveEngagement(e);
     } catch (error) {
       console.error("[gocardless webhook]", event.id, error);
     }

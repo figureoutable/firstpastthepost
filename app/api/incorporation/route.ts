@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { sendInternalEmail, sendClientEmail } from "@/lib/notifications";
 import { appendIncorporationSubmission } from "@/lib/google-sheets";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/email-html";
 import { createSubmission, type AmlPerson } from "@/lib/submission-store";
 import { signSubmissionId } from "@/lib/aml-signature";
 import { deleteDraft } from "@/lib/incorporation-draft-store";
-import { appOrigin, isPreview } from "@/lib/env";
+import { appOrigin, isPreview, isProduction } from "@/lib/env";
+import { startAmlCheck } from "@/lib/aml-start";
+import { adminLink, checkOnboardingAllowed, completeOnboarding, FlowError } from "@/lib/engagements/actions";
+import { getSettings } from "@/lib/engagements/settings";
+import { getEngagementByToken } from "@/lib/engagements/store";
 import { incorporationNextSteps, nextStepsEmailHtml } from "@/lib/next-steps";
 import { FIRM } from "@/lib/figures-config";
 
@@ -78,6 +82,24 @@ export async function POST(request: Request) {
     const payload = { ...body };
     delete payload.resumeCode;
     delete payload.website;
+    delete payload.engagementToken;
+
+    // Clients coming through a New client link must have signed and paid first.
+    const engagementToken = typeof body?.engagementToken === "string" ? body.engagementToken : "";
+    const engagement = engagementToken ? await getEngagementByToken(engagementToken) : null;
+    if (engagementToken) {
+      if (!engagement) return NextResponse.json({ error: "This link is not valid. Please contact us." }, { status: 404 });
+      try {
+        checkOnboardingAllowed(engagement);
+      } catch (error) {
+        const message = error instanceof FlowError ? error.message : "Please refresh the page.";
+        return NextResponse.json({ error: message }, { status: error instanceof FlowError ? error.status : 409 });
+      }
+      if (engagement.client.type !== "formation") {
+        return NextResponse.json({ error: "Please refresh the page and try again." }, { status: 409 });
+      }
+      payload.engagementId = engagement.id;
+    }
     const registeredEmail = String(payload?.step3?.registeredEmail || "").trim();
     if (!registeredEmail) {
       return NextResponse.json({ error: "Registered email missing" }, { status: 400 });
@@ -123,13 +145,21 @@ export async function POST(request: Request) {
     const submission = await createSubmission(payload, { kind: "incorporation", amlPeople });
     await appendIncorporationSubmission(payload as Record<string, unknown>, submission.id);
 
-    const amlSection = isPreview()
+    // Link clients have signed and set up payment, so the team can choose to start AML straight away.
+    const autoAml = Boolean(engagement) && isProduction() && (await getSettings()).autoStartAml;
+    const linkNote = engagement
+      ? `<p style="font-size:14px;">Came through a New client link. Engagement letter signed${engagement.payment.method === "none" ? "" : " and payment set up"}. <a href="${escapeHtml(adminLink(engagement, request))}" style="color:#c2410c;">Open on the status board</a></p>`
+      : "";
+    const amlSection = autoAml
+      ? `<p>The Firmcheck AML checks on the ${amlPeople.length} director(s) are starting automatically (switched on in Settings). You'll get an email when they have started.</p>`
+      : isPreview()
       ? `<p style="color:#9a3412;">This is a test submission from a preview build, so the paid Firmcheck AML button is hidden.</p>`
       : `<p>Forming a company is AML-regulated work. Use the button below to run individual checks on the ${amlPeople.length} director(s). You will be asked to confirm first.</p>
          <a href="${appOrigin(request)}/api/firmcheck/initiate?submissionId=${encodeURIComponent(submission.id)}&sig=${signSubmissionId(submission.id)}" style="display:inline-block;padding:10px 16px;background:#ea580c;color:#fff;text-decoration:none;border-radius:8px;">Review and start AML check</a>`;
 
     const html = `
       <h2 style="font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;">New incorporation request</h2>
+      ${linkNote}
 
       <h3 style="margin-top:16px;">Overview</h3>
       <table style="border-collapse:collapse;font-size:14px;">
@@ -316,13 +346,22 @@ export async function POST(request: Request) {
       "We've received your company formation request",
       nextStepsEmailHtml(
         `Hi ${escapeHtml(firstName)}, thank you for asking Figures to form ${escapeHtml(`${step2?.name || "your company"} ${step2?.ending || ""}`.trim())}. Here is what happens next.`,
-        incorporationNextSteps(),
+        incorporationNextSteps({ letterSigned: Boolean(engagement) }),
         FIRM.contactEmail
       )
     );
 
     if (resumeCode) {
       await deleteDraft(resumeCode).catch((error) => console.error("[incorporation] Draft cleanup failed", error));
+    }
+    if (engagement) {
+      await completeOnboarding(engagement.id, submission.id).catch((error) =>
+        console.error("[incorporation] Could not update the client record", error)
+      );
+    }
+    if (autoAml) {
+      // After the client has their answer, so they aren't kept waiting.
+      after(() => startAmlCheck(submission).then(() => undefined));
     }
 
     return NextResponse.json({ ok: true, submissionId: submission.id });

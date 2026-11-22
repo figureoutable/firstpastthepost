@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { VideoCard, type VideoCardHandle } from "@/components/kokonutui/video-card";
+import { FIRM } from "@/lib/figures-config";
 
 type Card = {
   href: string;
@@ -13,6 +14,8 @@ type Card = {
   src: string;
   startAt: number;
   soon?: boolean;
+  /** Opens another site in a new tab. */
+  external?: boolean;
 };
 
 function HomeCard({ card }: { card: Card }) {
@@ -50,6 +53,14 @@ function HomeCard({ card }: { card: Card }) {
     );
   }
 
+  const linkProps = {
+    className: `${className} transition-shadow hover:shadow-lg hover:shadow-stone-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/50`,
+    onMouseEnter: () => videoRef.current?.play(),
+    onMouseLeave: () => videoRef.current?.pause(),
+    onFocus: () => videoRef.current?.play(),
+    onBlur: () => videoRef.current?.pause(),
+  };
+
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -58,16 +69,15 @@ function HomeCard({ card }: { card: Card }) {
       className="h-full"
       tabIndex={-1}
     >
-      <Link
-        href={card.href}
-        className={`${className} transition-shadow hover:shadow-lg hover:shadow-stone-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/50`}
-        onMouseEnter={() => videoRef.current?.play()}
-        onMouseLeave={() => videoRef.current?.pause()}
-        onFocus={() => videoRef.current?.play()}
-        onBlur={() => videoRef.current?.pause()}
-      >
-        {inner}
-      </Link>
+      {card.external ? (
+        <a href={card.href} target="_blank" rel="noopener noreferrer" {...linkProps}>
+          {inner}
+        </a>
+      ) : (
+        <Link href={card.href} {...linkProps}>
+          {inner}
+        </Link>
+      )}
     </motion.div>
   );
 }
@@ -75,9 +85,10 @@ function HomeCard({ card }: { card: Card }) {
 export function HomeCards({ ventureEnabled }: { ventureEnabled: boolean }) {
   const cards: Card[] = [
     {
-      href: "/onboard",
-      label: "Become a client",
-      description: "Set up Self Assessment, company accounts, VAT or payroll.",
+      href: FIRM.bookingUrl,
+      external: true,
+      label: "Book a free call",
+      description: "Tell us what you need. We then send one link to sign, pay and get set up.",
       src: "/videos/onboarding-v3.mp4",
       startAt: 0.5,
     },

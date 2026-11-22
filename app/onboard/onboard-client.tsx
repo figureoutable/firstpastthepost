@@ -1,47 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Check, Copy, ShieldCheck } from "lucide-react";
-import { VideoCard, type VideoCardHandle } from "@/components/kokonutui/video-card";
+import { AlertCircle, CalendarDays, Check, Copy, ShieldCheck } from "lucide-react";
 import { OnboardingForm, type DocKind, type StepId } from "@/components/onboarding/onboarding-form";
 import { PageShell, PageTitle, Panel } from "@/components/site/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sanitizeDraftState } from "@/lib/onboarding-validation";
-import { isOnboardingType, type OnboardingType } from "@/lib/onboarding-fields";
+import { type OnboardingType } from "@/lib/onboarding-fields";
+import { FIRM } from "@/lib/figures-config";
 import { isTooLarge, prepareUpload } from "@/lib/compress-image";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Data = Record<string, any>;
 
 const RESUME_CODE_KEY = "onboarding-resume-code";
-
-const SERVICES: { type: OnboardingType; label: string; description: string; video: string; startAt: number }[] = [
-  {
-    type: "self-assessment",
-    label: "Self Assessment",
-    description: "Your personal tax return: employment, rental, dividends and more.",
-    video: "/videos/self-assessment.mp4",
-    startAt: 0.5,
-  },
-  {
-    type: "business",
-    label: "Company",
-    description: "Accounts, corporation tax, VAT and payroll for your limited company.",
-    video: "/videos/business.mp4",
-    startAt: 0.5,
-  },
-  {
-    type: "both",
-    label: "Company and Self Assessment",
-    description: "Both of the above, in one form.",
-    video: "/videos/both.mp4",
-    startAt: 0,
-  },
-];
 
 const TITLES: Record<OnboardingType, string> = {
   "self-assessment": "Self Assessment",
@@ -86,45 +62,8 @@ function storage(action: "get" | "set" | "clear", value = ""): string {
   return "";
 }
 
-function ServiceCard({
-  service,
-  onClick,
-  disabled,
-}: {
-  service: (typeof SERVICES)[number];
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  const videoRef = useRef<VideoCardHandle>(null);
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 320, damping: 24 }}
-      onMouseEnter={() => videoRef.current?.play()}
-      onMouseLeave={() => videoRef.current?.pause()}
-      onFocus={() => videoRef.current?.play()}
-      onBlur={() => videoRef.current?.pause()}
-      className="group flex h-full flex-row overflow-hidden rounded-2xl border border-stone-200 bg-white text-left sm:flex-col shadow-[0_1px_2px_rgba(28,25,23,0.04)] transition-shadow hover:shadow-lg hover:shadow-stone-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/50 disabled:opacity-60"
-    >
-      <span className="block w-24 shrink-0 sm:w-full">
-        <VideoCard ref={videoRef} src={service.video} startAt={service.startAt} className="aspect-[406/720] min-h-0" />
-      </span>
-      <span className="flex flex-1 flex-col justify-center gap-1 border-l border-stone-100 p-4 sm:justify-start sm:border-l-0 sm:border-t">
-        <span className="font-semibold text-stone-900">{service.label}</span>
-        <span className="text-sm leading-snug text-stone-500">{service.description}</span>
-      </span>
-    </motion.button>
-  );
-}
-
 export default function OnboardClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const typeFromUrl = searchParams.get("type");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [formStep, setFormStep] = useState(1);
@@ -134,13 +73,11 @@ export default function OnboardClient() {
   const [resumeCode, setResumeCode] = useState("");
   const [resumeInput, setResumeInput] = useState("");
   const [bannerError, setBannerError] = useState("");
-  const [starting, setStarting] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [copied, setCopied] = useState(false);
   const [hydrating, setHydrating] = useState(true);
   const submittingRef = useRef(false);
   const skipNextAutosave = useRef(false);
-  const urlDraftStarted = useRef(false);
 
   const applyDraft = useCallback((draft: { code: string; onboardingType: OnboardingType; formStep?: number; state?: Data }) => {
     skipNextAutosave.current = true;
@@ -181,36 +118,6 @@ export default function OnboardClient() {
       cancelled = true;
     };
   }, [applyDraft]);
-
-  const start = useCallback(async (type: OnboardingType) => {
-    setBannerError("");
-    setStarting(true);
-    try {
-      const res = await fetch("/api/onboarding/draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ onboardingType: type }),
-      });
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok || !result.code) {
-        setBannerError(result.error || "We could not start your form. Please try again.");
-        return;
-      }
-      applyDraft({ code: result.code, onboardingType: type, formStep: 1, state: {} });
-    } catch {
-      setBannerError("We could not start your form. Please check your connection and try again.");
-    } finally {
-      setStarting(false);
-    }
-  }, [applyDraft]);
-
-  // Links like /onboard?type=business skip the picker.
-  useEffect(() => {
-    if (hydrating || resumeCode || urlDraftStarted.current) return;
-    if (!isOnboardingType(typeFromUrl)) return;
-    urlDraftStarted.current = true;
-    void start(typeFromUrl);
-  }, [hydrating, resumeCode, typeFromUrl, start]);
 
   // Autosave a second after each change.
   useEffect(() => {
@@ -357,10 +264,6 @@ export default function OnboardClient() {
   };
 
   const backToPicker = () => {
-    if (isOnboardingType(typeFromUrl)) {
-      router.push("/");
-      return;
-    }
     setStep(1);
     setBannerError("");
   };
@@ -374,14 +277,14 @@ export default function OnboardClient() {
   }
 
   return (
-    <PageShell width={step === 1 ? "wide" : "default"}>
+    <PageShell>
       <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.div key="picker" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
             <PageTitle
               eyebrow="Become a client"
-              title="What can we help you with?"
-              description="Choose one to start. It takes about 10 minutes, and your progress saves as you go."
+              title="New clients get a personal link"
+              description="We now set everything up in one link: your engagement letter, payment and onboarding. Book a free call and we'll send yours."
             />
 
             {bannerError && (
@@ -390,15 +293,25 @@ export default function OnboardClient() {
               </p>
             )}
 
-            <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
-              {SERVICES.map((service) => (
-                <ServiceCard key={service.type} service={service} disabled={starting || resuming} onClick={() => start(service.type)} />
-              ))}
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-2xl border border-stone-200 bg-white p-6 text-center">
+              <CalendarDays className="h-6 w-6 text-clay-600" />
+              <p className="text-sm text-stone-600">
+                A short call to understand what you need. Prefer email? Write to{" "}
+                <a href={`mailto:${FIRM.contactEmail}`} className="font-medium text-clay-700 underline underline-offset-2">
+                  {FIRM.contactEmail}
+                </a>
+                .
+              </p>
+              <Button asChild>
+                <a href={FIRM.bookingUrl} target="_blank" rel="noopener noreferrer">
+                  Book a free call
+                </a>
+              </Button>
             </div>
 
             <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-5 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-1.5">
-                <Label htmlFor="onboarding-resume-code">Already started?</Label>
+                <Label htmlFor="onboarding-resume-code">Already started a form?</Label>
                 <p className="text-sm text-stone-500">Enter the 8-character code we gave you to carry on where you left off.</p>
               </div>
               <div className="flex gap-2">
@@ -410,9 +323,9 @@ export default function OnboardClient() {
                   placeholder="AB3K7MPQ"
                   aria-label="Resume code"
                   className="w-40 font-mono uppercase tracking-wider"
-                  disabled={starting || resuming}
+                  disabled={resuming}
                 />
-                <Button variant="outline" onClick={handleResume} disabled={starting || resuming}>
+                <Button variant="outline" onClick={handleResume} disabled={resuming}>
                   {resuming ? "Loading…" : "Resume"}
                 </Button>
               </div>

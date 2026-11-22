@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  createDraft,
   getDraft,
   normalizeCode,
   updateDraft,
@@ -14,31 +13,15 @@ function parseType(value: unknown): OnboardingType | null {
   return null;
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json().catch(() => ({}));
-    const onboardingType = parseType(body?.onboardingType);
-    if (!onboardingType) {
-      return NextResponse.json(
-        { error: "onboardingType is required (business | self-assessment | both)" },
-        { status: 400 }
-      );
-    }
-
-    const draft = await createDraft({
-      onboardingType,
-      outerStep: Number(body?.outerStep) || 2,
-      formStep: Number(body?.formStep) || 1,
-      state: typeof body?.state === "object" && body.state ? body.state : {},
-    });
-    return NextResponse.json({ code: draft.code });
-  } catch (err) {
-    console.error("Failed to create onboarding draft", err);
-    return NextResponse.json(
-      { error: "Could not create a resume code. Please try again." },
-      { status: 500 }
-    );
-  }
+/**
+ * New public forms are switched off: new clients now get a personal link from the team,
+ * which creates its draft on the server. Drafts started before the switch can still be resumed.
+ */
+export async function POST() {
+  return NextResponse.json(
+    { error: "New clients now get a personal link from us. Please book a free call and we'll send yours." },
+    { status: 410 }
+  );
 }
 
 export async function GET(request: Request) {

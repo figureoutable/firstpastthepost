@@ -34,8 +34,8 @@ export function onboardingNextSteps(opts: { hasPreviousAccountant?: boolean; let
   return steps;
 }
 
-export function incorporationNextSteps(): NextStep[] {
-  return [
+export function incorporationNextSteps(opts: { letterSigned?: boolean } = {}): NextStep[] {
+  const steps: NextStep[] = [
     {
       title: "We check your details",
       detail: "We review the company details and come back to you if anything needs changing.",
@@ -54,6 +54,7 @@ export function incorporationNextSteps(): NextStep[] {
       detail: "Once everything is approved we submit the application and send you the certificate.",
     },
   ];
+  return opts.letterSigned ? steps.filter((step) => step.title !== "Sign your engagement letter") : steps;
 }
 
 export function nextStepsEmailHtml(intro: string, steps: NextStep[], contactEmail: string): string {

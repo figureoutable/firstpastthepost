@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createSubmission } from "@/lib/submission-store";
 import { signSubmissionId } from "@/lib/aml-signature";
 import { sendClientEmail, sendInternalEmail } from "@/lib/notifications";
 import { appendOnboardingSubmission } from "@/lib/google-sheets";
 import { escapeHtml } from "@/lib/email-html";
 import { documentHref, LINK_LIFETIME_DAYS } from "@/lib/document-links";
-import { deleteDraft } from "@/lib/onboarding-draft-store";
-import { appOrigin, isPreview } from "@/lib/env";
+import { deleteDraft, getDraft } from "@/lib/onboarding-draft-store";
+import { appOrigin, isPreview, isProduction } from "@/lib/env";
+import { startAmlCheck } from "@/lib/aml-start";
+import { getSettings } from "@/lib/engagements/settings";
 import {
     AML_QUESTIONS,
     FIELD_LABELS,
@@ -151,6 +153,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Please refresh the page and try again." }, { status: 409 });
         }
         payload.engagementId = engagement.id;
+    } else if (!resumeCode || !(await getDraft(resumeCode))) {
+        // The public form is switched off. Only forms started before the switch can still be sent.
+        return NextResponse.json(
+            { message: "New clients now get a personal link from us. Please book a free call and we'll send yours." },
+            { status: 410 }
+        );
     }
 
     try {
@@ -165,7 +173,11 @@ export async function POST(request: Request) {
                 ? `<a href="${href}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;background:#1c1917;color:#fff;text-decoration:none;border-radius:8px;">${text}</a>`
                 : "";
 
-        const amlSection = isPreview()
+        // Link clients have signed and set up payment, so the team can choose to start AML straight away.
+        const autoAml = Boolean(engagement) && isProduction() && (await getSettings()).autoStartAml;
+        const amlSection = autoAml
+            ? `<p>The Firmcheck AML check is starting automatically (switched on in Settings). You'll get an email when it has started.</p>`
+            : isPreview()
             ? `<p style="color:#9a3412;">This is a test submission from a preview build, so the paid Firmcheck AML button is hidden.</p>`
             : `<p>After reviewing this submission, use the button below to start the paid Firmcheck AML check. You will be asked to confirm first.</p>
                <a href="${appOrigin(request)}/api/firmcheck/initiate?submissionId=${encodeURIComponent(submission.id)}&sig=${signSubmissionId(submission.id)}" style="display:inline-block;padding:10px 16px;background:#ea580c;color:#fff;text-decoration:none;border-radius:8px;">Review and start AML check</a>`;
@@ -208,9 +220,13 @@ export async function POST(request: Request) {
             await deleteDraft(resumeCode).catch((error) => console.error("[onboarding] Draft cleanup failed", error));
         }
         if (engagement) {
-            await completeOnboarding(engagement, submission.id).catch((error) =>
+            await completeOnboarding(engagement.id, submission.id).catch((error) =>
                 console.error("[onboarding] Could not update the client record", error)
             );
+        }
+        if (autoAml) {
+            // After the client has their answer, so they aren't kept waiting.
+            after(() => startAmlCheck(submission).then(() => undefined));
         }
 
         return NextResponse.json({ message: "Received", submissionId: submission.id }, { status: 200 });

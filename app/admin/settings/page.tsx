@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { AdminShell, AdminTitle, card } from "@/components/admin/admin-shell";
+import { OptionsEditor } from "@/components/admin/options-editor";
 import { PriceListEditor } from "@/components/admin/price-list-editor";
 import { TeamEditor } from "@/components/admin/team-editor";
 import { requireMember } from "@/lib/admin/session";
 import { getTeam, ownerEmails } from "@/lib/admin/team";
 import { getPriceList } from "@/lib/engagements/price-list";
+import { getSettings } from "@/lib/engagements/settings";
 import { isDriveConfigured } from "@/lib/google-drive";
 import { goCardlessEnvironment, isGoCardlessConfigured } from "@/lib/payments/gocardless";
 import { isStripeConfigured } from "@/lib/payments/stripe";
@@ -28,7 +30,7 @@ function Status({ ok, label, detail }: { ok: boolean; label: string; detail: str
 export default async function SettingsPage() {
   const member = await requireMember();
   if (member.role !== "admin") redirect("/admin");
-  const [priceList, team] = await Promise.all([getPriceList(), getTeam()]);
+  const [priceList, team, options] = await Promise.all([getPriceList(), getTeam(), getSettings()]);
   const gc = isGoCardlessConfigured();
 
   return (
@@ -41,6 +43,10 @@ export default async function SettingsPage() {
           <PriceListEditor items={priceList.items} examples={priceList.examples} />
         </section>
         <div className="space-y-5">
+          <section className={cn(card, "p-5")}>
+            <h2 className="mb-1 text-base font-semibold text-stone-900">Automatic steps</h2>
+            <OptionsEditor initial={{ autoStartAml: options.autoStartAml, dailySummary: options.dailySummary }} />
+          </section>
           <section className={cn(card, "p-5")}>
             <h2 className="mb-3 text-base font-semibold text-stone-900">Team</h2>
             <TeamEditor team={team} owners={ownerEmails()} me={member.email} />

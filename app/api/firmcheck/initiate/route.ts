@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifySubmissionSignature } from "@/lib/aml-signature";
-import { getSubmission, saveSubmission, SubmissionRecord } from "@/lib/submission-store";
-import { createCompanyClient, createIndividualClient } from "@/lib/firmcheck";
-import { sendInternalEmail } from "@/lib/notifications";
+import { getSubmission, SubmissionRecord } from "@/lib/submission-store";
+import { describeSubmission, startAmlCheck } from "@/lib/aml-start";
 import { escapeHtml } from "@/lib/email-html";
 import { isPreview } from "@/lib/env";
 
@@ -27,74 +26,6 @@ function page(title: string, body: string, status = 200): NextResponse {
     );
 }
 
-function describe(record: SubmissionRecord): string {
-    const p = record.payload;
-    if (record.kind === "incorporation") {
-        const step2 = (p.step2 ?? {}) as { name?: string; ending?: string };
-        const people = (record.amlPeople || []).map((person) => escapeHtml(person.fullName)).join(", ");
-        return `New company: <strong>${escapeHtml(`${step2.name || ""} ${step2.ending || ""}`.trim())}</strong><br/>People to check: ${people || "none listed"}`;
-    }
-    const who = [p.companyName, p.fullNamePassport].filter(Boolean).map((v) => escapeHtml(String(v))).join(" / ");
-    return `Onboarding (${escapeHtml(String(p.onboardingType || ""))}): <strong>${who}</strong>`;
-}
-
-async function runFirmcheckInitiation(record: SubmissionRecord): Promise<SubmissionRecord> {
-    const payload = record.payload;
-    const clientIds = new Set<string>(record.firmcheck?.clientIds || []);
-
-    if (record.kind === "incorporation") {
-        // No company number yet, so check each director as an individual.
-        for (const person of record.amlPeople || []) {
-            if (!person.fullName) continue;
-            const individual = await createIndividualClient({
-                fullName: person.fullName,
-                email: person.email,
-                dob: person.dob,
-                residentialAddress: person.address,
-            });
-            clientIds.add(individual.clientId);
-        }
-    } else {
-        const onboardingType = String(payload.onboardingType || "");
-        const email = typeof payload.email === "string" ? payload.email : undefined;
-
-        // Company: Firmcheck pulls directors and PSCs from Companies House itself.
-        if (onboardingType === "business" || onboardingType === "both") {
-            const crn = typeof payload.registrationNumber === "string" ? payload.registrationNumber : "";
-            if (!crn) throw new Error("Missing company registration number for company onboarding");
-            const company = await createCompanyClient(crn);
-            clientIds.add(company.clientId);
-        }
-
-        // Individual: the person filing a tax return.
-        if (onboardingType === "self-assessment" || onboardingType === "both") {
-            const fullName = typeof payload.fullNamePassport === "string" ? payload.fullNamePassport : undefined;
-            if (fullName) {
-                const individual = await createIndividualClient({
-                    fullName,
-                    email,
-                    dob: typeof payload.dob === "string" ? payload.dob : undefined,
-                    residentialAddress: typeof payload.homeAddress === "string" ? payload.homeAddress : undefined,
-                });
-                clientIds.add(individual.clientId);
-            }
-        }
-    }
-
-    return {
-        ...record,
-        updatedAt: new Date().toISOString(),
-        status: "initiated",
-        firmcheck: {
-            clientIds: [...clientIds],
-            verificationIds: [],
-            lastPolledAt: record.firmcheck?.lastPolledAt,
-            amlStatus: record.firmcheck?.amlStatus,
-            riskLevel: record.firmcheck?.riskLevel,
-        },
-    };
-}
-
 async function load(submissionId: string, sig: string): Promise<SubmissionRecord | NextResponse> {
     if (!submissionId || !sig || !verifySubmissionSignature(submissionId, sig)) {
         return page("Link not valid", "<p>This link is invalid or has expired.</p>", 403);
@@ -102,7 +33,7 @@ async function load(submissionId: string, sig: string): Promise<SubmissionRecord
     const submission = await getSubmission(submissionId);
     if (!submission) return page("Not found", "<p>We could not find this submission.</p>", 404);
     if (submission.status === "completed" || submission.status === "initiated") {
-        return page("Already started", `<p>The AML check for this submission is already ${submission.status}.</p><p>${describe(submission)}</p>`);
+        return page("Already started", `<p>The AML check for this submission is already ${submission.status}.</p><p>${describeSubmission(submission)}</p>`);
     }
     return submission;
 }
@@ -116,7 +47,7 @@ export async function GET(request: Request) {
 
     return page(
         "Start a Firmcheck AML check?",
-        `<p style="line-height:1.5;">${describe(result)}</p>
+        `<p style="line-height:1.5;">${describeSubmission(result)}</p>
          <p style="line-height:1.5;color:#57534e;">This creates the client in Firmcheck as a prospect. Firmcheck charges for checks.</p>
          <form method="post" style="margin-top:24px;">
             <input type="hidden" name="submissionId" value="${escapeHtml(submissionId)}">
@@ -139,52 +70,13 @@ export async function POST(request: Request) {
     if (result instanceof NextResponse) return result;
     const submission = result;
 
-    try {
-        const updated = await runFirmcheckInitiation(submission);
-        await saveSubmission(updated);
-
-        if (!updated.notifications?.initiatedEmailSent) {
-            const clientCount = updated.firmcheck?.clientIds.length || 0;
-            await sendInternalEmail(
-                `Firmcheck AML initiated: ${submissionId}`,
-                `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2>Firmcheck AML initiated</h2>
-                <p>${clientCount} client(s) created as prospects on Firmcheck.</p>
-                <p>${describe(updated)}</p>
-                <p><strong>Client IDs:</strong> ${escapeHtml(updated.firmcheck?.clientIds.join(", ") || "N/A")}</p>
-                <p>Open Firmcheck to review the clients and start ID verification when ready.</p>
-                <p><a href="https://my.firmcheck.com" style="display:inline-block;background:#1c1917;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Open Firmcheck</a></p>
-                </div>`
-            );
-            updated.notifications = { ...(updated.notifications || {}), initiatedEmailSent: true };
-            await saveSubmission(updated);
-        }
-
-        return page(
-            "AML check started",
-            `<p>${describe(updated)}</p><p>${updated.firmcheck?.clientIds.length || 0} client(s) created in Firmcheck.</p>
-             <p><a href="https://my.firmcheck.com" style="color:#c2410c;">Open Firmcheck</a></p>`
-        );
-    } catch (error) {
-        const failed: SubmissionRecord = {
-            ...submission,
-            updatedAt: new Date().toISOString(),
-            status: "failed",
-            error: (error as Error).message,
-            notifications: { ...(submission.notifications || {}), failureEmailSent: true },
-        };
-        await saveSubmission(failed);
-
-        await sendInternalEmail(
-            `Firmcheck AML failed: ${submissionId}`,
-            `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-            <h2 style="color:#dc2626;">Firmcheck AML failed</h2>
-            <p>Firmcheck initiation failed and manual action is required.</p>
-            <p>${describe(submission)}</p>
-            <p><strong>Error:</strong> ${escapeHtml((error as Error).message)}</p>
-            </div>`
-        );
-
+    const { ok, record } = await startAmlCheck(submission);
+    if (!ok) {
         return page("Something went wrong", "<p>Firmcheck could not start the check. We have emailed you the details.</p>", 500);
     }
+    return page(
+        "AML check started",
+        `<p>${describeSubmission(record)}</p><p>${record.firmcheck?.clientIds.length || 0} client(s) created in Firmcheck.</p>
+         <p><a href="https://my.firmcheck.com" style="color:#c2410c;">Open Firmcheck</a></p>`
+    );
 }

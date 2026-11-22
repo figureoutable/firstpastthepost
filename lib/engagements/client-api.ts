@@ -14,7 +14,7 @@ export async function withEngagement(
     if (!e) return NextResponse.json({ error: "This link is not valid. Please check it or contact us." }, { status: 404 });
     return await handler(e);
   } catch (error) {
-    if (error instanceof FlowError) return NextResponse.json({ error: error.message }, { status: error.status });
+    if (error instanceof FlowError) return NextResponse.json({ error: error.message, ...(error.details || {}) }, { status: error.status });
     console.error("[start]", error);
     return NextResponse.json({ error: "Something went wrong. Please try again in a moment." }, { status: 500 });
   }

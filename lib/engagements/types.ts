@@ -1,5 +1,8 @@
 import type { OnboardingType } from "@/lib/onboarding-fields";
 
+/** What the client is signing up for. "formation" uses the company formation form instead of onboarding. */
+export type ClientType = OnboardingType | "formation";
+
 /** How a client pays. Chosen by the team on the New client screen; clients never see the choice. */
 export type PaymentMethod = "direct_debit" | "card" | "none";
 
@@ -97,7 +100,7 @@ export interface Engagement {
   createdBy: string;
   status: "open" | "complete" | "cancelled";
   client: {
-    type: OnboardingType;
+    type: ClientType;
     name: string;
     email: string;
     companyName?: string;
@@ -114,14 +117,18 @@ export interface Engagement {
   letter: LetterSnapshot;
   signature?: Signature;
   linkSentAt?: string;
+  /** The link stops working after this, until the team sends it again. */
+  expiresAt?: string;
   firstOpenedAt?: string;
   reminderSentAt?: string;
   onboarding?: { draftCode?: string; submissionId?: string; completedAt?: string };
   flags: Flag[];
   events: EngagementEvent[];
+  /** Milestone emails already sent to the team, so each one only goes once. */
+  notified?: { letterSigned?: string; paymentDone?: string };
 }
 
-export type FlowStep = "letter" | "payment" | "onboarding" | "done" | "cancelled";
+export type FlowStep = "letter" | "payment" | "onboarding" | "done" | "cancelled" | "expired";
 
 export const BILLING_LABEL: Record<Billing, string> = {
   monthly: "Monthly",
@@ -135,8 +142,11 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   none: "No payment step",
 };
 
-export const CLIENT_TYPE_LABEL: Record<OnboardingType, string> = {
+export const CLIENT_TYPE_LABEL: Record<ClientType, string> = {
   "self-assessment": "Self Assessment",
   business: "Company",
   both: "Company and Self Assessment",
+  formation: "Company formation",
 };
+
+export const LINK_LIFETIME_DAYS = 60;

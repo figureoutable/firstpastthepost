@@ -5,6 +5,8 @@ export const FIRM = {
   website: "https://tryfigures.com",
   /** Shown to clients as the address to contact. */
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "joshua@tryfigures.com",
+  /** Free discovery call, used now that new clients get a personal link from the team. */
+  bookingUrl: "https://cal.com/figures/discoverycall",
 } as const;
 
 export const COMPANIES_HOUSE_IDENTITY_URL =

@@ -119,6 +119,33 @@ export async function putFile(
   return { pathname: result.pathname };
 }
 
+/**
+ * Writes a small marker only if it isn't there yet, so something happens once even when two
+ * requests arrive at the same moment. Returns false if another request already wrote it.
+ */
+export async function writeOnce(pathname: string): Promise<boolean> {
+  const local = localDir();
+  if (local) {
+    const full = localPath(local, pathname);
+    await fs.mkdir(path.dirname(full), { recursive: true });
+    try {
+      await fs.writeFile(full, new Date().toISOString(), { flag: "wx" });
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") return false;
+      throw error;
+    }
+  }
+  try {
+    await putFile(pathname, new Date().toISOString(), { contentType: "text/plain", overwrite: false });
+    return true;
+  } catch (error) {
+    // The store refuses to overwrite, so a failed write with the marker present means another request won.
+    if (await readFile(pathname)) return false;
+    throw error;
+  }
+}
+
 export async function putJson(pathname: string, value: unknown): Promise<void> {
   await putFile(pathname, JSON.stringify(value, null, 2), {
     contentType: "application/json",

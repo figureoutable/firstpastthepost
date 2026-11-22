@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import type { FlowStep, LetterBlock, PaymentMethod } from "@/lib/engagements/types";
 import type { NextStep } from "@/lib/next-steps";
 import { LetterView } from "./letter-view";
+import { FormationStep } from "./formation-step";
 import { OnboardingStep } from "./onboarding-step";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,8 @@ export interface StartView {
   payment: { method: PaymentMethod; amount?: string; canSimulate: boolean };
   nextSteps: NextStep[];
   contactEmail: string;
+  /** A new company: the last step is the formation form, not the onboarding form. */
+  formation: boolean;
 }
 
 const ICONS: Partial<Record<FlowStep, typeof Check>> = { letter: FileSignature, payment: Landmark, onboarding: UserRound };
@@ -331,7 +334,9 @@ export function StartFlow({ view }: { view: StartView }) {
       title: view.payment.method === "card" ? "Make your payment" : "Set up your Direct Debit",
       text: "Thank you for signing. Next, your payment details.",
     },
-    onboarding: { title: "Your details", text: "Last step. Your progress saves as you go, so you can come back to this link any time." },
+    onboarding: view.formation
+      ? { title: "Your new company", text: "Last step. Tell us about the company you'd like to set up." }
+      : { title: "Your details", text: "Last step. Your progress saves as you go, so you can come back to this link any time." },
   };
   const heading = titles[view.current];
 
@@ -355,11 +360,14 @@ export function StartFlow({ view }: { view: StartView }) {
           <motion.div key={view.current} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
             {view.current === "letter" && <LetterStep view={view} onSigned={advance} />}
             {view.current === "payment" && <PaymentStep view={view} onPaid={advance} />}
-            {view.current === "onboarding" && (
-              <Panel>
-                <OnboardingStep token={view.token} onDone={advance} />
-              </Panel>
-            )}
+            {view.current === "onboarding" &&
+              (view.formation ? (
+                <FormationStep token={view.token} onDone={advance} />
+              ) : (
+                <Panel>
+                  <OnboardingStep token={view.token} onDone={advance} />
+                </Panel>
+              ))}
             {view.current === "done" && <DoneStep view={view} />}
           </motion.div>
         </AnimatePresence>

@@ -6,10 +6,15 @@ import type { Engagement, FlowStep } from "./types";
  */
 export function currentStep(e: Engagement): FlowStep {
   if (e.status === "cancelled") return "cancelled";
+  if (e.status !== "complete" && isExpired(e)) return "expired";
   if (!e.signature) return "letter";
   if (paymentRequired(e) && !e.payment.completedAt) return "payment";
   if (!e.onboarding?.completedAt) return "onboarding";
   return "done";
+}
+
+export function isExpired(e: Engagement, now = Date.now()): boolean {
+  return Boolean(e.expiresAt && Date.parse(e.expiresAt) < now && !e.onboarding?.completedAt);
 }
 
 export function paymentRequired(e: Engagement): boolean {
@@ -22,7 +27,7 @@ export function visibleSteps(e: Engagement): { id: FlowStep; label: string }[] {
   if (paymentRequired(e)) {
     steps.push({ id: "payment", label: e.payment.method === "card" ? "Payment" : "Direct Debit" });
   }
-  steps.push({ id: "onboarding", label: "Your details" });
+  steps.push({ id: "onboarding", label: e.client.type === "formation" ? "Company details" : "Your details" });
   return steps;
 }
 
@@ -64,7 +69,10 @@ export function stageSummary(e: Engagement, aml?: AmlView) {
 
   return {
     step,
-    link: { state: (e.firstOpenedAt ? "done" : e.linkSentAt ? "current" : "waiting") as StageState, label: e.firstOpenedAt ? "Opened" : e.linkSentAt ? "Sent" : "Not sent" },
+    link:
+      step === "expired"
+        ? { state: "problem" as StageState, label: "Expired" }
+        : { state: (e.firstOpenedAt ? "done" : e.linkSentAt ? "current" : "waiting") as StageState, label: e.firstOpenedAt ? "Opened" : e.linkSentAt ? "Sent" : "Not sent" },
     letter: { state: (e.signature ? "done" : step === "letter" ? "current" : "waiting") as StageState, label: e.signature ? "Signed" : "Not signed" },
     payment: { state: paymentState, label: paymentLabel },
     onboarding: {

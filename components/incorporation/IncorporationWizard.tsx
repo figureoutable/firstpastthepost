@@ -96,27 +96,34 @@ function clearResumeCode() {
   }
 }
 
-export function IncorporationWizard() {
-  const [phase, setPhase] = useState<"banner" | "form">("banner");
-  const [step, setStep] = useState(1);
-  const [s, setS] = useState<IncorporationState>(initialState);
+/** Set when the form runs inside a client's personal link (after they've signed and paid). */
+export interface WizardLinkMode {
+  token: string;
+  draft: { code: string; step: number; phase: "banner" | "form"; state: IncorporationState };
+  onDone: () => void;
+}
+
+export function IncorporationWizard({ link }: { link?: WizardLinkMode } = {}) {
+  const [phase, setPhase] = useState<"banner" | "form">(link?.draft.phase === "form" ? "form" : "banner");
+  const [step, setStep] = useState(link?.draft.step || 1);
+  const [s, setS] = useState<IncorporationState>(() => link?.draft.state || initialState());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step1Blocked, setStep1Blocked] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [resumeCode, setResumeCode] = useState("");
+  const [resumeCode, setResumeCode] = useState(link?.draft.code || "");
   const [resumeInput, setResumeInput] = useState("");
   const [bannerError, setBannerError] = useState("");
   const [starting, setStarting] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [hydrating, setHydrating] = useState(true);
+  const [hydrating, setHydrating] = useState(!link);
   const [submitError, setSubmitError] = useState("");
   const [special, setSpecial] = useState({ name: "", email: "", phone: "" });
   const [specialState, setSpecialState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [website, setWebsite] = useState("");
   const reminderRequested = useRef(false);
-  const skipNextAutosave = useRef(false);
+  const skipNextAutosave = useRef(Boolean(link));
 
   const started = phase === "form" && !submitted;
 
@@ -132,6 +139,8 @@ export function IncorporationWizard() {
   }, [started]);
 
   useEffect(() => {
+    // Inside a client link, the draft comes from the link, not this browser tab.
+    if (link) return;
     let cancelled = false;
     (async () => {
       const code = readResumeCode();
@@ -170,6 +179,7 @@ export function IncorporationWizard() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -209,6 +219,10 @@ export function IncorporationWizard() {
 
   const handleStart = async () => {
     setBannerError("");
+    if (link) {
+      setPhase("form");
+      return;
+    }
     setStarting(true);
     try {
       const res = await fetch("/api/incorporation/draft", { method: "POST" });
@@ -423,7 +437,8 @@ export function IncorporationWizard() {
     const e = validateStep(step);
     setErrors(e);
     if (Object.keys(e).length) return;
-    if (step === 3 && resumeCode && !reminderRequested.current) {
+    // Link clients come back through their link, so they don't need a resume code email.
+    if (step === 3 && resumeCode && !link && !reminderRequested.current) {
       reminderRequested.current = true;
       void (async () => {
         try {
@@ -488,11 +503,16 @@ export function IncorporationWizard() {
       const res = await fetch("/api/incorporation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, resumeCode, website }),
+        body: JSON.stringify({ ...payload, resumeCode, website, ...(link ? { engagementToken: link.token } : {}) }),
       });
       if (!res.ok) {
         const result = await res.json().catch(() => ({}));
         setSubmitError(result.error || "We could not send your request. Your progress is saved, so please try again.");
+        return;
+      }
+      if (link) {
+        setSubmitted(true);
+        link.onDone();
         return;
       }
       clearResumeCode();
@@ -510,6 +530,10 @@ export function IncorporationWizard() {
     return (
       <p className="py-24 text-center text-sm text-stone-500">Loading your saved progress…</p>
     );
+  }
+
+  if (submitted && link) {
+    return <p className="py-14 text-center text-sm text-stone-500">Sending…</p>;
   }
 
   if (submitted) {
@@ -543,10 +567,17 @@ export function IncorporationWizard() {
     return (
       <div className={PANEL}>
         <div className="space-y-4 text-[15px] leading-relaxed text-stone-700">
-          <p>
-            This form takes about 25 to 30 minutes. Your progress <span className="font-medium text-stone-900">saves automatically</span>, and
-            we give you a short code so you can carry on later on any device.
-          </p>
+          {link ? (
+            <p>
+              This form takes about 25 to 30 minutes. Your progress <span className="font-medium text-stone-900">saves automatically</span>,
+              so you can come back to your link any time.
+            </p>
+          ) : (
+            <p>
+              This form takes about 25 to 30 minutes. Your progress <span className="font-medium text-stone-900">saves automatically</span>, and
+              we give you a short code so you can carry on later on any device.
+            </p>
+          )}
           <div className="rounded-xl border border-clay-200 bg-clay-50 p-4">
             <p className="font-medium text-stone-900">Before you start</p>
             <p className="mt-1 text-sm">
@@ -588,6 +619,7 @@ export function IncorporationWizard() {
           Start <ArrowRight className="h-4 w-4" />
         </GradientButton>
 
+        {!link && (
         <div className="mt-8 space-y-3 border-t border-stone-200 pt-6">
           <Label htmlFor="resume-code">Already started? Enter your resume code</Label>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -607,6 +639,7 @@ export function IncorporationWizard() {
             </Button>
           </div>
         </div>
+        )}
       </div>
     );
   }
@@ -681,7 +714,7 @@ export function IncorporationWizard() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      {resumeCode && (
+      {resumeCode && !link && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-clay-200 bg-clay-50 px-3 py-2">
           <div className="min-w-0 text-xs text-stone-700 sm:text-sm">
             <span className="font-medium text-stone-900">Resume code: </span>

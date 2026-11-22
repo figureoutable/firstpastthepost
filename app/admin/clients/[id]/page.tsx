@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { AlertTriangle, ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ExternalLink, FileText, Pencil } from "lucide-react";
 import { AdminShell, card } from "@/components/admin/admin-shell";
 import { LinkActions, ResolveFlag, RetryDrive } from "@/components/admin/client-actions";
 import { amlState, StagePill } from "@/components/admin/stage-pill";
@@ -9,7 +9,7 @@ import { requireMember } from "@/lib/admin/session";
 import { originFromHeaders } from "@/lib/env";
 import { isDriveConfigured } from "@/lib/google-drive";
 import { amlFor } from "@/lib/engagements/aml";
-import { stageSummary } from "@/lib/engagements/flow";
+import { isExpired, stageSummary } from "@/lib/engagements/flow";
 import { formatPence, totalsText } from "@/lib/engagements/letter";
 import { getEngagement, openFlags } from "@/lib/engagements/store";
 import { BILLING_LABEL, CLIENT_TYPE_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/engagements/types";
@@ -44,6 +44,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   const h = await headers();
   const link = `${originFromHeaders(h)}/start/${e.token}`;
   const drive = e.signature?.drive;
+  const canEdit = e.status === "open" && !e.signature;
+  const expired = isExpired(e);
+  const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
 
   return (
     <AdminShell member={member}>
@@ -153,7 +156,17 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           </section>
 
           <section className={cn(card, "p-5 sm:p-6")}>
-            <h2 className="mb-3 text-base font-semibold text-stone-900">Services and fees</h2>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-base font-semibold text-stone-900">Services and fees</h2>
+              {canEdit && (
+                <Link
+                  href={`/admin/clients/${e.id}/edit`}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 text-xs font-medium text-stone-800 hover:bg-stone-50"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </Link>
+              )}
+            </div>
             <table className="w-full text-sm">
               <tbody className="divide-y divide-stone-100">
                 {e.lines.map((l) => (
@@ -175,7 +188,17 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             {e.status === "cancelled" ? (
               <p className="text-sm text-stone-500">This link was cancelled and no longer works.</p>
             ) : (
-              <LinkActions id={e.id} link={link} canResend={e.status === "open"} canCancel={e.status === "open"} />
+              <>
+                <LinkActions id={e.id} link={link} canResend={e.status === "open"} canCancel={e.status === "open"} />
+                {e.status === "open" && e.expiresAt && (
+                  <p className={cn("mt-3 text-xs", expired ? "font-medium text-red-700" : "text-stone-500")}>
+                    {expired
+                      ? `Expired on ${day(e.expiresAt)}. Email the link again to give it another 60 days.`
+                      : `Works until ${day(e.expiresAt)}. Emailing it again adds another 60 days.`}
+                  </p>
+                )}
+                {canEdit && <p className="mt-2 text-xs text-stone-500">You can edit the details and fees until the client signs.</p>}
+              </>
             )}
           </section>
 

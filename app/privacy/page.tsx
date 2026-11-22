@@ -44,6 +44,10 @@ export default function PrivacyPage() {
             <li>company details, including directors, shareholders and Companies House codes</li>
             <li>information about your income, your business and your current accountant</li>
             <li>your answers to our anti-money laundering questions</li>
+            <li>
+              when you sign an engagement letter: the name you type, your email, the date and time, your internet (IP)
+              address and browser details, kept as a record of your signature
+            </li>
           </ul>
         </Section>
 

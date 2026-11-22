@@ -23,7 +23,7 @@ export async function withMember(
 }
 
 export function errorResponse(error: unknown): Response {
-  if (error instanceof FlowError) return NextResponse.json({ error: error.message }, { status: error.status });
+  if (error instanceof FlowError) return NextResponse.json({ error: error.message, ...(error.details || {}) }, { status: error.status });
   if (error instanceof Error && /^(Enter|Choose|Check|Price list|Service|Owners|That person)/.test(error.message)) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

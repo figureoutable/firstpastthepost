@@ -37,6 +37,24 @@ export async function getEngagement(id: string): Promise<Engagement | null> {
   return record;
 }
 
+/**
+ * Changes a record safely: reads the latest saved copy, applies the change and
+ * saves it straight away. Two updates at the same moment (a GoCardless message
+ * and the client's own browser, say) then can't wipe each other out.
+ * Return false from `change` to leave the record as it is.
+ */
+export async function updateEngagement(
+  id: string,
+  change: (record: Engagement) => boolean | void | Promise<boolean | void>
+): Promise<{ record: Engagement; changed: boolean }> {
+  const record = await getEngagement(id);
+  if (!record) throw new Error("Client record not found");
+  const result = await change(record);
+  if (result === false) return { record, changed: false };
+  await saveEngagement(record);
+  return { record, changed: true };
+}
+
 export async function getEngagementByToken(token: string): Promise<Engagement | null> {
   if (!TOKEN_PATTERN.test(token)) return null;
   const link = await readJson<{ id: string }>(`${LINK_PREFIX}${token}.json`);

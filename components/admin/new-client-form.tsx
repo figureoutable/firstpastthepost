@@ -2,23 +2,40 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Building2, Check, Copy, CreditCard, Landmark, Loader2, Mail, Search, Send, Ban, User, Users } from "lucide-react";
+import { AlertTriangle, Building2, Check, Copy, CreditCard, Landmark, Loader2, Mail, Save, Search, Send, Ban, Sparkles, User, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { OnboardingType } from "@/lib/onboarding-fields";
-import type { PaymentMethod, PriceListItem } from "@/lib/engagements/types";
+import type { ClientType, PaymentMethod, PriceListItem } from "@/lib/engagements/types";
 import { BILLING_LABEL } from "@/lib/engagements/types";
 
 const card = "rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:p-6";
 
-const TYPES: { id: OnboardingType; label: string; Icon: typeof User }[] = [
+const TYPES: { id: ClientType; label: string; Icon: typeof User }[] = [
   { id: "self-assessment", label: "Self Assessment", Icon: User },
   { id: "business", label: "Company", Icon: Building2 },
   { id: "both", label: "Company and Self Assessment", Icon: Users },
+  { id: "formation", label: "Company formation", Icon: Sparkles },
 ];
+
+/** What the edit page passes in. */
+export interface ClientFormInitial {
+  id: string;
+  type: ClientType;
+  name: string;
+  email: string;
+  companyName?: string;
+  companyNumber?: string;
+  lines: { serviceId: string; pricePence: number }[];
+  paymentMethod: PaymentMethod;
+  cardAmountPence?: number;
+  paymentNote?: string;
+}
+
+const poundsText = (pence: number) => (pence / 100).toFixed(pence % 100 ? 2 : 0);
 
 const PAYMENTS: { id: PaymentMethod; title: string; detail: string; Icon: typeof Landmark }[] = [
   { id: "direct_debit", title: "Direct Debit", detail: "Client sets up a mandate. Nothing is collected until your Xero invoice.", Icon: Landmark },
@@ -49,24 +66,42 @@ function Section({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-export function NewClientForm({ items, examples, lookupEnabled }: { items: PriceListItem[]; examples: boolean; lookupEnabled: boolean }) {
-  const [type, setType] = useState<OnboardingType>("business");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [companyNumber, setCompanyNumber] = useState("");
-  const [companyName, setCompanyName] = useState("");
+export function NewClientForm({
+  items,
+  examples,
+  lookupEnabled,
+  initial,
+}: {
+  items: PriceListItem[];
+  examples: boolean;
+  lookupEnabled: boolean;
+  /** Set when editing a link the client hasn't signed yet. */
+  initial?: ClientFormInitial;
+}) {
+  const router = useRouter();
+  const editing = Boolean(initial);
+  const [type, setType] = useState<ClientType>(initial?.type || "business");
+  const [name, setName] = useState(initial?.name || "");
+  const [email, setEmail] = useState(initial?.email || "");
+  const [companyNumber, setCompanyNumber] = useState(initial?.companyNumber || "");
+  const [companyName, setCompanyName] = useState(initial?.companyName || "");
   const [lookup, setLookup] = useState<{ busy: boolean; message: string }>({ busy: false, message: "" });
-  const [selected, setSelected] = useState<Record<string, string>>({});
-  const [method, setMethod] = useState<PaymentMethod>("direct_debit");
-  const [cardAmount, setCardAmount] = useState("");
-  const [note, setNote] = useState("");
+  const [selected, setSelected] = useState<Record<string, string>>(() =>
+    Object.fromEntries((initial?.lines || []).map((l) => [l.serviceId, poundsText(l.pricePence)]))
+  );
+  const [method, setMethod] = useState<PaymentMethod>(initial?.paymentMethod || "direct_debit");
+  const [cardAmount, setCardAmount] = useState(initial?.cardAmountPence ? poundsText(initial.cardAmountPence) : "");
+  const [note, setNote] = useState(initial?.paymentNote || "");
   const [busy, setBusy] = useState<"" | "send" | "copy">("");
   const [error, setError] = useState("");
+  const [duplicate, setDuplicate] = useState<{ id: string; message: string; send: boolean } | null>(null);
   const [created, setCreated] = useState<{ id: string; link: string; sent: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const isCompany = type !== "self-assessment";
-  const active = items.filter((i) => i.active);
+  const isCompany = type === "business" || type === "both";
+  const isFormation = type === "formation";
+  // When editing, keep services already on the letter even if they've since been switched off.
+  const active = items.filter((i) => i.active || selected[i.id] !== undefined);
 
   const lines = useMemo(
     () =>
@@ -105,39 +140,50 @@ export function NewClientForm({ items, examples, lookupEnabled }: { items: Price
     }
   };
 
-  const submit = async (send: boolean) => {
+  const submit = async (send: boolean, allowDuplicate = false) => {
     setError("");
+    setDuplicate(null);
     if (lines.some((l) => l.pence === null)) {
       setError("Check the prices: one of them isn't a number.");
       return;
     }
     setBusy(send ? "send" : "copy");
     try {
-      const res = await fetch("/api/admin/clients", {
-        method: "POST",
+      const res = await fetch(initial ? `/api/admin/clients/${initial.id}` : "/api/admin/clients", {
+        method: initial ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
           name,
           email,
-          companyName,
-          companyNumber,
+          companyName: isCompany || isFormation ? companyName : "",
+          companyNumber: isCompany ? companyNumber : "",
           lines: lines.map((l) => ({ serviceId: l.item.id, pricePence: l.pence })),
           paymentMethod: method,
           cardAmountPence: method === "card" ? toPence(cardAmount || String(grandTotal / 100)) : undefined,
           paymentNote: note,
           send,
+          allowDuplicate,
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not create the link.");
+      if (res.status === 409 && data.duplicateId) {
+        setDuplicate({ id: data.duplicateId, message: data.error, send });
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || (initial ? "Could not save the changes." : "Could not create the link."));
+      if (initial) {
+        router.push(`/admin/clients/${initial.id}`);
+        router.refresh();
+        return;
+      }
       setCreated(data);
       if (!send) {
         await navigator.clipboard.writeText(data.link).then(() => setCopied(true)).catch(() => {});
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the link.");
+      setError(err instanceof Error ? err.message : initial ? "Could not save the changes." : "Could not create the link.");
     } finally {
       setBusy("");
     }
@@ -202,7 +248,7 @@ export function NewClientForm({ items, examples, lookupEnabled }: { items: Price
     <div className="grid gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
       <div className="space-y-5">
         <Section n={1} title="Who is it for?">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="What the client needs">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="What the client needs">
             {TYPES.map(({ id, label, Icon }) => (
               <button
                 key={id}
@@ -233,7 +279,7 @@ export function NewClientForm({ items, examples, lookupEnabled }: { items: Price
 
           <AnimatePresence initial={false}>
             {isCompany && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+              <motion.div key="company" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="mt-4 grid gap-4 sm:grid-cols-[200px_1fr]">
                   <div className="space-y-2">
                     <Label htmlFor="company-number">Company number</Label>
@@ -252,6 +298,15 @@ export function NewClientForm({ items, examples, lookupEnabled }: { items: Price
                   </div>
                 </div>
                 {lookup.message && <p className="mt-2 text-xs text-stone-500">{lookup.message}</p>}
+              </motion.div>
+            )}
+            {isFormation && (
+              <motion.div key="formation" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="proposed-name">Proposed company name (optional)</Label>
+                  <Input id="proposed-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Example Ltd" />
+                  <p className="text-xs text-stone-500">The client signs as themselves, then fills in the company formation form.</p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -374,16 +429,51 @@ export function NewClientForm({ items, examples, lookupEnabled }: { items: Price
           {grandTotal === 0 && <p className="text-stone-400">No fees yet</p>}
         </div>
         {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {duplicate && (
+          <div role="alert" className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+            <p className="flex items-start gap-1.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> {duplicate.message}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/admin/clients/${duplicate.id}`} className="inline-flex h-8 items-center rounded-md border border-amber-300 bg-white px-3 text-xs font-medium hover:bg-amber-100">
+                Open that link
+              </Link>
+              <button
+                type="button"
+                onClick={() => submit(duplicate.send, true)}
+                className="inline-flex h-8 items-center rounded-md bg-amber-600 px-3 text-xs font-semibold text-white hover:bg-amber-700"
+              >
+                {editing ? "Save anyway" : "Create anyway"}
+              </button>
+            </div>
+          </div>
+        )}
         <div className="space-y-2">
-          <Button type="button" className="w-full" onClick={() => submit(true)} disabled={Boolean(busy)}>
-            {busy === "send" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Create and email link
-          </Button>
-          <Button type="button" variant="outline" className="w-full" onClick={() => submit(false)} disabled={Boolean(busy)}>
-            {busy === "copy" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />} Create and copy link
-          </Button>
+          {editing ? (
+            <>
+              <Button type="button" className="w-full" onClick={() => submit(false)} disabled={Boolean(busy)}>
+                {busy === "copy" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={() => submit(true)} disabled={Boolean(busy)}>
+                {busy === "send" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Save and email the link again
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button type="button" className="w-full" onClick={() => submit(true)} disabled={Boolean(busy)}>
+                {busy === "send" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Create and email link
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={() => submit(false)} disabled={Boolean(busy)}>
+                {busy === "copy" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />} Create and copy link
+              </Button>
+            </>
+          )}
         </div>
         <p className="flex items-start gap-1.5 text-xs text-stone-500">
-          <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" /> The email comes from joshua@ and the client signs, pays, then adds their details.
+          <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {editing
+            ? "The link stays the same. The client sees the updated letter next time they open it."
+            : "The email comes from joshua@ and the client signs, pays, then adds their details."}
         </p>
       </aside>
     </div>

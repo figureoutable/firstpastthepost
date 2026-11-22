@@ -15,6 +15,7 @@ const EXAMPLES: Omit<PriceListItem, "id">[] = [
   { name: "VAT returns", description: "Quarterly VAT returns under Making Tax Digital.", billing: "monthly", pricePence: 5000, active: true },
   { name: "Payroll", description: "Monthly payroll and RTI submissions.", billing: "monthly", pricePence: 4000, active: true },
   { name: "Confirmation statement", description: "Annual confirmation statement with Companies House.", billing: "annual", pricePence: 6000, active: true },
+  { name: "Company formation", description: "Setting up your limited company with Companies House.", billing: "one_off", pricePence: 15000, active: true },
 ];
 
 export type PriceList = { items: PriceListItem[]; examples: boolean; updatedAt?: string; updatedBy?: string };

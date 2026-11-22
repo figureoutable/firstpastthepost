@@ -280,7 +280,7 @@ export function NewClientForm({ items, examples, lookupEnabled }: { items: Price
                     </span>
                     <span className="min-w-0">
                       <span className="block text-sm font-medium text-stone-900">{item.name}</span>
-                      <span className="block text-xs text-stone-500">{BILLING_LABEL[item.billing]} · usually {gbp(item.pricePence)}</span>
+                      <span className="block text-xs text-stone-500">{BILLING_LABEL[item.billing]}</span>
                     </span>
                   </button>
                   {on && (

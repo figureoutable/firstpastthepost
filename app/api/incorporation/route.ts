@@ -25,8 +25,12 @@ function plainAddress(addr: Address | undefined | null): string {
 }
 
 /** Directors to run individual AML checks on (the company has no number yet). */
-function amlPeopleFrom(payload: any, registeredEmail: string): AmlPerson[] {
-  const directors: any[] = Array.isArray(payload?.step5?.directors) ? payload.step5.directors : [];
+/** The client's form answers. Each field is read defensively below, so a loose type is fine here. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Answers = any;
+
+function amlPeopleFrom(payload: Answers, registeredEmail: string): AmlPerson[] {
+  const directors: Answers[] = Array.isArray(payload?.step5?.directors) ? payload.step5.directors : [];
   const registered = payload?.step3?.registered;
   return directors
     .map((d, index) => {
@@ -108,7 +112,7 @@ export async function POST(request: Request) {
 
     const totalShares = Array.isArray(step6?.shareholders)
       ? step6.shareholders.reduce(
-          (sum: number, sh: any) => sum + (step7?.allocations?.[sh.id] || 0),
+          (sum: number, sh: Answers) => sum + (step7?.allocations?.[sh.id] || 0),
           0
         )
       : 0;
@@ -158,7 +162,7 @@ export async function POST(request: Request) {
       <h3 style="margin-top:16px;">Companies House personal codes</h3>
       <table style="border-collapse:collapse;font-size:14px;">
         ${(Array.isArray(step5?.directors) ? step5.directors : [])
-          .map((d: any) => row(`${d.firstName || ""} ${d.lastName || ""}`.trim() || "Director", step9?.directorPersonalCodes?.[d.id]))
+          .map((d: Answers) => row(`${d.firstName || ""} ${d.lastName || ""}`.trim() || "Director", step9?.directorPersonalCodes?.[d.id]))
           .join("")}
         ${payload.introPersonalCode ? row("Code entered at the start", payload.introPersonalCode) : ""}
       </table>
@@ -183,8 +187,8 @@ export async function POST(request: Request) {
         ${row(
           "SIC codes",
           (Array.isArray(step4?.sicCodes) ? step4.sicCodes : [])
-            .filter((c: any) => c?.code)
-            .map((c: any) => `${c.code}${c.description ? ` (${c.description})` : ""}`)
+            .filter((c: Answers) => c?.code)
+            .map((c: Answers) => `${c.code}${c.description ? ` (${c.description})` : ""}`)
             .join("\n")
         )}
         ${row(
@@ -202,7 +206,7 @@ export async function POST(request: Request) {
       <h3 style="margin-top:16px;">Directors (${Array.isArray(step5?.directors) ? step5.directors.length : 0})</h3>
       <ul style="font-size:14px;margin:4px 0 0 16px;padding:0;list-style-type:none;">
         ${(Array.isArray(step5?.directors) ? step5.directors : [])
-          .map((d: any) => {
+          .map((d: Answers) => {
             // "registered"/"same" are shorthand for "use the registered office
             // address" — resolve them here so the email never shows a blank line.
             const corrAddress =
@@ -237,7 +241,7 @@ export async function POST(request: Request) {
       <h3 style="margin-top:16px;">Shareholders (${Array.isArray(step6?.shareholders) ? step6.shareholders.length : 0})</h3>
       <ul style="font-size:14px;margin:4px 0 0 16px;padding:0;list-style-type:none;">
         ${(Array.isArray(step6?.shareholders) ? step6.shareholders : [])
-          .map((sh: any) => {
+          .map((sh: Answers) => {
             const isBusiness = sh.kind === "business";
             const name = isBusiness
               ? escapeHtml(sh.businessName)
@@ -268,7 +272,7 @@ export async function POST(request: Request) {
       <h3 style="margin-top:16px;">PSCs</h3>
       <ul style="font-size:14px;margin:4px 0 0 16px;padding:0;">
         ${(Array.isArray(pscSummary) ? pscSummary : [])
-          .map((p: any) => {
+          .map((p: Answers) => {
             const pct = typeof p.pct === "number" ? p.pct.toFixed(1) : p.pct;
             return `<li>${escapeHtml(p.name)} - controls ${pct}% of shares</li>`;
           })

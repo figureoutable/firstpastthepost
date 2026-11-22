@@ -2,8 +2,8 @@
 
 export type NextStep = { title: string; detail: string };
 
-export function onboardingNextSteps(opts: { hasPreviousAccountant?: boolean } = {}): NextStep[] {
-  const steps: NextStep[] = [
+export function onboardingNextSteps(opts: { hasPreviousAccountant?: boolean; letterSigned?: boolean } = {}): NextStep[] {
+  let steps: NextStep[] = [
     {
       title: "We review your details",
       detail: "We check everything you sent and come back to you if anything is missing.",
@@ -23,6 +23,8 @@ export function onboardingNextSteps(opts: { hasPreviousAccountant?: boolean } = 
         "HMRC may post you a code or email you a link to approve us. Please send it to us when it arrives.",
     },
   ];
+  // Clients who came through a New client link have already signed.
+  if (opts.letterSigned) steps = steps.filter((s) => s.title !== "Sign your engagement letter");
   if (opts.hasPreviousAccountant) {
     steps.push({
       title: "We contact your previous accountant",

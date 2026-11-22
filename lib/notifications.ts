@@ -24,12 +24,15 @@ async function savePreview(subject: string, html: string) {
   await writeFile(path.join(dir, name), html);
 }
 
+export type EmailAttachment = { filename: string; content: Buffer };
+type SendOptions = { attachments?: EmailAttachment[]; replyTo?: string };
+
 function subjectFor(subject: string): string {
   return isPreview() ? `[Preview test] ${subject}` : subject;
 }
 
 /** Sends to the team inbox. Failures are logged (Vercel logs) rather than thrown. */
-export async function sendInternalEmail(subject: string, html: string): Promise<boolean> {
+export async function sendInternalEmail(subject: string, html: string, options: SendOptions = {}): Promise<boolean> {
   if (!resend) {
     console.warn("[email] RESEND_API_KEY not set; internal email skipped:", subject);
     await savePreview(subject, html).catch(() => {});
@@ -41,6 +44,8 @@ export async function sendInternalEmail(subject: string, html: string): Promise<
       to: [INTERNAL_TO],
       subject: subjectFor(subject),
       html,
+      ...(options.attachments?.length ? { attachments: options.attachments } : {}),
+      ...(options.replyTo ? { replyTo: options.replyTo } : {}),
     });
     if (result.error) {
       console.error("[email] Internal email not sent:", subject, result.error.message);
@@ -53,12 +58,15 @@ export async function sendInternalEmail(subject: string, html: string): Promise<
   }
 }
 
-/** Sends to the client. Never throws: a failed confirmation must not fail a submission. */
-export async function sendClientEmail(to: string, subject: string, html: string): Promise<void> {
-  if (!to) return;
+/**
+ * Sends to the client. Never throws: a failed confirmation must not fail a submission.
+ * Returns false if it could not be sent, so callers can flag it.
+ */
+export async function sendClientEmail(to: string, subject: string, html: string, options: SendOptions = {}): Promise<boolean> {
+  if (!to) return false;
   if (!resend) {
     await savePreview(`client ${subject}`, html).catch(() => {});
-    return;
+    return false;
   }
   try {
     const result = await resend.emails.send({
@@ -66,9 +74,16 @@ export async function sendClientEmail(to: string, subject: string, html: string)
       to: [to],
       subject: subjectFor(subject),
       html,
+      ...(options.attachments?.length ? { attachments: options.attachments } : {}),
+      replyTo: options.replyTo || INTERNAL_TO,
     });
-    if (result.error) console.error("[email] Client email not sent:", result.error.message);
+    if (result.error) {
+      console.error("[email] Client email not sent:", result.error.message);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("[email] Client email failed:", error);
+    return false;
   }
 }

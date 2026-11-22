@@ -145,7 +145,8 @@ export function OnboardingForm({
   type: OnboardingType;
   data: Data;
   updateData: Update;
-  onBack: () => void;
+  /** Back from the first step. Leave out to hide the button there. */
+  onBack?: () => void;
   onSubmit: (data: Data) => void;
   loading: boolean;
   formStep?: number;
@@ -246,15 +247,19 @@ export function OnboardingForm({
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-stone-200 pt-6 sm:flex-row sm:justify-between">
-        <GradientButton
-          type="button"
-          appearance="outline"
-          onClick={index === 0 ? onBack : () => go(index)}
-          disabled={loading}
-          className="sm:w-40"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back
-        </GradientButton>
+        {index === 0 && !onBack ? (
+          <span />
+        ) : (
+          <GradientButton
+            type="button"
+            appearance="outline"
+            onClick={index === 0 ? onBack : () => go(index)}
+            disabled={loading}
+            className="sm:w-40"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </GradientButton>
+        )}
         <GradientButton type="button" onClick={next} loading={loading} className="sm:min-w-48">
           {isLast ? "Submit my details" : "Continue"} <ArrowRight className="h-4 w-4" />
         </GradientButton>

@@ -149,6 +149,7 @@ export const FIELD_LABELS: Record<string, string> = {
   confirmed: "Confirmed details are accurate",
   role: "Role",
   address: "Address",
+  engagementId: "Engagement reference",
 };
 
 /** Internal-only flags that are folded into the values above. */

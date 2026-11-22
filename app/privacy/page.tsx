@@ -68,11 +68,12 @@ export default function PrivacyPage() {
           <p>We only share what is needed, with:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>Firmcheck, our identity and anti-money laundering check provider</li>
+            <li>GoCardless (Direct Debit) and Stripe (card payments), which take your payment details directly; we never see your bank or card details</li>
             <li>HMRC and Companies House, when we act for you</li>
             <li>your previous accountant, if you ask us to take over from them</li>
             <li>
               the technology providers that run this website and our records: Vercel (website hosting and file storage), Resend
-              (email) and Google (spreadsheets)
+              (email) and Google (spreadsheets and document storage)
             </li>
           </ul>
           <p>

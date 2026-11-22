@@ -35,6 +35,33 @@ Built with Next.js, deployed on Vercel. Pushing to `main` deploys the live site;
 
 Firm details for the footer and privacy notice live in `lib/figures-config.ts`.
 
+## Client links: engagement letter, payment, onboarding
+
+The team creates a link at `/admin/new`. The client opens `/start/<link>` and goes through:
+
+1. **Engagement letter**: read and sign (typed name and a tick). A PDF with the signing record is saved, emailed to both sides and saved to Google Drive.
+2. **Payment**: Direct Debit through GoCardless (default), card upfront through Stripe, or no payment step. Only the team chooses this.
+3. **Onboarding**: the existing form, prefilled. Submitting works exactly as before (email, Google Sheet, AML button).
+
+The server checks each step before the next opens, so steps can't be skipped. The status board at `/admin` shows where everyone is.
+Nothing in the app ever cancels a mandate, refunds a payment or edits Xero. Problems (failed or cancelled Direct Debits, AML failures) are flagged for the team.
+
+The letter wording is in `lib/engagements/letter.ts` (placeholder until the real template is added). Prices are edited in Settings.
+
+| Name | What it is |
+| --- | --- |
+| `ADMIN_SESSION_SECRET` | Long random text that signs team sign-ins. Falls back to `AML_INITIATE_SECRET`. |
+| `ADMIN_EMAILS` | Owners, always admins. Defaults to joshua@tryfigures.com. Others are added in Settings. |
+| `GOCARDLESS_ACCESS_TOKEN` | Read-write access token. Test one first (sandbox). |
+| `GOCARDLESS_ENVIRONMENT` | `sandbox` (default) or `live`. |
+| `GOCARDLESS_WEBHOOK_SECRET` | From the webhook endpoint pointing at `/api/webhooks/gocardless`. |
+| `STRIPE_SECRET_KEY` | `sk_test_...` while testing, then `sk_live_...`. |
+| `STRIPE_WEBHOOK_SECRET` | From the webhook pointing at `/api/webhooks/stripe` (event `checkout.session.completed`). |
+| `GOOGLE_DRIVE_CLIENTS_FOLDER_ID` | The Shared Drive "Clients" folder. Add the service account email to the Shared Drive as Content manager. |
+| `COMPANIES_HOUSE_API_KEY` | Optional. Fills company details from a company number. |
+
+With no payment keys, preview builds let you simulate the payment step. The live site never does.
+
 ## Running locally
 
 ```bash

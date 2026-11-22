@@ -17,6 +17,9 @@ import {
 } from "@/lib/onboarding-fields";
 import { nextStepsEmailHtml, onboardingNextSteps } from "@/lib/next-steps";
 import { FIRM } from "@/lib/figures-config";
+import { adminLink, checkOnboardingAllowed, completeOnboarding, FlowError } from "@/lib/engagements/actions";
+import { getEngagementByToken } from "@/lib/engagements/store";
+import { escapeHtml as esc } from "@/lib/email-html";
 
 function label(key: string): string {
     if (FIELD_LABELS[key]) return FIELD_LABELS[key];
@@ -131,6 +134,24 @@ export async function POST(request: Request) {
     const payload: Record<string, unknown> = { ...body };
     delete payload.resumeCode;
     delete payload.website;
+    delete payload.engagementToken;
+
+    // Clients coming through a New client link must have signed and paid first.
+    const engagementToken = typeof body.engagementToken === "string" ? body.engagementToken : "";
+    const engagement = engagementToken ? await getEngagementByToken(engagementToken) : null;
+    if (engagementToken) {
+        if (!engagement) return NextResponse.json({ message: "This link is not valid. Please contact us." }, { status: 404 });
+        try {
+            checkOnboardingAllowed(engagement);
+        } catch (error) {
+            const message = error instanceof FlowError ? error.message : "Please refresh the page.";
+            return NextResponse.json({ message }, { status: error instanceof FlowError ? error.status : 409 });
+        }
+        if (engagement.client.type !== type) {
+            return NextResponse.json({ message: "Please refresh the page and try again." }, { status: 409 });
+        }
+        payload.engagementId = engagement.id;
+    }
 
     try {
         const submission = await createSubmission(payload, { kind: "onboarding" });
@@ -156,6 +177,7 @@ export async function POST(request: Request) {
                 `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:720px;margin:0 auto;padding:20px;">
                     <h2 style="margin:0 0 4px;">New onboarding submission</h2>
                     <p style="color:#57534e;margin:0 0 16px;">${escapeHtml(type)} onboarding. Submission ID ${submission.id}</p>
+                    ${engagement ? `<p style="margin:0 0 16px;">Came through a New client link. Engagement letter signed${engagement.payment.method === "none" ? "" : " and payment set up"}. <a href="${esc(adminLink(engagement, request))}" style="color:#c2410c;">Open on the status board</a></p>` : ""}
                     <table style="width:100%;border-collapse:collapse;font-size:14px;">${renderRows(payload)}</table>
                     <h3 style="margin-top:28px;">Documents</h3>
                     <div>${button(photoLink, "View photo ID")}${button(addressLink, "View proof of address")}</div>
@@ -176,7 +198,7 @@ export async function POST(request: Request) {
                 "We've received your details",
                 nextStepsEmailHtml(
                     `Hi ${escapeHtml(firstName)}, thank you for sending your details to Figures. Here is what happens next.`,
-                    onboardingNextSteps({ hasPreviousAccountant: payload.previousAccountant === "yes" }),
+                    onboardingNextSteps({ hasPreviousAccountant: payload.previousAccountant === "yes", letterSigned: Boolean(engagement) }),
                     FIRM.contactEmail
                 )
             );
@@ -184,6 +206,11 @@ export async function POST(request: Request) {
 
         if (resumeCode) {
             await deleteDraft(resumeCode).catch((error) => console.error("[onboarding] Draft cleanup failed", error));
+        }
+        if (engagement) {
+            await completeOnboarding(engagement, submission.id).catch((error) =>
+                console.error("[onboarding] Could not update the client record", error)
+            );
         }
 
         return NextResponse.json({ message: "Received", submissionId: submission.id }, { status: 200 });

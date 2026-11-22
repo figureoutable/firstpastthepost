@@ -159,4 +159,7 @@ export const HIDDEN_FIELDS = new Set([
   "noBusinessUtr",
   "noAuthCode",
   "resumeCode",
+  "website",
+  "photoIdName",
+  "proofOfAddressName",
 ]);

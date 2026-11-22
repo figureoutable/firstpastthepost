@@ -9,6 +9,8 @@ export type IncorporationDraftRecord = {
   code: string;
   createdAt: string;
   updatedAt: string;
+  /** When we emailed the client their resume code. */
+  reminderSentAt?: string;
   step: number;
   phase: "banner" | "form";
   state: IncorporationState;
@@ -85,4 +87,9 @@ export async function updateDraft(input: {
   };
   await saveDraft(record);
   return record;
+}
+
+/** Records that the resume-code email went out, so it is only sent once. */
+export async function markReminderSent(record: IncorporationDraftRecord): Promise<void> {
+  await saveDraft({ ...record, reminderSentAt: new Date().toISOString() });
 }

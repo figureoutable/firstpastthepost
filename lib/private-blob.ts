@@ -1,6 +1,7 @@
 import { del, get, head, list, put } from "@vercel/blob";
 import { promises as fs } from "fs";
 import path from "path";
+import { isProduction } from "@/lib/env";
 
 /**
  * Storage for client data: ID documents, saved drafts and submissions.
@@ -9,8 +10,13 @@ import path from "path";
  * connected to the project with the prefix PRIVATE_BLOB, which creates either
  * PRIVATE_BLOB_READ_WRITE_TOKEN or PRIVATE_BLOB_STORE_ID.
  *
- * Until then it falls back to the old public store so nothing breaks, and logs
- * a warning. Files in a private store can only be read by this app.
+ * Reads also look in the old public store, so submissions and drafts saved
+ * before the switch keep working. New files are only ever written to the
+ * private store.
+ *
+ * If the private store is not connected: previews and local builds fall back
+ * to the old store; the live site refuses to save and emails an alert, so ID
+ * documents are never silently stored publicly.
  */
 
 type PutBody = Parameters<typeof put>[1];
@@ -44,6 +50,10 @@ function legacyToken(): string {
   return token;
 }
 
+function legacyTokenOrNull(): string | null {
+  return process.env.BLOB_READ_WRITE_TOKEN?.trim() || null;
+}
+
 let warned = false;
 function warnLegacy() {
   if (warned) return;
@@ -51,6 +61,28 @@ function warnLegacy() {
   console.warn(
     "[storage] Private Blob store is not connected (PRIVATE_BLOB_*). Falling back to the public store."
   );
+}
+
+let lastAlert = 0;
+async function refuseOnLiveSite(): Promise<never> {
+  const message =
+    "The private file store is not connected on the live site, so client details and documents cannot be saved.";
+  console.error(`[storage] ${message}`);
+  // At most one alert an hour from each server instance.
+  if (Date.now() - lastAlert > 60 * 60 * 1000) {
+    lastAlert = Date.now();
+    try {
+      const { sendInternalEmail } = await import("@/lib/notifications");
+      await sendInternalEmail(
+        "Action needed: onboarding site cannot save client details",
+        `<p>${message}</p><p>Clients cannot start or submit forms until it is fixed.</p>
+         <p>In Vercel: Storage, then figures-onboarding-private, then Connect Project. Choose figures-onboarding, tick Production, and use the prefix <strong>PRIVATE_BLOB</strong>. Then redeploy.</p>`
+      );
+    } catch {
+      /* already logged */
+    }
+  }
+  throw new Error("File storage is not available");
 }
 
 export function isPrivateStorageConfigured(): boolean {
@@ -81,6 +113,7 @@ export async function putFile(
     const result = await put(pathname, body, { ...common, ...creds, access: "private" });
     return { pathname: result.pathname };
   }
+  if (isProduction()) await refuseOnLiveSite();
   warnLegacy();
   const result = await put(pathname, body, { ...common, token: legacyToken(), access: "public" });
   return { pathname: result.pathname };
@@ -110,13 +143,19 @@ export async function readFile(
   }
   const creds = privateCredentials();
   if (creds) {
-    const result = await get(pathname, { ...creds, access: "private", useCache: false });
-    if (!result || result.statusCode !== 200 || !result.stream) return null;
-    return { stream: result.stream, contentType: result.blob.contentType };
+    try {
+      const result = await get(pathname, { ...creds, access: "private", useCache: false });
+      if (result && result.statusCode === 200 && result.stream) {
+        return { stream: result.stream, contentType: result.blob.contentType };
+      }
+    } catch {
+      /* not in the private store: try the old one below */
+    }
   }
-  warnLegacy();
+  const token = legacyTokenOrNull();
+  if (!token) return null;
   try {
-    const meta = await head(pathname, { token: legacyToken() });
+    const meta = await head(pathname, { token });
     const res = await fetch(meta.url, { cache: "no-store" });
     if (!res.ok || !res.body) return null;
     return { stream: res.body, contentType: meta.contentType };
@@ -147,12 +186,12 @@ export async function deleteFiles(pathnames: string[]): Promise<void> {
     return;
   }
   const creds = privateCredentials();
-  if (creds) {
-    await del(pathnames, creds);
-    return;
+  if (creds) await del(pathnames, creds);
+  const token = legacyTokenOrNull();
+  if (token) {
+    // Remove any copy left in the old store too.
+    await del(pathnames, { token }).catch(() => {});
   }
-  warnLegacy();
-  await del(pathnames, { token: legacyToken() });
 }
 
 export async function listFiles(
@@ -175,16 +214,22 @@ export async function listFiles(
     await walk(local);
     return out;
   }
+  const stores: Array<{ token: string } | { storeId: string }> = [];
   const creds = privateCredentials();
-  const auth = creds ?? { token: legacyToken() };
-  const out: Array<{ pathname: string; uploadedAt: Date }> = [];
-  let cursor: string | undefined;
-  do {
-    const page = await list({ ...auth, prefix, cursor, limit: 1000 });
-    for (const blob of page.blobs) {
-      out.push({ pathname: blob.pathname, uploadedAt: new Date(blob.uploadedAt) });
-    }
-    cursor = page.hasMore ? page.cursor : undefined;
-  } while (cursor);
-  return out;
+  if (creds) stores.push(creds);
+  const token = legacyTokenOrNull();
+  if (token) stores.push({ token });
+
+  const seen = new Map<string, Date>();
+  for (const auth of stores) {
+    let cursor: string | undefined;
+    do {
+      const page = await list({ ...auth, prefix, cursor, limit: 1000 });
+      for (const blob of page.blobs) {
+        if (!seen.has(blob.pathname)) seen.set(blob.pathname, new Date(blob.uploadedAt));
+      }
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+  }
+  return [...seen].map(([pathname, uploadedAt]) => ({ pathname, uploadedAt }));
 }

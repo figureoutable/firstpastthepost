@@ -35,7 +35,7 @@ export async function GET() {
 
 export async function POST(request: Request): Promise<NextResponse> {
     const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code") || "";
+    const code = request.headers.get("x-resume-code") || "";
     const kind = searchParams.get("kind") || "";
 
     if (!KINDS.has(kind)) {

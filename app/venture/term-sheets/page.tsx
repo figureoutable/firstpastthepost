@@ -34,7 +34,7 @@ export default function TermSheetsPage() {
   const status = getTermSheetsStatus(state);
   const sheets = state.termSheets.sheets;
 
-  const [view, setView] = useState<"intro" | "list" | "wizard" | "compare">("intro");
+  const [view, setView] = useState<"list" | "wizard" | "compare">("list");
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -102,23 +102,20 @@ export default function TermSheetsPage() {
 
   return (
     <div>
-      {view === "intro" && (
+      {view === "list" && (
         <ModuleIntro
           icon={FileText}
-          eyebrow="Fundraising"
-          title="Capture and compare term sheets"
-          description="Record valuation, round size, liquidation preference, pro-rata rights, board seats and vesting for each offer - then duplicate and compare them side by side before you decide."
-          color="#5FA8A0"
+          eyebrow="Raise money"
+          title="Term sheets"
+          description="Record each offer from an investor, then compare two side by side before you decide."
           status={status}
           stats={[{ label: "Term sheets", value: String(sheets.length) }]}
-          ctaLabel={sheets.length > 0 ? "View term sheets" : "Create your first term sheet"}
-          onStart={() => setView("list")}
         />
       )}
 
       {view === "list" && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Term sheets</h2>
@@ -178,7 +175,7 @@ export default function TermSheetsPage() {
 
       {view === "compare" && compareSheets.length === 2 && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight text-stone-900">Comparing term sheets</h2>
               <Button variant="outline" onClick={() => setView("list")}>

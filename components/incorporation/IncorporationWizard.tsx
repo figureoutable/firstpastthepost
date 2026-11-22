@@ -114,6 +114,8 @@ export function IncorporationWizard() {
   const [submitError, setSubmitError] = useState("");
   const [special, setSpecial] = useState({ name: "", email: "", phone: "" });
   const [specialState, setSpecialState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [website, setWebsite] = useState("");
+  const reminderRequested = useRef(false);
   const skipNextAutosave = useRef(false);
 
   const started = phase === "form" && !submitted;
@@ -138,7 +140,7 @@ export function IncorporationWizard() {
         return;
       }
       try {
-        const res = await fetch(`/api/incorporation/draft?code=${encodeURIComponent(code)}`);
+        const res = await fetch("/api/incorporation/draft", { headers: { "x-resume-code": code } });
         if (!res.ok) {
           // Only forget the code when the server has confirmed it's gone.
           // Transient 500s/network errors should leave it for a retry.
@@ -241,7 +243,7 @@ export function IncorporationWizard() {
     }
     setResuming(true);
     try {
-      const res = await fetch(`/api/incorporation/draft?code=${encodeURIComponent(code)}`);
+      const res = await fetch("/api/incorporation/draft", { headers: { "x-resume-code": code } });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBannerError(data.error || "No draft found for that code.");
@@ -421,8 +423,30 @@ export function IncorporationWizard() {
     const e = validateStep(step);
     setErrors(e);
     if (Object.keys(e).length) return;
+    if (step === 3 && resumeCode && !reminderRequested.current) {
+      reminderRequested.current = true;
+      void (async () => {
+        try {
+          await fetch("/api/incorporation/draft", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: resumeCode, step: 4, phase, state: s }),
+          });
+          await fetch("/api/incorporation/draft/remind", { method: "POST", headers: { "x-resume-code": resumeCode } });
+        } catch {
+          /* not essential */
+        }
+      })();
+    }
     if (step < STEPS) setStep(step + 1);
   };
+
+  // Once errors are showing, re-check as the client types so fixed fields clear.
+  useEffect(() => {
+    if (Object.keys(errors).length === 0) return;
+    setErrors(validateStep(step));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s]);
 
   const back = () => {
     setErrors({});
@@ -464,7 +488,7 @@ export function IncorporationWizard() {
       const res = await fetch("/api/incorporation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, resumeCode }),
+        body: JSON.stringify({ ...payload, resumeCode, website }),
       });
       if (!res.ok) {
         const result = await res.json().catch(() => ({}));
@@ -663,7 +687,7 @@ export function IncorporationWizard() {
             <span className="font-medium text-stone-900">Resume code: </span>
             <span className="font-mono tracking-wider text-clay-800">{resumeCode}</span>
             <span className="mt-0.5 block text-stone-500 sm:mt-0 sm:ml-2 sm:inline">
-              Keep this code to continue later on any device.
+              We also email it to you once you add your email address.
             </span>
           </div>
           <Button
@@ -686,7 +710,7 @@ export function IncorporationWizard() {
         </div>
       )}
 
-      <div className={PANEL}>
+      <div className={`relative ${PANEL}`}>
         <StepProgress steps={STEP_TITLES} current={step - 1} />
 
         <div className="space-y-4">
@@ -1323,6 +1347,12 @@ export function IncorporationWizard() {
             <AlertCircle className="h-4 w-4 shrink-0" /> {submitError}
           </p>
         )}
+
+        {/* Hidden from people; bots that fill every field get filtered out. */}
+        <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+          <label htmlFor="inc-website">Website</label>
+          <input id="inc-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+        </div>
 
         <div className="mt-6 flex flex-col-reverse gap-3 border-t border-stone-200 pt-6 sm:flex-row sm:justify-between">
           <GradientButton type="button" appearance="outline" className="sm:w-40" onClick={back}>

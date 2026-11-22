@@ -43,8 +43,8 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code") || "";
+    // The code is sent in a header so it stays out of URLs and server logs.
+    const code = request.headers.get("x-resume-code") || new URL(request.url).searchParams.get("code") || "";
     const draft = await getDraft(code);
     if (!draft) {
       return NextResponse.json({ error: "Draft not found" }, { status: 404 });

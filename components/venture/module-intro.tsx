@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StatusDot, stagger } from "@/components/venture/motion-bits";
 import type { ModuleStatus } from "@/lib/venture/types";
 
 export interface ModuleIntroStat {
@@ -11,13 +12,22 @@ export interface ModuleIntroStat {
   value: string;
 }
 
+const STATUS_LABEL: Record<ModuleStatus, string> = {
+  not_started: "Not started",
+  in_progress: "In progress",
+  complete: "Done",
+};
+
+/**
+ * The header at the top of every Venture module: icon, title, one line on what it does,
+ * a few key numbers and optional actions. It sits above the module's working area.
+ */
 export function ModuleIntro({
-  icon: _Icon,
+  icon: Icon,
   eyebrow,
   title,
   description,
-  color: _color,
-  status: _status,
+  status,
   stats,
   visual,
   ctaLabel,
@@ -25,14 +35,15 @@ export function ModuleIntro({
   ctaDisabled,
   secondaryCtaLabel,
   onSecondaryStart,
-  hideIcon: _hideIcon,
-  hideStatus: _hideStatus,
+  hideStatus,
   logoSrc,
+  actions,
 }: {
   icon?: LucideIcon;
   eyebrow?: string;
   title: string;
   description: string;
+  /** Kept for older callers; the header now uses the Figures palette. */
   color?: string;
   status?: ModuleStatus;
   stats?: ModuleIntroStat[];
@@ -45,76 +56,77 @@ export function ModuleIntro({
   hideIcon?: boolean;
   hideStatus?: boolean;
   logoSrc?: string;
+  actions?: ReactNode;
 }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="w-full overflow-hidden rounded-2xl border border-stone-200 bg-card"
-    >
-      <div className="flex flex-col gap-3 p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            {eyebrow && (
-              <span className="-mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-400">
-                {eyebrow}
-              </span>
-            )}
-            <h2 className="mt-1 flex items-center gap-3 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
-              {logoSrc && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={`${logoSrc}?v=3`} alt="" className="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14" />
-              )}
-              {title}
-            </h2>
-            <p className="mt-3 text-base leading-relaxed text-stone-600">
-              {description}
-            </p>
-          </div>
+  const hasButtons = Boolean((ctaLabel && onStart) || (secondaryCtaLabel && onSecondaryStart) || actions);
 
-          {(ctaLabel || secondaryCtaLabel) && (
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              {secondaryCtaLabel && onSecondaryStart && (
-                <Button
-                  size="default"
-                  className="w-48 rounded-lg"
-                  onClick={onSecondaryStart}
-                >
-                  {secondaryCtaLabel}
-                </Button>
+  return (
+    <motion.header
+      variants={stagger.container}
+      initial="hidden"
+      animate="show"
+      className="mb-6 space-y-5 sm:mb-8"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <motion.div variants={stagger.item} className="flex min-w-0 items-start gap-4">
+          {(logoSrc || Icon) && (
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-stone-200">
+              {logoSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`${logoSrc}?v=3`} alt="" className="h-9 w-9 object-contain" />
+              ) : Icon ? (
+                <Icon className="h-6 w-6 text-clay-600" />
+              ) : null}
+            </span>
+          )}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {eyebrow && (
+                <span className="text-xs font-semibold uppercase tracking-wider text-clay-700">{eyebrow}</span>
               )}
-              {ctaLabel && onStart && (
-                <Button
-                  size="default"
-                  className="w-48 rounded-lg"
-                  onClick={onStart}
-                  disabled={ctaDisabled}
-                >
-                  {ctaLabel}
-                </Button>
+              {status && !hideStatus && (
+                <span className="inline-flex items-center gap-1.5 text-xs text-stone-500">
+                  <StatusDot status={status} /> {STATUS_LABEL[status]}
+                </span>
               )}
             </div>
-          )}
-        </div>
-
-        {visual}
-
-        {!visual && stats && stats.length > 0 ? (
-          <div className="flex min-w-0 flex-wrap items-end gap-12 sm:gap-16">
-            {stats.map((s) => (
-              <div key={s.label} className="min-w-0">
-                <div className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
-                  {s.value}
-                </div>
-                <div className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-stone-400">
-                  {s.label}
-                </div>
-              </div>
-            ))}
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-stone-900 sm:text-[28px]">{title}</h1>
+            <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-stone-600">{description}</p>
           </div>
-        ) : null}
+        </motion.div>
+
+        {hasButtons && (
+          <motion.div variants={stagger.item} className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+            {actions}
+            {secondaryCtaLabel && onSecondaryStart && (
+              <Button variant="outline" onClick={onSecondaryStart}>
+                {secondaryCtaLabel}
+              </Button>
+            )}
+            {ctaLabel && onStart && (
+              <Button onClick={onStart} disabled={ctaDisabled}>
+                {ctaLabel}
+              </Button>
+            )}
+          </motion.div>
+        )}
       </div>
-    </motion.div>
+
+      {visual && <motion.div variants={stagger.item}>{visual}</motion.div>}
+
+      {!visual && stats && stats.length > 0 && (
+        <motion.dl variants={stagger.item} className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="min-w-0 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:min-w-40"
+            >
+              <dt className="text-xs font-medium text-stone-500">{s.label}</dt>
+              <dd className="mt-0.5 truncate text-lg font-semibold tabular-nums tracking-tight text-stone-900">{s.value}</dd>
+            </div>
+          ))}
+        </motion.dl>
+      )}
+    </motion.header>
   );
 }

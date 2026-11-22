@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FlaskConical, Plus, Trash2, PoundSterling } from "lucide-react";
+import { Plus, Trash2, PoundSterling } from "lucide-react";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { WizardShell } from "@/components/venture/wizard-shell";
 import { FormSection } from "@/components/venture/form-section";
@@ -36,7 +36,7 @@ export default function RdPage() {
   const projects = state.rd.projects;
   const grandTotal = projects.reduce((sum, p) => sum + totalCosts(p.costs), 0);
 
-  const [view, setView] = useState<"intro" | "list" | "wizard">("intro");
+  const [view, setView] = useState<"list" | "wizard">("list");
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(EMPTY_PROJECT);
 
@@ -93,26 +93,23 @@ export default function RdPage() {
 
   return (
     <div>
-      {view === "intro" && (
+      {view === "list" && (
         <ModuleIntro
-          icon={FlaskConical}
+          logoSrc="/icons/rd.png"
           eyebrow="Tax relief"
-          title="Log your qualifying R&D projects"
-          description="Capture the advance you were seeking, the uncertainty you faced, the work carried out and a cost breakdown for each project - then submit as your Additional Information Form when you're ready."
-          color="#3DBE7A"
+          title="R&D tax relief"
+          description="Log each project: what you were trying to achieve, what was uncertain, the work done and what it cost. We use this for your claim."
           status={status}
           stats={[
             { label: "Projects logged", value: String(projects.length) },
             { label: "Qualifying spend", value: GBP.format(grandTotal) },
           ]}
-          ctaLabel={projects.length > 0 ? "View projects" : "Log your first project"}
-          onStart={() => setView("list")}
         />
       )}
 
       {view === "list" && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Projects</h2>
@@ -162,7 +159,7 @@ export default function RdPage() {
           </div>
 
           {projects.length > 0 && (
-            <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+            <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-stone-900">
                   {state.rd.submitted ? "Additional Information Form submitted" : "Ready to submit"}
@@ -175,7 +172,7 @@ export default function RdPage() {
               <StubAction
                 emphasized
                 label="Submit Additional Information Form"
-                placeholderText="Connect HMRC integration here - this demo does not send a real Additional Information Form."
+                placeholderText="Thanks. Figures reviews your projects and costs, then prepares the Additional Information Form with you. This demo does not send anything to HMRC."
                 onActivated={() =>
                   setState((prev) => ({
                     ...prev,

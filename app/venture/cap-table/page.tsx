@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  PieChart,
   Plus,
   ArrowLeftRight,
   History,
@@ -383,22 +382,20 @@ export default function CapTablePage() {
   return (
     <div className="space-y-6">
       <ModuleIntro
-        icon={PieChart}
-        title="Your Cap Table"
-        description="A live record of who owns what. Add shareholders, record share issues or transfers, and see ownership percentages recalculate instantly."
-        color="#8B7FD6"
+        logoSrc="/icons/cap-table.png"
+        eyebrow="Ownership"
+        title="Cap table"
+        description="A live record of who owns what. Add shareholders, record share issues or transfers, and the percentages update straight away."
         status={status}
-        hideIcon
-        hideStatus
         visual={
           <OwnershipPie
-            size={480}
+            size={400}
             slices={shareholders.map((sh) => ({ name: sh.name, shares: sh.shares }))}
           />
         }
       />
 
-      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-stone-900">Shareholders</h2>
@@ -644,7 +641,7 @@ export default function CapTablePage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="mb-1 text-lg font-semibold text-stone-900">Share classes</h3>
@@ -935,7 +932,7 @@ export default function CapTablePage() {
       </div>
 
       {events.length > 0 && (
-        <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
           <div className="mb-4 flex items-center gap-2">
             <History className="h-4 w-4 text-stone-400" />
             <h3 className="text-lg font-semibold text-stone-900">Share history</h3>
@@ -956,12 +953,12 @@ export default function CapTablePage() {
         </div>
       )}
 
-      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
         <h3 className="mb-4 text-lg font-semibold text-stone-900">Companies House filing</h3>
         <StubAction
           emphasized
           label="File SH01"
-          placeholderText="Connect Companies House integration here - this demo does not file a real SH01 return of allotment of shares."
+          placeholderText="Thanks. Figures files the SH01 return of allotment with Companies House for you. This demo does not file anything."
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell, PageTitle, Panel } from "@/components/site/site-chrome";
-import { FIRM, firmValue } from "@/lib/figures-config";
+import { FIRM } from "@/lib/figures-config";
 
 export const metadata: Metadata = { title: "Privacy notice" };
 
@@ -23,10 +23,8 @@ export default function PrivacyPage() {
       <Panel className="space-y-6">
         <Section title="Who we are">
           <p>
-            {FIRM.tradingName} is a trading name of {FIRM.legalName} (company number {firmValue(FIRM.companyNumber)}), a firm of
-            chartered accountants. We are the controller of the personal information you give us here. Our registered office is{" "}
-            {firmValue(FIRM.registeredOffice)}. We are registered with the Information Commissioner&apos;s Office (registration
-            number {firmValue(FIRM.icoNumber)}).
+            {FIRM.tradingName} is a trading name of {FIRM.legalName}, a firm of chartered accountants. We are the controller of the
+            personal information you give us here.
           </p>
           <p>
             You can contact us about your information at{" "}

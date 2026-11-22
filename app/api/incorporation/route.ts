@@ -47,6 +47,15 @@ function amlPeopleFrom(payload: any, registeredEmail: string): AmlPerson[] {
     .filter((person) => person.fullName);
 }
 
+function row(label: string, value: unknown): string {
+  const text = value === null || value === undefined || value === "" ? "-" : String(value);
+  return `<tr><td style="padding:4px 12px 4px 0;font-weight:600;vertical-align:top;white-space:nowrap;">${escapeHtml(label)}</td><td style="padding:4px 0;vertical-align:top;">${escapeHtmlMultiline(text)}</td></tr>`;
+}
+
+function yesNo(value: unknown): string {
+  return value === "yes" || value === true ? "Yes" : value === "no" || value === false ? "No" : "-";
+}
+
 function formatAddress(addr: Address | undefined | null): string {
   return [addr?.line1, addr?.line2, addr?.town, addr?.county, addr?.postcode, addr?.country]
     .filter(Boolean)
@@ -57,9 +66,14 @@ function formatAddress(addr: Address | undefined | null): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    // Hidden "website" field: people never see it, bots fill it in.
+    if (typeof body?.website === "string" && body.website.trim()) {
+      return NextResponse.json({ ok: true });
+    }
     const resumeCode = typeof body?.resumeCode === "string" ? body.resumeCode : "";
     const payload = { ...body };
     delete payload.resumeCode;
+    delete payload.website;
     const registeredEmail = String(payload?.step3?.registeredEmail || "").trim();
     if (!registeredEmail) {
       return NextResponse.json({ error: "Registered email missing" }, { status: 400 });
@@ -131,6 +145,22 @@ export async function POST(request: Request) {
           <td style="padding:4px 8px;font-weight:600;">Registered email</td>
           <td style="padding:4px 8px;">${escapeHtml(registeredEmail)}</td>
         </tr>
+        <tr>
+          <td style="padding:4px 8px;font-weight:600;">Phone for HMRC</td>
+          <td style="padding:4px 8px;">${escapeHtml(step3?.hmrcPhone) || "-"}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;font-weight:600;">Backup name</td>
+          <td style="padding:4px 8px;">${step2?.backupName ? `${escapeHtml(step2.backupName)} ${escapeHtml(step2.backupEnding)}` : "-"}</td>
+        </tr>
+      </table>
+
+      <h3 style="margin-top:16px;">Companies House personal codes</h3>
+      <table style="border-collapse:collapse;font-size:14px;">
+        ${(Array.isArray(step5?.directors) ? step5.directors : [])
+          .map((d: any) => row(`${d.firstName || ""} ${d.lastName || ""}`.trim() || "Director", step9?.directorPersonalCodes?.[d.id]))
+          .join("")}
+        ${payload.introPersonalCode ? row("Code entered at the start", payload.introPersonalCode) : ""}
       </table>
 
       <h3 style="margin-top:16px;">Registered office</h3>
@@ -138,16 +168,36 @@ export async function POST(request: Request) {
         ${formatAddress(registeredAddr)}
       </p>
 
-      <h3 style="margin-top:16px;">Business details</h3>
-      <p style="font-size:14px;margin:4px 0;">${escapeHtmlMultiline(step4?.businessDescription)}</p>
+      <h3 style="margin-top:16px;">Principal place of business</h3>
       <p style="font-size:14px;margin:4px 0;">
-        SIC: ${escapeHtml(
-          (Array.isArray(step4?.sicCodes) ? step4.sicCodes : [])
-            .map((c: any) => c.code)
-            .filter(Boolean)
-            .join(", ")
-        ) || "-"}
+        ${step3?.principal === "different"
+          ? formatAddress(step3?.principalAddr)
+          : step3?.principal === "none"
+            ? "No fixed place of business yet"
+            : "Same as registered office"}
       </p>
+
+      <h3 style="margin-top:16px;">Business details</h3>
+      <table style="border-collapse:collapse;font-size:14px;">
+        ${row("What the business does", step4?.businessDescription)}
+        ${row(
+          "SIC codes",
+          (Array.isArray(step4?.sicCodes) ? step4.sicCodes : [])
+            .filter((c: any) => c?.code)
+            .map((c: any) => `${c.code}${c.description ? ` (${c.description})` : ""}`)
+            .join("\n")
+        )}
+        ${row(
+          "Starts trading",
+          step4?.trading === "date" ? step4?.tradingDate : step4?.trading === "none" ? "Not trading yet" : "Straight away"
+        )}
+        ${row("Replacing an existing business", yesNo(step4?.replacing))}
+        ${step4?.replacing === "yes" ? row("Previous business", step4?.prevBusinessName) : ""}
+        ${step4?.replacing === "yes" ? row("Previous business address", plainAddress(step4?.prevBusinessAddr)) : ""}
+        ${step4?.replacing === "yes" ? row("Handover contact", step4?.handoverPerson) : ""}
+        ${row("Loans from overseas", yesNo(step4?.loansOverseas))}
+        ${row("Asked for details to be protected", yesNo(step4?.protectedDetails))}
+      </table>
 
       <h3 style="margin-top:16px;">Directors (${Array.isArray(step5?.directors) ? step5.directors.length : 0})</h3>
       <ul style="font-size:14px;margin:4px 0 0 16px;padding:0;list-style-type:none;">
@@ -169,10 +219,12 @@ export async function POST(request: Request) {
                 : "-";
             return `
               <li style="margin-bottom:12px;">
-                <div><strong>${escapeHtml(d.firstName)} ${escapeHtml(d.lastName)}</strong></div>
+                <div><strong>${escapeHtml([d.title, d.firstName, d.middleName, d.lastName].filter(Boolean).join(" "))}</strong></div>
+                ${d.differentName === "yes" ? `<div>Previous name: ${escapeHtml(`${d.prevFirst || ""} ${d.prevLast || ""}`.trim())}</div>` : ""}
+                <div>Personal code: ${escapeHtml(step9?.directorPersonalCodes?.[d.id]) || "-"}</div>
                 <div>Country of residence: ${escapeHtml(d.countryResidence) || "-"}</div>
                 <div>Date of birth: ${dob}</div>
-                <div>Nationality: ${escapeHtml(d.nationality) || "-"}</div>
+                <div>Nationality: ${escapeHtml(d.nationality) || "-"}${d.secondNationality ? `, ${escapeHtml(d.secondNationality)}` : ""}</div>
                 <div style="margin-top:4px;"><em>Correspondence address (public)</em><br/>${corrAddress}</div>
                 <div style="margin-top:4px;"><em>Home address (private)</em><br/>${homeAddress}</div>
                 <div style="margin-top:4px;">Email for filing reminders: ${escapeHtml(d.emailReminders) || "-"}</div>
@@ -223,8 +275,29 @@ export async function POST(request: Request) {
           .join("") || "<li>None (confirmed no one controls more than 25%)</li>"}
       </ul>
 
+      <h3 style="margin-top:16px;">Share capital</h3>
+      <table style="border-collapse:collapse;font-size:14px;">
+        ${step7?.standard
+          ? row("Structure", "Standard: £1 ordinary shares, one vote each, equal dividends")
+          : row("Custom structure requested", step7?.customShareDescription || "Client will email the details")}
+        ${row("Share class", step7?.shareClass === "Other" ? step7?.shareClassOther : step7?.shareClass)}
+        ${row("Currency", step7?.currency === "Other" ? step7?.currencyOther : step7?.currency)}
+        ${row("Value per share", step7?.valuePerShare === "Other" ? step7?.valueOther : step7?.valuePerShare)}
+        ${row("Shares paid in full", yesNo(step7?.paidFull))}
+      </table>
+
+      <h3 style="margin-top:16px;">Confirmations</h3>
+      <table style="border-collapse:collapse;font-size:14px;">
+        ${row("No one controls more than 25%", yesNo(step8?.noPscConfirm))}
+        ${row("PSC list matches the shareholdings", yesNo(step8?.pscListConfirm))}
+        ${row("Declarations accepted", yesNo(step9?.acc1 && step9?.acc2 && step9?.acc3))}
+      </table>
+
       <h3 style="margin-top:24px;">Firmcheck AML</h3>
       ${amlSection}
+
+      <h3 style="margin-top:24px;">Everything the client entered</h3>
+      <pre style="font-size:12px;white-space:pre-wrap;word-break:break-word;border:1px solid #eee;padding:8px;border-radius:4px;">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>
     `;
 
     try {

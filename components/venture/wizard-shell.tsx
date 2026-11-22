@@ -1,9 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import GradientButton from "@/components/kokonutui/gradient-button";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { StepIndicator } from "./step-indicator";
 
 export function WizardShell({
@@ -33,17 +33,18 @@ export function WizardShell({
   hideFooter?: boolean;
   children: ReactNode;
 }) {
+  const reduce = useReducedMotion();
   return (
-    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:p-7">
       <StepIndicator current={step} total={totalSteps} label={stepLabel} />
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 20 }}
+          initial={reduce ? false : { opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
+          exit={reduce ? undefined : { opacity: 0, x: -16 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
           className="space-y-5"
         >
           {children}
@@ -51,20 +52,27 @@ export function WizardShell({
       </AnimatePresence>
 
       {!hideFooter && (
-        <div className="mt-6 flex gap-3 border-t border-stone-200 pt-6">
-          <GradientButton type="button" appearance="outline" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" /> {backLabel}
-          </GradientButton>
-          <GradientButton
+        <div className="mt-7 flex gap-3 border-t border-stone-100 pt-5">
+          <Button type="button" variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> {backLabel}
+          </Button>
+          <Button
             type="button"
-            variant={isLastStep ? "emerald" : "purple"}
             onClick={onNext}
             disabled={nextDisabled || loading}
             className="ml-auto flex-1 sm:flex-none"
           >
-            {loading ? "Saving…" : nextLabel}
-            {!loading && <ArrowRight className="h-4 w-4" />}
-          </GradientButton>
+            {loading ? (
+              <>
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Saving
+              </>
+            ) : (
+              <>
+                {nextLabel}
+                {isLastStep ? <Check className="ml-1.5 h-4 w-4" /> : <ArrowRight className="ml-1.5 h-4 w-4" />}
+              </>
+            )}
+          </Button>
         </div>
       )}
     </div>

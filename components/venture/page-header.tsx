@@ -21,39 +21,27 @@ export function PageHeader({
   }
 
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-stone-900"
+          className="mb-4 inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-stone-500 transition-colors hover:text-stone-900"
         >
           <ArrowLeft className="h-4 w-4" /> {backLabel}
         </Link>
       )}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          {(logoSrc || title) && (
-            <div className="flex items-center gap-3">
-              {logoSrc && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`${logoSrc}?v=3`}
-                  alt=""
-                  className="h-12 w-12 shrink-0 object-contain sm:h-14 sm:w-14"
-                />
-              )}
-              {title && (
-                <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
-                  {title}
-                </h1>
-              )}
-            </div>
+        <div className="flex min-w-0 items-start gap-4">
+          {logoSrc && (
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-stone-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`${logoSrc}?v=3`} alt="" className="h-9 w-9 object-contain" />
+            </span>
           )}
-          {subtitle && (
-            <p className={title || logoSrc ? "mt-2 max-w-2xl text-stone-600" : "max-w-2xl text-stone-600"}>
-              {subtitle}
-            </p>
-          )}
+          <div className="min-w-0">
+            {title && <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-[28px]">{title}</h1>}
+            {subtitle && <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-stone-600">{subtitle}</p>}
+          </div>
         </div>
         {action}
       </div>

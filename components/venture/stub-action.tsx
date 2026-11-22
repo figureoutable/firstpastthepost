@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Plug } from "lucide-react";
+import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import GradientButton from "@/components/kokonutui/gradient-button";
 import { cn } from "@/lib/utils";
 import { Expandable } from "@/components/ui/expandable";
 
+/**
+ * A button for a step Figures does for the client (filing, signatures, valuations).
+ * In this demo it explains what would happen next instead of sending anything.
+ */
 export function StubAction({
   label,
   placeholderText,
@@ -26,34 +29,20 @@ export function StubAction({
 
   return (
     <div className={cn("space-y-2", className)}>
-      {emphasized ? (
-        <GradientButton
-          type="button"
-          variant="emerald"
-          className="w-full sm:w-auto"
-          onClick={() => {
-            setActivated(true);
-            onActivated?.();
-          }}
-        >
-          {label}
-        </GradientButton>
-      ) : (
-        <Button
-          type="button"
-          variant={variant}
-          className="w-full sm:w-auto"
-          onClick={() => {
-            setActivated(true);
-            onActivated?.();
-          }}
-        >
-          {label}
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant={emphasized ? "default" : variant}
+        className="w-full sm:w-auto"
+        onClick={() => {
+          setActivated(true);
+          onActivated?.();
+        }}
+      >
+        {label}
+      </Button>
       <Expandable show={activated} contentKey="stub-activated">
-        <div className="flex items-start gap-2 rounded-lg border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs text-stone-500">
-          <Plug className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-xl border border-clay-100 bg-clay-50/70 px-3 py-2.5 text-sm text-clay-900">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-clay-600" />
           <span>{placeholderText}</span>
         </div>
       </Expandable>

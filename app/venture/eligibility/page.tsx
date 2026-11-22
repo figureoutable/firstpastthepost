@@ -27,9 +27,9 @@ export default function EligibilityPage() {
   const status = getEligibilityStatus(state);
   const hasResults = !!state.eligibility.results;
 
-  const [view, setView] = useState<"intro" | "wizard" | "results">(
-    hasResults ? "intro" : "intro"
-  );
+  // Until the client picks a view, show their results if they have them, otherwise the start screen.
+  const [chosenView, setView] = useState<"intro" | "wizard" | "results" | null>(null);
+  const view = chosenView ?? (hasResults ? "results" : "intro");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<EligibilityAnswers>(state.eligibility.answers);
 
@@ -89,13 +89,11 @@ export default function EligibilityPage() {
 
   return (
     <div>
-      {view === "intro" && (
-        <ModuleIntro
+      <ModuleIntro
           icon={ClipboardCheck}
-          eyebrow="Step 1 of your fundraise"
-          title="Check your eligibility"
-          description="Answer five quick questions to see, at a glance, whether your company is likely to qualify for SEIS, EIS, R&D tax relief and EMI options - with the specific reason behind each result."
-          color="#F5C542"
+          eyebrow="Raise money"
+          title="Eligibility check"
+          description="Five quick questions to see if your company is likely to qualify for SEIS, EIS, EMI options and R&D tax relief, with the reason behind each answer."
           status={status}
           stats={
             hasResults
@@ -111,9 +109,24 @@ export default function EligibilityPage() {
                 ]
               : undefined
           }
-          ctaLabel={hasResults ? "View results" : "Start assessment"}
-          onStart={() => (hasResults ? setView("results") : setView("wizard"))}
+          ctaLabel={view === "intro" ? "Start the check" : undefined}
+          onStart={() => setView("wizard")}
         />
+
+      {view === "intro" && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {[
+            { title: "SEIS", detail: "Tax relief for investors in very early companies." },
+            { title: "EIS", detail: "Tax relief for investors in growing companies." },
+            { title: "EMI share options", detail: "Tax-friendly share options for your team." },
+            { title: "R&D tax relief", detail: "Money back on qualifying research and development." },
+          ].map((item) => (
+            <div key={item.title} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
+              <p className="font-semibold text-stone-900">{item.title}</p>
+              <p className="mt-1 text-sm text-stone-500">{item.detail}</p>
+            </div>
+          ))}
+        </div>
       )}
 
       {view === "wizard" && (
@@ -281,7 +294,7 @@ export default function EligibilityPage() {
 
       {view === "results" && state.eligibility.results && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-10">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-10">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">
@@ -294,7 +307,7 @@ export default function EligibilityPage() {
                     month: "long",
                     year: "numeric",
                   })}
-                  . Not a substitute for formal HMRC advance clearance.
+                  . This is a first view, not HMRC advance assurance.
                 </p>
               </div>
               <Button variant="outline" onClick={restart}>

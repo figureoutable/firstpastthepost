@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Gift, Plus, Settings2 } from "lucide-react";
+import { Plus, Settings2 } from "lucide-react";
 import { ModuleIntro } from "@/components/venture/module-intro";
 import { WizardShell } from "@/components/venture/wizard-shell";
 import { FormSection } from "@/components/venture/form-section";
@@ -26,7 +26,7 @@ export default function EmiPage() {
   const { poolSizePercent, vestingYears, cliffMonths, grants, valuationRequested } = state.emi;
   const totalGranted = grants.reduce((s, g) => s + g.numberOfOptions, 0);
 
-  const [view, setView] = useState<"intro" | "workspace" | "wizard">("intro");
+  const [view, setView] = useState<"workspace" | "wizard">("workspace");
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [poolDraft, setPoolDraft] = useState({
@@ -100,26 +100,24 @@ export default function EmiPage() {
 
   return (
     <div>
-      {view === "intro" && (
+      {view === "workspace" && (
         <ModuleIntro
-          icon={Gift}
-          eyebrow="Employee equity"
-          title="EMI option scheme"
-          description="Configure your option pool and vesting defaults, then record grants to individual employees - exercise price, number of options and status, all in one place."
-          color="#E0A458"
+          logoSrc="/icons/emi.png"
+          eyebrow="Ownership"
+          title="EMI share options"
+          description="Set the size of your option pool and the vesting rules, then record each grant to your team."
           status={status}
           stats={[
             { label: "Pool size", value: `${poolSizePercent}%` },
-            { label: "Options granted", value: totalGranted.toLocaleString() },
+            { label: "Options granted", value: totalGranted.toLocaleString("en-GB") },
+            { label: "Grants", value: String(grants.length) },
           ]}
-          ctaLabel="Manage option scheme"
-          onStart={() => setView("workspace")}
         />
       )}
 
       {view === "workspace" && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight text-stone-900">Option pool settings</h2>
               {!editingPool && (
@@ -186,7 +184,7 @@ export default function EmiPage() {
               ) : (
                 <StubAction
                   label="Request EMI valuation"
-                  placeholderText="Connect a share valuation provider here - this demo does not calculate a real HMRC-agreed valuation."
+                  placeholderText="Thanks. Figures prepares the share valuation and agrees it with HMRC before you grant. This demo does not send anything."
                   onActivated={() =>
                     setState((prev) => ({ ...prev, emi: { ...prev.emi, valuationRequested: true } }))
                   }
@@ -195,7 +193,7 @@ export default function EmiPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">Option grants</h2>

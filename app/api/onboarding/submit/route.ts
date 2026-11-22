@@ -113,6 +113,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: "Invalid request." }, { status: 400 });
     }
 
+    // Hidden "website" field: people never see it, bots fill it in.
+    if (typeof body.website === "string" && body.website.trim()) {
+        return NextResponse.json({ message: "Received" }, { status: 200 });
+    }
+
     const type = body.onboardingType;
     if (!isOnboardingType(type)) {
         return NextResponse.json({ message: "Missing onboarding type." }, { status: 400 });
@@ -125,6 +130,7 @@ export async function POST(request: Request) {
     const resumeCode = typeof body.resumeCode === "string" ? body.resumeCode : "";
     const payload: Record<string, unknown> = { ...body };
     delete payload.resumeCode;
+    delete payload.website;
 
     try {
         const submission = await createSubmission(payload, { kind: "onboarding" });

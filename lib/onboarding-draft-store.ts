@@ -11,6 +11,8 @@ export type OnboardingDraftRecord = {
   code: string;
   createdAt: string;
   updatedAt: string;
+  /** When we emailed the client their resume code. */
+  reminderSentAt?: string;
   onboardingType: OnboardingType;
   outerStep: number;
   formStep: number;
@@ -133,4 +135,9 @@ export async function updateDraft(input: {
   };
   await saveDraft(record);
   return record;
+}
+
+/** Records that the resume-code email went out, so it is only sent once. */
+export async function markReminderSent(record: OnboardingDraftRecord): Promise<void> {
+  await saveDraft({ ...record, reminderSentAt: new Date().toISOString() });
 }

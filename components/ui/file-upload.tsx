@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Upload, X, FileCheck2 } from "lucide-react";
+import { Upload, X, FileCheck2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasUpload } from "@/lib/onboarding-validation";
 import { ACCEPTED_UPLOADS, isAcceptedUpload } from "@/lib/compress-image";
@@ -13,6 +13,10 @@ interface FileUploadProps {
     required?: boolean;
     desc?: string;
     error?: string;
+    /** True while the file is being uploaded. */
+    uploading?: boolean;
+    /** Original file name to show for a file that has already been uploaded. */
+    fileName?: string | null;
 }
 
 function fileLabel(value: File | string): string {
@@ -31,15 +35,16 @@ function fileSizeLabel(value: File | string): string {
     return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(value.size / 1024))} KB`;
 }
 
-export function FileUpload({ label, onChange, value, required, desc, error }: FileUploadProps) {
+export function FileUpload({ label, onChange, value, required, desc, error, uploading, fileName }: FileUploadProps) {
     const [dragActive, setDragActive] = React.useState(false);
     const [localError, setLocalError] = React.useState("");
     const inputRef = React.useRef<HTMLInputElement>(null);
     const hasFile = hasUpload(value);
     const shownError = localError || error;
+    const name = fileName || (value ? fileLabel(value as File | string) : "");
 
     const accept = (file: File | undefined) => {
-        if (!file) return;
+        if (!file || uploading) return;
         if (!isAcceptedUpload(file)) {
             setLocalError("Please choose a PDF or a photo (JPG, PNG, HEIC or WEBP).");
             return;
@@ -69,7 +74,8 @@ export function FileUpload({ label, onChange, value, required, desc, error }: Fi
             <div
                 role="button"
                 tabIndex={0}
-                aria-label={hasFile ? `${label}: ${fileLabel(value as File | string)}. Choose a different file` : `Upload ${label}`}
+                aria-label={uploading ? `${label}: uploading` : hasFile ? `${label}: ${name}. Choose a different file` : `Upload ${label}`}
+                aria-busy={uploading || undefined}
                 className={cn(
                     "relative flex min-h-28 w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed px-4 py-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/40",
                     hasFile
@@ -107,13 +113,18 @@ export function FileUpload({ label, onChange, value, required, desc, error }: Fi
                     }}
                 />
 
-                {hasFile && value ? (
+                {uploading ? (
+                    <div className="flex flex-col items-center gap-2 text-stone-500">
+                        <Loader2 className="h-5 w-5 animate-spin text-clay-600" />
+                        <span className="text-sm font-medium text-stone-700">Uploading securely…</span>
+                    </div>
+                ) : hasFile && value ? (
                     <div className="flex w-full items-center gap-3 text-left">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-forest-100 text-forest-700">
                             <FileCheck2 className="h-5 w-5" />
                         </span>
                         <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium text-stone-900">{fileLabel(value)}</span>
+                            <span className="block truncate text-sm font-medium text-stone-900">{name}</span>
                             <span className="block text-xs text-stone-500">{fileSizeLabel(value)} · click to change</span>
                         </span>
                         <button

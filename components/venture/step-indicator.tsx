@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 export function StepIndicator({
   current,
   total,
@@ -8,30 +12,29 @@ export function StepIndicator({
   label?: string;
 }) {
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2">
+    <div className="mb-7">
+      <div className="flex items-center justify-between gap-3">
+        {label ? (
+          <p className="text-sm font-semibold text-stone-900">{label}</p>
+        ) : (
+          <span />
+        )}
+        <span className="whitespace-nowrap text-xs tabular-nums text-stone-500">
+          Step {current + 1} of {total}
+        </span>
+      </div>
+      <div className="mt-3 flex items-center gap-1.5" aria-hidden>
         {Array.from({ length: total }, (_, i) => (
-          <div key={i} className="flex flex-1 items-center gap-2">
-            <div
-              className={`h-1 w-full rounded-full transition-all duration-500 ${
-                i < current
-                  ? "bg-forest-500"
-                  : i === current
-                    ? "bg-forest-300"
-                    : "bg-stone-200"
-              }`}
+          <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-stone-200">
+            <motion.div
+              className="h-full rounded-full bg-clay-500"
+              initial={false}
+              animate={{ width: i < current ? "100%" : i === current ? "50%" : "0%" }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
         ))}
-        <span className="ml-1 whitespace-nowrap text-[11px] tabular-nums text-stone-400">
-          {current + 1}/{total}
-        </span>
       </div>
-      {label && (
-        <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-stone-400">
-          {label}
-        </p>
-      )}
     </div>
   );
 }

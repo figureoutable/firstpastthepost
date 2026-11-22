@@ -51,7 +51,13 @@ function HomeCard({ card }: { card: Card }) {
   }
 
   return (
-    <motion.div whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 320, damping: 24 }} className="h-full">
+    <motion.div
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 320, damping: 24 }}
+      className="h-full"
+      tabIndex={-1}
+    >
       <Link
         href={card.href}
         className={`${className} transition-shadow hover:shadow-lg hover:shadow-stone-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/50`}

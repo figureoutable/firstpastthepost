@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  FileSignature,
   Plus,
   ArrowLeft,
   ArrowRight,
@@ -492,34 +491,19 @@ export default function SafePage() {
       {view === "list" && (
         <div className="space-y-6">
           <ModuleIntro
-            icon={FileSignature}
-            eyebrow="Future equity"
-            title="Future Equity Agreements"
-            description="Create a Future Equity Agreement in minutes, then track every instrument you've issued - outstanding or converted - in one register."
-            color="#D2795A"
+            logoSrc="/icons/future-equity.png"
+            eyebrow="Raise money"
+            title="Future equity"
+            description="Take investment now and turn it into shares at your next round. Create an agreement in minutes and track every one in a single register."
             status={status}
-            visual={
-              <p className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
-                <span>{raises.length}</span>{" "}
-                <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-                  raises
-                </span>
-                <span className="mx-4 font-normal text-stone-300">·</span>
-                <span>{formatGbpFromPence(totalOutstanding)}</span>{" "}
-                <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-                  outstanding
-                </span>
-                <span className="mx-4 font-normal text-stone-300">·</span>
-                <span>{formatGbpFromPence(totalConverted)}</span>{" "}
-                <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-                  converted
-                </span>
-              </p>
-            }
-            hideStatus
+            stats={[
+              { label: "Raises", value: String(raises.length) },
+              { label: "Outstanding", value: formatGbpFromPence(totalOutstanding) },
+              { label: "Converted", value: formatGbpFromPence(totalConverted) },
+            ]}
           />
 
-          <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
+          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">
@@ -671,7 +655,7 @@ export default function SafePage() {
       )}
 
       {view === "form" && (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
           {mode === "add-investor" && targetRaise && (
             <div className="mb-6 rounded-lg border border-forest-200 bg-forest-50 px-4 py-3 text-sm text-forest-800">
               Adding an investor to{" "}
@@ -1189,7 +1173,7 @@ export default function SafePage() {
       )}
 
       {view === "preview" && (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-stone-900">Agreement preview</h3>
@@ -1292,7 +1276,7 @@ export default function SafePage() {
             <StubAction
               emphasized
               label="Send for signature"
-              placeholderText="Connect an e-signature provider here - this demo does not send a real signature request."
+              placeholderText="Thanks. The agreement goes to the investor to sign electronically. This demo does not send a real signature request."
               onActivated={() => {
                 if (!createdIds) return;
                 setState((prev) => ({

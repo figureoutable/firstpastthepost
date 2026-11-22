@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { FIRM, firmValue } from "@/lib/figures-config";
+import { FIRM } from "@/lib/figures-config";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
@@ -27,16 +27,11 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  const registered = FIRM.registeredIn ? `, registered in ${FIRM.registeredIn}` : "";
   return (
     <footer className="border-t border-stone-200/80 bg-white">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-6 text-xs leading-relaxed text-stone-500 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-        <p className="max-w-2xl">
-          {FIRM.tradingName} is a trading name of {FIRM.legalName}
-          {registered}. Company number: {firmValue(FIRM.companyNumber)}. Registered office:{" "}
-          {firmValue(FIRM.registeredOffice)}.
-        </p>
-        <nav className="flex shrink-0 gap-4">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-5 text-xs text-stone-500 sm:px-6">
+        <span>© {new Date().getFullYear()} {FIRM.tradingName}</span>
+        <nav className="flex gap-4">
           <Link href="/privacy" className="hover:text-stone-900">
             Privacy notice
           </Link>

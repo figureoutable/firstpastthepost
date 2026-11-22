@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Check, Copy, ShieldCheck } from "lucide-react";
 import { VideoCard, type VideoCardHandle } from "@/components/kokonutui/video-card";
-import { OnboardingForm } from "@/components/onboarding/onboarding-form";
+import { OnboardingForm, type DocKind, type StepId } from "@/components/onboarding/onboarding-form";
 import { PageShell, PageTitle, Panel } from "@/components/site/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +68,11 @@ function migrateDraft(type: OnboardingType, state: Data): Data {
   }
   if (!next.fullNamePassport && next.fullName) next.fullNamePassport = next.fullName;
   return next;
+}
+
+/** Loads a saved draft. The code goes in a header so it stays out of URLs and logs. */
+function fetchDraft(code: string) {
+  return fetch("/api/onboarding/draft", { headers: { "x-resume-code": code } });
 }
 
 function storage(action: "get" | "set" | "clear", value = ""): string {
@@ -158,7 +163,7 @@ export default function OnboardClient() {
         return;
       }
       try {
-        const res = await fetch(`/api/onboarding/draft?code=${encodeURIComponent(code)}`);
+        const res = await fetchDraft(code);
         if (!res.ok) {
           if (res.status === 404) storage("clear");
           else if (!cancelled) setBannerError("We could not load your saved progress. Please refresh to try again.");
@@ -230,7 +235,7 @@ export default function OnboardClient() {
     return () => clearTimeout(timer);
   }, [resumeCode, onboardingType, step, formStep, data, hydrating]);
 
-  const uploadFile = async (original: File, kind: "photoId" | "proofOfAddress"): Promise<string> => {
+  const uploadFile = async (original: File, kind: DocKind): Promise<string> => {
     const file = await prepareUpload(original);
     if (isTooLarge(file)) {
       throw new Error(`Your ${kind === "photoId" ? "photo ID" : "proof of address"} is over 4 MB. Please upload a smaller file or a photo of it.`);
@@ -238,15 +243,35 @@ export default function OnboardClient() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
     try {
-      const response = await fetch(
-        `/api/upload?code=${encodeURIComponent(resumeCode)}&kind=${kind}`,
-        { method: "POST", body: file, headers: { "Content-Type": file.type || "application/octet-stream" }, signal: controller.signal }
-      );
+      const response = await fetch(`/api/upload?kind=${kind}`, {
+        method: "POST",
+        body: file,
+        headers: { "Content-Type": file.type || "application/octet-stream", "x-resume-code": resumeCode },
+        signal: controller.signal,
+      });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.pathname) throw new Error(result.error || "Upload failed. Please try again.");
       return result.pathname as string;
     } finally {
       clearTimeout(timeoutId);
+    }
+  };
+
+  const reminderRequested = useRef(false);
+
+  /** Saves straight away (skipping the autosave delay), then emails the resume code once. */
+  const handleStepComplete = async (stepId: StepId, formData: Data) => {
+    if (stepId !== "you" || reminderRequested.current || !resumeCode || !onboardingType) return;
+    reminderRequested.current = true;
+    try {
+      await fetch("/api/onboarding/draft", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: resumeCode, onboardingType, outerStep: 2, formStep: 2, state: sanitizeDraftState(formData) }),
+      });
+      await fetch("/api/onboarding/draft/remind", { method: "POST", headers: { "x-resume-code": resumeCode } });
+    } catch {
+      /* not essential */
     }
   };
 
@@ -307,7 +332,7 @@ export default function OnboardClient() {
     }
     setResuming(true);
     try {
-      const res = await fetch(`/api/onboarding/draft?code=${encodeURIComponent(code)}`);
+      const res = await fetchDraft(code);
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
         setBannerError(res.status === 404 ? "We could not find a saved form with that code." : result.error || "Please try again.");
@@ -407,7 +432,7 @@ export default function OnboardClient() {
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-clay-200 bg-clay-50 px-4 py-3">
                 <p className="text-sm text-stone-700">
                   Your resume code is <span className="font-mono font-semibold tracking-wider text-clay-800">{resumeCode}</span>.{" "}
-                  <span className="text-stone-500">Keep it to finish on any device.</span>
+                  <span className="text-stone-500">We also email it to you once you add your email address.</span>
                 </p>
                 <Button type="button" variant="outline" size="sm" onClick={copyResumeCode} className="bg-white">
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -433,6 +458,8 @@ export default function OnboardClient() {
                 loading={loading}
                 formStep={formStep}
                 onFormStepChange={setFormStep}
+                onUpload={(kind, file) => uploadFile(file, kind)}
+                onStepComplete={handleStepComplete}
               />
             </Panel>
           </motion.div>

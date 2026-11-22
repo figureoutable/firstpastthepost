@@ -71,16 +71,30 @@ export async function createIndividualClient(input: {
         lastName,
     };
     if (input.email) entity.email = input.email;
-    if (input.dob) entity.dateOfBirth = input.dob;
     if (input.residentialAddress) entity.residentialAddress = input.residentialAddress;
 
-    const response = await firmcheckRequest("/clients", "POST", {
-        status: "PROSPECT",
-        entity,
-    });
-    const clientId = typeof response.id === "string" ? response.id : "";
-    if (!clientId) throw new Error(`No client id in Firmcheck response: ${JSON.stringify(response)}`);
-    return { clientId, raw: response };
+    const create = async (withDob: boolean) => {
+        const body: JsonObject = { ...entity };
+        // Dates are sent as YYYY-MM-DD.
+        if (withDob && input.dob) body.dateOfBirth = input.dob;
+        const response = await firmcheckRequest("/clients", "POST", { status: "PROSPECT", entity: body });
+        const clientId = typeof response.id === "string" ? response.id : "";
+        if (!clientId) throw new Error(`No client id in Firmcheck response: ${JSON.stringify(response)}`);
+        return { clientId, raw: response };
+    };
+
+    try {
+        return await create(true);
+    } catch (error) {
+        // Firmcheck's date format isn't documented publicly. If it rejects the
+        // request and we sent a date of birth, try once more without it.
+        const message = error instanceof Error ? error.message : "";
+        if (input.dob && /\((400|422)\)/.test(message)) {
+            console.warn("[firmcheck] Retrying without date of birth:", message);
+            return create(false);
+        }
+        throw error;
+    }
 }
 
 export async function getClient(clientId: string): Promise<JsonObject> {

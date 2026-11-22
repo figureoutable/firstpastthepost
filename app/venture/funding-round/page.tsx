@@ -38,7 +38,7 @@ export default function FundingRoundPage() {
   const rounds = state.fundingRounds.rounds;
   const acceptedOrAnySheets = state.termSheets.sheets;
 
-  const [view, setView] = useState<"intro" | "list" | "wizard" | "summary">("intro");
+  const [view, setView] = useState<"list" | "wizard" | "summary">("list");
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [activeRoundId, setActiveRoundId] = useState<string | null>(null);
@@ -160,23 +160,20 @@ export default function FundingRoundPage() {
 
   return (
     <div>
-      {view === "intro" && (
+      {view === "list" && (
         <ModuleIntro
           icon={TrendingUp}
-          eyebrow="Fundraising"
-          title="Run a priced funding round"
-          description="Turn a term sheet into a closed round: confirm the amount raised and valuation, generate the standard closing documents, then apply the round to your cap table."
-          color="#4F677A"
+          eyebrow="Raise money"
+          title="Funding rounds"
+          description="Model a priced round, see how it changes who owns what, then add it to your cap table."
           status={status}
           stats={[{ label: "Rounds", value: String(rounds.length) }]}
-          ctaLabel={rounds.length > 0 ? "View rounds" : "Start a round"}
-          onStart={() => setView("list")}
         />
       )}
 
       {view === "list" && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight text-stone-900">Funding rounds</h2>
               <Button
@@ -313,7 +310,7 @@ export default function FundingRoundPage() {
 
       {view === "summary" && activeRound && (
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">{activeRound.name}</h2>
@@ -331,7 +328,7 @@ export default function FundingRoundPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <h3 className="mb-4 text-lg font-semibold text-stone-900">Closing documents</h3>
             <div className="space-y-3">
               {DOCUMENTS.map((doc) => {
@@ -348,7 +345,7 @@ export default function FundingRoundPage() {
                     <StubAction
                       label={generated ? "Regenerate" : "Generate"}
                       variant={generated ? "outline" : "default"}
-                      placeholderText="Connect a document-generation / e-signature integration here - this demo does not produce a real document."
+                      placeholderText="Thanks. Figures prepares the closing documents with your lawyer and sends them for signature. This demo does not create a real document."
                       onActivated={() => generateDocument(doc)}
                     />
                   </div>
@@ -357,7 +354,7 @@ export default function FundingRoundPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
             <h3 className="mb-2 text-lg font-semibold text-stone-900">Apply to cap table</h3>
             <p className="mb-4 text-sm text-stone-500">
               This will issue new shares to reflect this round and update ownership percentages.

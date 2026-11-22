@@ -46,7 +46,9 @@ import {
 type Data = Record<string, any>;
 type Update = (updater: (prev: Data) => Data) => void;
 
-type StepId = "you" | "company" | "business" | "income" | "checks";
+export type StepId = "you" | "company" | "business" | "income" | "checks";
+export type DocKind = "photoId" | "proofOfAddress";
+type UploadState = Partial<Record<DocKind, { busy?: boolean; error?: string }>>;
 
 const STEPS: Record<OnboardingType, { id: StepId; title: string }[]> = {
   "self-assessment": [
@@ -137,6 +139,8 @@ export function OnboardingForm({
   loading,
   formStep = 1,
   onFormStepChange,
+  onUpload,
+  onStepComplete,
 }: {
   type: OnboardingType;
   data: Data;
@@ -146,14 +150,42 @@ export function OnboardingForm({
   loading: boolean;
   formStep?: number;
   onFormStepChange?: (step: number) => void;
+  /** Uploads a document straight away and returns its stored path. */
+  onUpload?: (kind: DocKind, file: File) => Promise<string>;
+  /** Called after a step passes its checks, with the data at that point. */
+  onStepComplete?: (stepId: StepId, data: Data) => void;
 }) {
   const steps = STEPS[type];
   const index = Math.min(Math.max(formStep, 1), steps.length) - 1;
   const step = steps[index];
   const [errors, setErrors] = useState<string[]>([]);
   const [showInvalid, setShowInvalid] = useState(false);
+  const [uploads, setUploads] = useState<UploadState>({});
 
   const set = (field: string, value: unknown) => updateData((prev) => ({ ...prev, [field]: value }));
+
+  const pickFile = async (kind: DocKind, file: File | null) => {
+    if (!file) {
+      updateData((prev) => ({ ...prev, [kind]: null, [`${kind}Name`]: null }));
+      setUploads((u) => ({ ...u, [kind]: {} }));
+      return;
+    }
+    if (!onUpload) {
+      updateData((prev) => ({ ...prev, [kind]: file, [`${kind}Name`]: file.name }));
+      return;
+    }
+    setUploads((u) => ({ ...u, [kind]: { busy: true } }));
+    try {
+      const path = await onUpload(kind, file);
+      updateData((prev) => ({ ...prev, [kind]: path, [`${kind}Name`]: file.name }));
+      setUploads((u) => ({ ...u, [kind]: {} }));
+    } catch (error) {
+      setUploads((u) => ({
+        ...u,
+        [kind]: { error: error instanceof Error ? error.message : "Upload failed. Please try again." },
+      }));
+    }
+  };
   const go = (next: number) => {
     setErrors([]);
     setShowInvalid(false);
@@ -162,12 +194,17 @@ export function OnboardingForm({
   };
 
   const next = () => {
+    if (uploads.photoId?.busy || uploads.proofOfAddress?.busy) {
+      setErrors(["Wait for your documents to finish uploading"]);
+      return;
+    }
     const missing = missingOnStep(type, step.id, data);
     if (missing.length) {
       setErrors(missing);
       setShowInvalid(true);
       return;
     }
+    onStepComplete?.(step.id, data);
     if (index < steps.length - 1) go(index + 2);
     else onSubmit(data);
   };
@@ -175,7 +212,7 @@ export function OnboardingForm({
   const isLast = index === steps.length - 1;
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
       <StepProgress steps={steps.map((s) => s.title)} current={index} />
 
       <AnimatePresence mode="wait">
@@ -187,7 +224,7 @@ export function OnboardingForm({
           transition={{ duration: 0.18 }}
           className="space-y-8"
         >
-          {step.id === "you" && <YouStep type={type} d={data} set={set} />}
+          {step.id === "you" && <YouStep type={type} d={data} set={set} uploads={uploads} onPick={pickFile} />}
           {step.id === "company" && <CompanyStep d={data} set={set} />}
           {step.id === "business" && <BusinessStep type={type} d={data} set={set} />}
           {step.id === "income" && (
@@ -201,6 +238,12 @@ export function OnboardingForm({
       </AnimatePresence>
 
       <ErrorSummary items={errors} />
+
+      {/* Hidden from people; bots that fill every field get filtered out. */}
+      <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+        <label htmlFor="website">Website</label>
+        <input id="website" tabIndex={-1} autoComplete="off" value={data.website || ""} onChange={(e) => set("website", e.target.value)} />
+      </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-stone-200 pt-6 sm:flex-row sm:justify-between">
         <GradientButton
@@ -222,7 +265,13 @@ export function OnboardingForm({
 
 type StepProps = { d: Data; set: (field: string, value: unknown) => void };
 
-function YouStep({ type, d, set }: StepProps & { type: OnboardingType }) {
+function YouStep({
+  type,
+  d,
+  set,
+  uploads,
+  onPick,
+}: StepProps & { type: OnboardingType; uploads: UploadState; onPick: (kind: DocKind, file: File | null) => void }) {
   return (
     <>
       <FormSection title="Your details" description="The person we will be working with. Use your name exactly as it appears on your passport or driving licence.">
@@ -270,8 +319,26 @@ function YouStep({ type, d, set }: StepProps & { type: OnboardingType }) {
 
       <FormSection title="Identity documents" description="We need these to confirm who you are, as required by anti-money laundering rules.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FileUpload label="Photo ID" desc="Passport or driving licence" required value={d.photoId} onChange={(file) => set("photoId", file)} />
-          <FileUpload label="Proof of home address" desc="Bank statement or utility bill from the last 3 months" required value={d.proofOfAddress} onChange={(file) => set("proofOfAddress", file)} />
+          <FileUpload
+            label="Photo ID"
+            desc="Passport or driving licence"
+            required
+            value={d.photoId}
+            fileName={d.photoIdName}
+            uploading={uploads.photoId?.busy}
+            error={uploads.photoId?.error}
+            onChange={(file) => onPick("photoId", file)}
+          />
+          <FileUpload
+            label="Proof of home address"
+            desc="Bank statement or utility bill from the last 3 months"
+            required
+            value={d.proofOfAddress}
+            fileName={d.proofOfAddressName}
+            uploading={uploads.proofOfAddress?.busy}
+            error={uploads.proofOfAddress?.error}
+            onChange={(file) => onPick("proofOfAddress", file)}
+          />
         </div>
       </FormSection>
     </>

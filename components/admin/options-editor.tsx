@@ -4,7 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { TeamSettings } from "@/lib/engagements/settings";
 
-type Key = "autoStartAml" | "dailySummary";
+type Key = "autoStartAml" | "dailySummary" | "oldOnboardingForm";
 
 const OPTIONS: { key: Key; title: string; detail: string }[] = [
   {
@@ -16,6 +16,11 @@ const OPTIONS: { key: Key; title: string; detail: string }[] = [
     key: "dailySummary",
     title: "One daily summary email",
     detail: "Replaces the \"letter signed\" and \"payment set up\" emails with one email each morning. Problems still email straight away.",
+  },
+  {
+    key: "oldOnboardingForm",
+    title: "Old onboarding form open",
+    detail: "Lets people start the old form at tryfigures.app/onboard without a link. Turn off once your last client has used it.",
   },
 ];
 
@@ -36,7 +41,11 @@ export function OptionsEditor({ initial }: { initial: Pick<TeamSettings, Key> })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not save.");
-      setValues({ autoStartAml: data.settings.autoStartAml, dailySummary: data.settings.dailySummary });
+      setValues({
+        autoStartAml: data.settings.autoStartAml,
+        dailySummary: data.settings.dailySummary,
+        oldOnboardingForm: data.settings.oldOnboardingForm,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save.");
     } finally {

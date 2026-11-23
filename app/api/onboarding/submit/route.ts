@@ -153,8 +153,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Please refresh the page and try again." }, { status: 409 });
         }
         payload.engagementId = engagement.id;
-    } else if (!resumeCode || !(await getDraft(resumeCode))) {
-        // The public form is switched off. Only forms started before the switch can still be sent.
+    } else if (!(await getSettings()).oldOnboardingForm && (!resumeCode || !(await getDraft(resumeCode)))) {
+        // The old public form is switched off in Settings. Forms started before that can still be sent.
         return NextResponse.json(
             { message: "New clients now get a personal link from us. Please book a free call and we'll send yours." },
             { status: 410 }

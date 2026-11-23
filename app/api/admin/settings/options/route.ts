@@ -10,6 +10,7 @@ export async function PUT(request: Request) {
         {
           autoStartAml: typeof body?.autoStartAml === "boolean" ? body.autoStartAml : undefined,
           dailySummary: typeof body?.dailySummary === "boolean" ? body.dailySummary : undefined,
+          oldOnboardingForm: typeof body?.oldOnboardingForm === "boolean" ? body.oldOnboardingForm : undefined,
         },
         member.email
       );

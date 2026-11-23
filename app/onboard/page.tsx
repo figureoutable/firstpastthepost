@@ -1,7 +1,11 @@
 import { Suspense } from "react";
+import { getSettings } from "@/lib/engagements/settings";
 import OnboardClient from "./onboard-client";
 
-export default function OnboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function OnboardPage() {
+  const { oldOnboardingForm } = await getSettings();
   return (
     <Suspense
       fallback={
@@ -10,7 +14,7 @@ export default function OnboardPage() {
         </div>
       }
     >
-      <OnboardClient />
+      <OnboardClient formOpen={oldOnboardingForm} />
     </Suspense>
   );
 }

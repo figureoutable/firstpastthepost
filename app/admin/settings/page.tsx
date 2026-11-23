@@ -45,7 +45,9 @@ export default async function SettingsPage() {
         <div className="space-y-5">
           <section className={cn(card, "p-5")}>
             <h2 className="mb-1 text-base font-semibold text-stone-900">Automatic steps</h2>
-            <OptionsEditor initial={{ autoStartAml: options.autoStartAml, dailySummary: options.dailySummary }} />
+            <OptionsEditor
+              initial={{ autoStartAml: options.autoStartAml, dailySummary: options.dailySummary, oldOnboardingForm: options.oldOnboardingForm }}
+            />
           </section>
           <section className={cn(card, "p-5")}>
             <h2 className="mb-3 text-base font-semibold text-stone-900">Team</h2>

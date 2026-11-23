@@ -54,6 +54,25 @@ function legacyTokenOrNull(): string | null {
   return process.env.BLOB_READ_WRITE_TOKEN?.trim() || null;
 }
 
+/**
+ * Client-link data that only lives in the private store on the live site. Preview builds write
+ * to the old store, so the live site never reads these folders from there: test clients made on
+ * a preview can't appear on the live board or get reminder emails.
+ */
+const LIVE_PRIVATE_ONLY = [
+  "engagements/",
+  "engagement-links/",
+  "engagement-files/",
+  "engagement-once/",
+  "gocardless-index/",
+  "settings/",
+  "auth/",
+];
+
+function legacyAllowed(pathname: string): boolean {
+  return !(isProduction() && LIVE_PRIVATE_ONLY.some((folder) => pathname.startsWith(folder)));
+}
+
 let warned = false;
 function warnLegacy() {
   if (warned) return;
@@ -179,6 +198,7 @@ export async function readFile(
       /* not in the private store: try the old one below */
     }
   }
+  if (!legacyAllowed(pathname)) return null;
   const token = legacyTokenOrNull();
   if (!token) return null;
   try {
@@ -245,7 +265,7 @@ export async function listFiles(
   const creds = privateCredentials();
   if (creds) stores.push(creds);
   const token = legacyTokenOrNull();
-  if (token) stores.push({ token });
+  if (token && legacyAllowed(prefix)) stores.push({ token });
 
   const seen = new Map<string, Date>();
   for (const auth of stores) {

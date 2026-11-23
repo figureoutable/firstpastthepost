@@ -417,7 +417,7 @@ export function NewClientForm({
             {lines.map((l) => (
               <li key={l.item.id} className="flex justify-between gap-3">
                 <span className="text-stone-700">{l.item.name}</span>
-                <span className="shrink-0 tabular-nums text-stone-900">{l.pence === null ? "?" : gbp(l.pence)}</span>
+                <span className="shrink-0 tabular-nums text-stone-900">{l.pence === null ? "?" : l.pence === 0 ? "Free" : gbp(l.pence)}</span>
               </li>
             ))}
           </ul>
@@ -426,8 +426,13 @@ export function NewClientForm({
           {totals.monthly > 0 && <p className="flex justify-between"><span className="text-stone-500">Monthly</span><span className="font-semibold tabular-nums">{gbp(totals.monthly)}</span></p>}
           {totals.annual > 0 && <p className="flex justify-between"><span className="text-stone-500">Annual</span><span className="font-semibold tabular-nums">{gbp(totals.annual)}</span></p>}
           {totals.one_off > 0 && <p className="flex justify-between"><span className="text-stone-500">One-off</span><span className="font-semibold tabular-nums">{gbp(totals.one_off)}</span></p>}
-          {grandTotal === 0 && <p className="text-stone-400">No fees yet</p>}
+          {grandTotal === 0 && <p className="text-stone-400">{lines.length ? "Free" : "No fees yet"}</p>}
         </div>
+        {lines.length > 0 && grandTotal === 0 && method !== "none" && (
+          <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs leading-relaxed text-stone-600">
+            Everything ticked is free. Choose &ldquo;No payment step&rdquo; unless you want a Direct Debit in place for later work.
+          </p>
+        )}
         {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         {duplicate && (
           <div role="alert" className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">

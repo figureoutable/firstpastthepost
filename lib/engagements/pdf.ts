@@ -130,7 +130,7 @@ export async function letterPdf(
           y -= height;
           rule();
         }
-        paragraph(`Total: ${block.totals.join(", ") || "£0"}`, { font: bold, gap: 8 });
+        paragraph(`Total: ${block.totals.join(", ") || "Free"}`, { font: bold, gap: 8 });
         break;
       }
     }

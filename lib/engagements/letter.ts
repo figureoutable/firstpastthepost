@@ -37,6 +37,11 @@ export function formatPence(pence: number): string {
   }).format(pounds);
 }
 
+/** A line's price as the client sees it: "Free" rather than £0. */
+export function linePrice(pence: number): string {
+  return pence === 0 ? "Free" : formatPence(pence);
+}
+
 export function totalsByBilling(lines: EngagementLine[]): Record<Billing, number> {
   const totals: Record<Billing, number> = { monthly: 0, annual: 0, one_off: 0 };
   for (const line of lines) totals[line.billing] += line.pricePence;
@@ -86,7 +91,7 @@ export function buildLetter(input: {
     { type: "h2", text: "Services and fees" },
     {
       type: "fees",
-      rows: input.lines.map((l) => ({ name: l.name, billing: BILLING_LABEL[l.billing], price: formatPence(l.pricePence) })),
+      rows: input.lines.map((l) => ({ name: l.name, billing: BILLING_LABEL[l.billing], price: linePrice(l.pricePence) })),
       totals: totalsText(input.lines),
     },
   ];
@@ -160,7 +165,7 @@ export function letterHtml(letter: LetterSnapshot): string {
               )
               .join("")}</tbody>
           </table>
-          <p style="margin:0 0 12px;font-weight:600;">Total: ${escapeHtml(block.totals.join(", ") || formatPence(0))}</p>`;
+          <p style="margin:0 0 12px;font-weight:600;">Total: ${escapeHtml(block.totals.join(", ") || "Free")}</p>`;
       }
     })
     .join("\n");

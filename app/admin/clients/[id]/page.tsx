@@ -10,7 +10,7 @@ import { originFromHeaders } from "@/lib/env";
 import { isDriveConfigured } from "@/lib/google-drive";
 import { amlFor } from "@/lib/engagements/aml";
 import { isExpired, stageSummary } from "@/lib/engagements/flow";
-import { formatPence, totalsText } from "@/lib/engagements/letter";
+import { formatPence, linePrice, totalsText } from "@/lib/engagements/letter";
 import { getEngagement, openFlags } from "@/lib/engagements/store";
 import { BILLING_LABEL, CLIENT_TYPE_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/engagements/types";
 import { cn } from "@/lib/utils";
@@ -173,12 +173,12 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                   <tr key={l.serviceId}>
                     <td className="py-2 text-stone-800">{l.name}</td>
                     <td className="py-2 text-stone-500">{BILLING_LABEL[l.billing]}</td>
-                    <td className="py-2 text-right tabular-nums text-stone-900">{formatPence(l.pricePence)}</td>
+                    <td className="py-2 text-right tabular-nums text-stone-900">{linePrice(l.pricePence)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="mt-3 text-sm font-semibold text-stone-900">Total: {totalsText(e.lines).join(", ") || formatPence(0)}</p>
+            <p className="mt-3 text-sm font-semibold text-stone-900">Total: {totalsText(e.lines).join(", ") || "Free"}</p>
           </section>
         </div>
 

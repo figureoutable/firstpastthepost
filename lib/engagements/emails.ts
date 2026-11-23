@@ -1,6 +1,6 @@
 import { escapeHtml } from "@/lib/email-html";
 import { FIRM } from "@/lib/figures-config";
-import { formatPence, totalsText } from "./letter";
+import { totalsText } from "./letter";
 import { PAYMENT_METHOD_LABEL, type Engagement } from "./types";
 
 function wrap(body: string): string {
@@ -80,7 +80,7 @@ function summaryTable(e: Engagement, adminUrl: string): string {
       ${e.client.companyName ? row("Company", escapeHtml(`${e.client.companyName}${e.client.companyNumber ? ` (${e.client.companyNumber})` : ""}`)) : ""}
       ${row("Email", escapeHtml(e.client.email))}
       ${row("Services", escapeHtml(e.lines.map((l) => l.name).join(", ")))}
-      ${row("Fees", escapeHtml(totalsText(e.lines).join(", ") || formatPence(0)))}
+      ${row("Fees", escapeHtml(totalsText(e.lines).join(", ") || "Free"))}
       ${row("Payment", escapeHtml(PAYMENT_METHOD_LABEL[e.payment.method]))}
     </table>
     <p><a href="${adminUrl}" style="color:#c2410c;">Open on the status board</a></p>`;

@@ -42,7 +42,7 @@ export function LetterView({ blocks }: { blocks: LetterBlock[] }) {
                   </tbody>
                 </table>
                 <p className="border-t border-stone-200 bg-stone-50/60 px-3 py-2.5 text-sm font-semibold text-stone-900">
-                  Total: {block.totals.join(", ") || "£0"}
+                  Total: {block.totals.join(", ") || "Free"}
                 </p>
               </div>
             );

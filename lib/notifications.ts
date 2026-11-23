@@ -9,7 +9,7 @@ const INTERNAL_TO = process.env.NOTIFY_EMAIL || "joshua@tryfigures.com";
 /**
  * Sender address. "onboarding@resend.dev" is Resend's test sender and can only
  * deliver to the Resend account owner, so client emails need EMAIL_FROM set to
- * an address on a domain verified in Resend, e.g. "Josh at Figures <joshua@tryfigures.app>".
+ * an address on a domain verified in Resend, e.g. "Josh at Figures <joshua@tryfigures.com>".
  */
 const FROM = process.env.EMAIL_FROM || "Figures Onboarding <onboarding@resend.dev>";
 

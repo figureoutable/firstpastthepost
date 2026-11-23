@@ -23,7 +23,7 @@ Built with Next.js, deployed on Vercel. Pushing to `main` deploys the live site;
 | `PRIVATE_BLOB_READ_WRITE_TOKEN` or `PRIVATE_BLOB_STORE_ID` | Created when the private store is connected with the prefix `PRIVATE_BLOB`. |
 | `BLOB_READ_WRITE_TOKEN` | The old public store. Only used as a fallback until the private store is connected. |
 | `RESEND_API_KEY` | Sends emails. |
-| `EMAIL_FROM` | Sender, e.g. `Josh at Figures <joshua@tryfigures.app>`. Must be on a domain verified in Resend, or client emails will not be delivered. Replies go to `NOTIFY_EMAIL`. |
+| `EMAIL_FROM` | Sender, e.g. `Josh at Figures <joshua@tryfigures.com>`. Must be on a domain verified in Resend, or client emails will not be delivered. Replies go to `NOTIFY_EMAIL`. |
 | `CLIENT_EMAIL_CC` | Copied on every client email (not sign-in links). Defaults to joshua@tryfigures.com. |
 | `NOTIFY_EMAIL` | Where new submissions go. Defaults to joshua@tryfigures.com. |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | Contact email shown to clients. Defaults to joshua@tryfigures.com. |

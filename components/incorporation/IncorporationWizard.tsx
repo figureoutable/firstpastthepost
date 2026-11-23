@@ -578,6 +578,10 @@ export function IncorporationWizard({ link }: { link?: WizardLinkMode } = {}) {
               we give you a short code so you can carry on later on any device.
             </p>
           )}
+          <p>
+            <span className="font-medium text-stone-900">Our company formation is free</span> when you appoint Figures as your
+            company&apos;s accountants.
+          </p>
           <div className="rounded-xl border border-clay-200 bg-clay-50 p-4">
             <p className="font-medium text-stone-900">Before you start</p>
             <p className="mt-1 text-sm">
@@ -1365,6 +1369,7 @@ export function IncorporationWizard({ link }: { link?: WizardLinkMode } = {}) {
           update={update}
           onSubmit={submit}
           submitting={submitting}
+          link={Boolean(link)}
         />
       )}
 
@@ -2027,6 +2032,7 @@ function Step9Review({
   update,
   onSubmit,
   submitting,
+  link,
 }: {
   s: IncorporationState;
   setStep: (n: number) => void;
@@ -2034,6 +2040,8 @@ function Step9Review({
   update: <K extends keyof IncorporationState>(key: K, val: IncorporationState[K]) => void;
   onSubmit: () => void;
   submitting: boolean;
+  /** True inside a client's personal link, where the letter is already signed. */
+  link?: boolean;
 }) {
   const companyTypeSummary =
     s.step1.cic === "no" && s.step1.limitedByGuarantee === "no"
@@ -2221,7 +2229,12 @@ function Step9Review({
             I understand Figures will check everything before submitting to Companies House.
           </span>
           <span className="block">
-            I understand Figures will check the identity of each director and send me an engagement letter to sign.
+            {link
+              ? "I understand Figures will check the identity of each director."
+              : "I understand Figures will check the identity of each director and send me an engagement letter to sign."}
+          </span>
+          <span className="block">
+            I understand the formation is free because I am appointing Figures as the company&apos;s accountants.
           </span>
         </Label>
         <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-44">

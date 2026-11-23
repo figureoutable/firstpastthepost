@@ -95,7 +95,7 @@ export function HomeCards({ ventureEnabled }: { ventureEnabled: boolean }) {
     {
       href: "/incorporate",
       label: "Form a new company",
-      description: "We set up your UK limited company with Companies House.",
+      description: "Free when you appoint us as your accountants. We set it up with Companies House.",
       src: "/videos/incorporate.mp4",
       startAt: 1,
     },

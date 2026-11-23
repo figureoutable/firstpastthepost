@@ -16,7 +16,8 @@ export async function POST(request: Request) {
   if (member) {
     const token = await createLoginToken(member.email);
     const { subject, html } = signInEmail(`${appOrigin(request)}/admin/login/verify#${token}`);
-    await sendClientEmail(member.email, subject, html);
+    // Sign-in links go only to the person signing in.
+    await sendClientEmail(member.email, subject, html, { cc: false });
   }
   return NextResponse.json({ ok: true });
 }

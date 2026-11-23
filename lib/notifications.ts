@@ -9,7 +9,7 @@ const INTERNAL_TO = process.env.NOTIFY_EMAIL || "joshua@tryfigures.com";
 /**
  * Sender address. "onboarding@resend.dev" is Resend's test sender and can only
  * deliver to the Resend account owner, so client emails need EMAIL_FROM set to
- * an address on a domain verified in Resend, e.g. "Figures <hello@tryfigures.com>".
+ * an address on a domain verified in Resend, e.g. "Josh at Figures <joshua@tryfigures.app>".
  */
 const FROM = process.env.EMAIL_FROM || "Figures Onboarding <onboarding@resend.dev>";
 
@@ -24,8 +24,12 @@ async function savePreview(subject: string, html: string) {
   await writeFile(path.join(dir, name), html);
 }
 
+/** Copied on every client email, so the team has a record of what each client was sent. */
+const CLIENT_CC = process.env.CLIENT_EMAIL_CC || "joshua@tryfigures.com";
+
 export type EmailAttachment = { filename: string; content: Buffer };
-type SendOptions = { attachments?: EmailAttachment[]; replyTo?: string };
+/** cc: false for emails that must only reach the person, such as sign-in links. */
+type SendOptions = { attachments?: EmailAttachment[]; replyTo?: string; cc?: boolean };
 
 function subjectFor(subject: string): string {
   return isPreview() ? `[Preview test] ${subject}` : subject;
@@ -72,6 +76,7 @@ export async function sendClientEmail(to: string, subject: string, html: string,
     const result = await resend.emails.send({
       from: FROM,
       to: [to],
+      ...(options.cc !== false && CLIENT_CC && CLIENT_CC.toLowerCase() !== to.toLowerCase() ? { cc: [CLIENT_CC] } : {}),
       subject: subjectFor(subject),
       html,
       ...(options.attachments?.length ? { attachments: options.attachments } : {}),

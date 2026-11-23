@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { appOrigin, isProduction } from "@/lib/env";
 import { putFile, readFile, writeOnce } from "@/lib/private-blob";
 import { sendClientEmail, sendInternalEmail } from "@/lib/notifications";
-import { isDriveConfigured, saveSignedLetter } from "@/lib/google-drive";
+import { isDriveConfigured, savePdf, saveSignedLetter, findOrCreateClientFolder } from "@/lib/google-drive";
 import { isEmail } from "@/lib/onboarding-fields";
 import { createDraft as createOnboardingDraft, getDraft as getOnboardingDraft } from "@/lib/onboarding-draft-store";
 import { createDraft as createFormationDraft, getDraft as getFormationDraft } from "@/lib/incorporation-draft-store";
@@ -24,8 +24,20 @@ import {
   newToken,
   updateEngagement,
 } from "./store";
-import { currentStep } from "./flow";
-import { LINK_LIFETIME_DAYS, type ClientType, type Engagement, type EngagementLine, type PaymentMethod } from "./types";
+import { currentStep, firstSignature, lettersSigned } from "./flow";
+import { issueLetters, letterMode, LetterError, readLetterPdf } from "./letters";
+import { signedLetterPdf, ukDay } from "./sign-pdf";
+import {
+  LINK_LIFETIME_DAYS,
+  letterKindsFor,
+  onboardingTypeFor,
+  type ClientType,
+  type Engagement,
+  type EngagementLine,
+  type IssuedLetter,
+  type LetterDetails,
+  type PaymentMethod,
+} from "./types";
 
 export class FlowError extends Error {
   constructor(
@@ -97,6 +109,7 @@ export interface NewClientInput {
   paymentMethod: PaymentMethod;
   cardAmountPence?: number;
   paymentNote?: string;
+  letterDetails?: Partial<LetterDetails>;
   send: boolean;
   /** Create even though this email already has a link in progress. */
   allowDuplicate?: boolean;
@@ -107,29 +120,83 @@ type CleanInput = Pick<Engagement, "client" | "lines" | "cardAmountPence"> & {
   paymentNote?: string;
 };
 
+function isoDay(value: unknown): string | undefined {
+  const s = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) ? s : undefined;
+}
+
+/** One line per part, as typed. */
+function addressLines(value: unknown): string[] | undefined {
+  const raw = Array.isArray(value) ? value.map(String) : String(value || "").split(/\r?\n/);
+  const lines = raw.map((l) => l.trim().replace(/\s+/g, " ").slice(0, 120)).filter(Boolean).slice(0, 8);
+  return lines.length ? lines : undefined;
+}
+
+function cleanLetterDetails(type: ClientType, name: string, raw: Partial<LetterDetails> = {}): LetterDetails | undefined {
+  const kinds = letterKindsFor(type);
+  if (!kinds.length) return undefined;
+  const text = (v: unknown, max: number) => String(v || "").trim().replace(/\s+/g, " ").slice(0, max);
+  const d: LetterDetails = { dearName: text(raw.dearName, 60) || name.split(" ")[0] || name };
+  if (kinds.includes("company")) {
+    d.companyAddress = addressLines(raw.companyAddress);
+    d.yearEnd = isoDay(raw.yearEnd);
+    if (!d.yearEnd) throw new FlowError("Enter the first year end we're taking over. It goes in the letter (clause 4.2.1).");
+    d.vatFirstPeriodEnd = isoDay(raw.vatFirstPeriodEnd);
+    d.personalServiceCompany = raw.personalServiceCompany === true;
+    d.group = raw.group === true;
+  }
+  if (kinds.includes("sa")) {
+    d.saFullName = text(raw.saFullName, 160) || name;
+    d.saAddress = addressLines(raw.saAddress);
+    d.mtd = raw.mtd === true;
+    d.mtdFirstPeriodEnd = d.mtd ? isoDay(raw.mtdFirstPeriodEnd) : undefined;
+  }
+  if (kinds.includes("partnership")) {
+    d.partnershipPeriodEnd = isoDay(raw.partnershipPeriodEnd);
+    if (!d.partnershipPeriodEnd) throw new FlowError("Enter the partnership's accounting period end. It goes in the letter (clause 4.2.1).");
+  }
+  return d;
+}
+
 async function cleanInput(input: NewClientInput): Promise<CleanInput> {
-  const name = String(input.name || "").trim().slice(0, 120);
+  const name = String(input.name || "").trim().replace(/\s+/g, " ").slice(0, 120);
   const email = String(input.email || "").trim().toLowerCase();
   if (!name) throw new FlowError("Enter the client's name.");
   if (!isEmail(email)) throw new FlowError("Enter a valid email address.");
-  if (!["self-assessment", "business", "both", "formation"].includes(input.type)) throw new FlowError("Choose what the client needs.");
+  if (!["self-assessment", "business", "both", "partnership", "formation"].includes(input.type)) throw new FlowError("Choose what the client needs.");
 
+  const formation = input.type === "formation";
   const hasCompany = input.type === "business" || input.type === "both";
-  const companyName = hasCompany || input.type === "formation" ? String(input.companyName || "").trim().slice(0, 160) : "";
+  const partnership = input.type === "partnership";
+  const companyName = hasCompany || formation || partnership ? String(input.companyName || "").trim().slice(0, 160) : "";
   const companyNumber = hasCompany ? String(input.companyNumber || "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 10) : "";
   if (hasCompany && !companyName) throw new FlowError("Enter the company name.");
+  if (partnership && !companyName) throw new FlowError("Enter the partnership name.");
 
   const priceList = await getPriceList();
   const byId = new Map(priceList.items.map((i) => [i.id, i]));
-  if (!Array.isArray(input.lines) || input.lines.length === 0) throw new FlowError("Choose at least one service.");
-  const lines: EngagementLine[] = input.lines.map((l) => {
+  const rawLines = formation ? [] : Array.isArray(input.lines) ? input.lines : [];
+  if (!formation && rawLines.length === 0) throw new FlowError("Choose at least one service.");
+  const lines: EngagementLine[] = rawLines.map((l) => {
     const item = byId.get(l.serviceId);
     if (!item) throw new FlowError("One of the services is no longer on the price list. Refresh and try again.");
     const price = Number(l.pricePence);
     if (!Number.isInteger(price) || price < 0) throw new FlowError(`Check the price for ${item.name}.`);
-    return { serviceId: item.id, name: item.name, description: item.description, billing: item.billing, pricePence: price };
+    return {
+      serviceId: item.id,
+      name: item.name,
+      description: item.description,
+      billing: item.billing,
+      pricePence: price,
+      ...(item.letterRow ? { letterRow: item.letterRow } : {}),
+    };
   });
+  const letterDetails = cleanLetterDetails(input.type, name, input.letterDetails);
 
+  // A formation has no letter or payment: those come once the company exists.
+  if (formation) {
+    input = { ...input, paymentMethod: "none", paymentNote: input.paymentNote || "Company formation, free when we're appointed as accountants" };
+  }
   const method = input.paymentMethod;
   if (!["direct_debit", "card", "none"].includes(method)) throw new FlowError("Choose how the client pays.");
   const note = String(input.paymentNote || "").trim().slice(0, 300);
@@ -148,6 +215,7 @@ async function cleanInput(input: NewClientInput): Promise<CleanInput> {
       email,
       ...(companyName ? { companyName } : {}),
       ...(companyNumber ? { companyNumber } : {}),
+      ...(letterDetails ? { letterDetails } : {}),
     },
     lines,
     cardAmountPence,
@@ -160,6 +228,25 @@ async function cleanInput(input: NewClientInput): Promise<CleanInput> {
 async function openLinksFor(email: string, exceptId?: string): Promise<Engagement[]> {
   const all = await listEngagements();
   return all.filter((e) => e.id !== exceptId && e.client.email === email && ["letter", "payment", "onboarding"].includes(currentStep(e)));
+}
+
+/** The letters for a new or edited link: the firm's real letters, or the older built-in one on test builds. */
+async function lettersFor(
+  id: string,
+  c: CleanInput,
+  by: string,
+  previous?: IssuedLetter[]
+): Promise<Pick<Engagement, "letters" | "letter">> {
+  const mode = await letterMode(c.client.type);
+  if (mode.mode === "none") return { letters: undefined, letter: undefined };
+  if (mode.mode === "blocked") throw new FlowError(`The engagement letters aren't ready yet. ${mode.reason}`, 409);
+  if (mode.mode === "placeholder") return { letters: undefined, letter: letterFor(c, by) };
+  try {
+    return { letters: await issueLetters({ engagementId: id, client: c.client, lines: c.lines, by, previous }), letter: undefined };
+  } catch (error) {
+    if (error instanceof LetterError) throw new FlowError(error.message, 502);
+    throw error;
+  }
 }
 
 function letterFor(c: CleanInput, by: string) {
@@ -185,9 +272,12 @@ export async function createNewClient(input: NewClientInput, by: string, request
     }
   }
 
+  // Make the letters first, so a link never exists without its letter.
+  const id = crypto.randomUUID();
+  const letters = await lettersFor(id, c, by);
   const now = new Date().toISOString();
   const engagement: Engagement = {
-    id: crypto.randomUUID(),
+    id,
     token: newToken(),
     createdAt: now,
     updatedAt: now,
@@ -199,7 +289,7 @@ export async function createNewClient(input: NewClientInput, by: string, request
     cardAmountPence: c.cardAmountPence,
     paymentNote: c.paymentNote,
     paymentChosenBy: by,
-    letter: letterFor(c, by),
+    ...letters,
     expiresAt: newExpiry(),
     flags: [],
     events: [],
@@ -233,9 +323,15 @@ export async function editClient(
       });
     }
   }
+  const signedAlready = (e: Engagement) => Boolean(e.signature || e.letters?.some((l) => l.signature));
+  if (current.status === "cancelled") throw new FlowError("This link has been cancelled.");
+  if (signedAlready(current)) {
+    throw new FlowError("The client has already signed, so this can no longer be changed. Cancel it and create a new link instead.", 409);
+  }
+  const letters = await lettersFor(id, c, by, current.letters);
   const { record } = await updateEngagement(id, (e) => {
     if (e.status === "cancelled") throw new FlowError("This link has been cancelled.");
-    if (e.signature) {
+    if (signedAlready(e)) {
       throw new FlowError("The client has already signed, so this can no longer be changed. Cancel it and create a new link instead.", 409);
     }
     const methodChanged = e.payment.method !== c.paymentMethod;
@@ -246,7 +342,8 @@ export async function editClient(
     e.paymentNote = c.paymentNote;
     e.payment = { method: c.paymentMethod, status: c.paymentMethod === "none" ? "not_required" : "not_started" };
     if (methodChanged) e.paymentChosenBy = by;
-    e.letter = letterFor(c, by);
+    e.letters = letters.letters;
+    e.letter = letters.letter;
     if (typeChanged) e.onboarding = undefined;
     logEvent(e, by, "Edited the details, services or payment. The letter was updated.");
   });
@@ -305,15 +402,25 @@ export function letterFileName(e: Engagement, signedAt: string): string {
   return `Engagement letter - ${partyName(e).replace(/[\\/:*?"<>|]/g, "-")} - ${day}`;
 }
 
+export function signedLetterName(letter: IssuedLetter): string {
+  const day = letter.signature?.signedAt.slice(0, 10) || "";
+  const label = letter.kind === "sa" ? " (Self Assessment)" : "";
+  return `Signed engagement letter - ${letter.party.replace(/[\\/:*?"<>|]/g, "-")}${label} - ${day}`;
+}
+
+const KIND_LABEL: Record<IssuedLetter["kind"], string> = { company: "company", sa: "Self Assessment", partnership: "partnership" };
+
 export async function signLetter(
   e: Engagement,
-  input: { name: string; agree: boolean; fingerprint: string },
+  input: { kind?: string; name: string; agree: boolean; startNow?: boolean; fingerprint: string },
   request: Request
 ): Promise<void> {
   requireStep(e, "letter");
   const name = String(input.name || "").trim().replace(/\s+/g, " ").slice(0, 120);
   if (name.length < 2) throw new FlowError("Type your full name to sign.");
   if (input.agree !== true) throw new FlowError("Please tick to confirm you agree.");
+  if (e.letters?.length) return signIssuedLetter(e, { ...input, name }, request);
+  if (!e.letter) throw new FlowError("There is no letter to sign. Please refresh the page.", 409);
   if (input.fingerprint !== e.letter.fingerprint) {
     throw new FlowError("This letter has been updated. Please refresh the page to read the latest version.", 409);
   }
@@ -334,7 +441,7 @@ export async function signLetter(
   // Check again against the latest saved copy, in case the team edited it a moment ago.
   const { record } = await updateEngagement(e.id, (fresh) => {
     requireStep(fresh, "letter");
-    if (fresh.letter.fingerprint !== input.fingerprint) {
+    if (fresh.letter?.fingerprint !== input.fingerprint) {
       throw new FlowError("This letter has been updated. Please refresh the page to read the latest version.", 409);
     }
     fresh.signature = { ...base, pdfPath };
@@ -359,6 +466,83 @@ export async function signLetter(
   }));
 }
 
+/** Signing one of the firm's real letters. The flow moves on once every letter is signed. */
+async function signIssuedLetter(
+  e: Engagement,
+  input: { kind?: string; name: string; startNow?: boolean; fingerprint: string },
+  request: Request
+): Promise<void> {
+  const letter = e.letters?.find((l) => l.kind === input.kind);
+  if (!letter || letter.signature) throw new FlowError("This letter is already signed. Please refresh the page.", 409);
+  if (input.fingerprint !== letter.fingerprint) {
+    throw new FlowError("This letter has been updated. Please refresh the page to read the latest version.", 409);
+  }
+  const issued = await readLetterPdf(letter, false);
+  if (!issued) throw new FlowError("We could not load your letter. Please refresh the page.", 500);
+
+  const signedAt = new Date().toISOString();
+  const base = {
+    name: input.name,
+    email: e.client.email,
+    signedAt,
+    ip: clientIp(request),
+    userAgent: (request.headers.get("user-agent") || "").slice(0, 300),
+    fingerprint: letter.fingerprint,
+    startNow: input.startNow === true,
+  };
+  const pdf = await signedLetterPdf(issued, base, { title: letter.title, reference: e.id });
+  const pdfPath = `engagement-files/${e.id}/signed-${letter.kind}-${crypto.randomBytes(6).toString("hex")}.pdf`;
+  await putFile(pdfPath, Buffer.from(pdf), { contentType: "application/pdf", overwrite: true });
+
+  const { record } = await updateEngagement(e.id, (fresh) => {
+    requireStep(fresh, "letter");
+    const target = fresh.letters?.find((l) => l.kind === letter.kind);
+    if (!target || target.signature) throw new FlowError("This letter is already signed. Please refresh the page.", 409);
+    if (target.fingerprint !== input.fingerprint) {
+      throw new FlowError("This letter has been updated. Please refresh the page to read the latest version.", 409);
+    }
+    target.signature = { ...base, pdfPath };
+    logEvent(
+      fresh,
+      "client",
+      `Signed the ${KIND_LABEL[letter.kind]} engagement letter as "${input.name}"${base.startNow ? ", and asked us to start within the 14-day cancellation period" : ""}`
+    );
+  });
+
+  // From here nothing may stop the client moving on. Filing and emails happen once, when the last letter is signed.
+  if (!lettersSigned(record)) return;
+  if (!(await firstTime(record.id, "signed"))) return;
+  await saveLetterToDrive(record.id).catch((err) => console.error("[engagement] Drive save failed", err));
+
+  const attachments: { filename: string; content: Buffer }[] = [];
+  for (const l of record.letters || []) {
+    const bytes = await readLetterPdf(l, true);
+    if (bytes) attachments.push({ filename: `${signedLetterName(l)}.pdf`, content: bytes });
+  }
+  const copy = signedCopyEmail(record);
+  const sent = await sendClientEmail(record.client.email, copy.subject, copy.html, { attachments });
+  if (!sent) {
+    await updateEngagement(record.id, (fresh) => logEvent(fresh, "system", "Could not email the signed copy to the client"));
+  }
+  const startNow = (record.letters || []).some((l) => l.signature?.startNow);
+  await notifyTeamOnce(record.id, "letterSigned", (fresh) => ({
+    subject: `Engagement letter${attachments.length > 1 ? "s" : ""} signed: ${partyName(fresh)}`,
+    html: teamEmail(
+      fresh,
+      adminLink(fresh, request),
+      `Engagement letter${attachments.length > 1 ? "s" : ""} signed`,
+      `Signed by ${escapeText(input.name)} on ${ukDay(signedAt)}. ${
+        startNow ? "They asked us to start work within the 14-day cancellation period." : "They did not ask us to start within the 14-day cancellation period."
+      } The signed PDF${attachments.length > 1 ? "s are" : " is"} attached.`
+    ),
+    attachments,
+  }));
+}
+
+function escapeText(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 export async function readSignedPdf(e: Engagement): Promise<Buffer | null> {
   if (!e.signature?.pdfPath) return null;
   const file = await readFile(e.signature.pdfPath);
@@ -366,10 +550,53 @@ export async function readSignedPdf(e: Engagement): Promise<Buffer | null> {
   return Buffer.from(await new Response(file.stream).arrayBuffer());
 }
 
+/** Saves each signed PDF next to its letter's Google Doc in Clients > [client]. Safe to retry. */
+async function saveSignedLettersToDrive(e: Engagement): Promise<boolean> {
+  const todo = (e.letters || []).filter((l) => l.signature && !l.drive?.signedPdfFileId);
+  if (!todo.length) return true;
+  if (!isDriveConfigured()) {
+    if (isProduction()) {
+      await updateEngagement(e.id, (fresh) => {
+        if (!addFlag(fresh, "drive", "Google Drive is not connected, so the signed letter was not saved there. Download it from this page.")) {
+          return false;
+        }
+      });
+    }
+    return false;
+  }
+  try {
+    for (const letter of todo) {
+      const bytes = await readLetterPdf(letter, true);
+      if (!bytes) throw new Error("Signed PDF not found");
+      const folderId = letter.drive?.folderId || (await findOrCreateClientFolder(letter.party));
+      const fileId = await savePdf(folderId, `${signedLetterName(letter)}.pdf`, bytes);
+      await updateEngagement(e.id, (fresh) => {
+        const target = fresh.letters?.find((l) => l.kind === letter.kind);
+        if (!target) return false;
+        target.drive = { ...(target.drive || {}), folderId, signedPdfFileId: fileId, error: undefined };
+      });
+    }
+    await updateEngagement(e.id, (fresh) => {
+      for (const flag of fresh.flags) if (flag.kind === "drive" && !flag.resolvedAt) flag.resolvedAt = new Date().toISOString();
+      logEvent(fresh, "system", "Saved the signed letter to Google Drive");
+    });
+    return true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await updateEngagement(e.id, (fresh) => {
+      for (const l of fresh.letters || []) if (l.signature && !l.drive?.signedPdfFileId) l.drive = { ...(l.drive || {}), error: message.slice(0, 300) };
+      addFlag(fresh, "drive", "Saving the signed letter to Google Drive failed. Use Retry on this page.");
+      logEvent(fresh, "system", "Saving to Google Drive failed");
+    });
+    return false;
+  }
+}
+
 /** Saves the PDF and a Google Doc to Shared Drive > Figures > Clients > <client>. Safe to retry. */
 export async function saveLetterToDrive(id: string, pdf?: Uint8Array): Promise<boolean> {
   const e = await getEngagement(id);
-  if (!e?.signature) return false;
+  if (e?.letters?.length) return saveSignedLettersToDrive(e);
+  if (!e?.signature || !e.letter) return false;
   if (!isDriveConfigured()) {
     if (isProduction()) {
       await updateEngagement(id, (fresh) => {
@@ -555,10 +782,12 @@ export async function onboardingDraft(e: Engagement) {
     state.step3.registeredEmail = e.client.email;
     code = (await createFormationDraft({ step: 1, phase: "banner", state })).code;
   } else {
-    const state: Record<string, unknown> = { fullNamePassport: e.signature?.name || e.client.name, email: e.client.email };
-    if (e.client.companyName) state.companyName = e.client.companyName;
+    const onboardingType = onboardingTypeFor(e.client.type);
+    if (!onboardingType) throw new FlowError("We could not load your form. Please contact us.", 500);
+    const state: Record<string, unknown> = { fullNamePassport: firstSignature(e)?.name || e.client.name, email: e.client.email };
+    if (e.client.companyName && e.client.type !== "partnership") state.companyName = e.client.companyName;
     if (e.client.companyNumber) state.registrationNumber = e.client.companyNumber;
-    code = (await createOnboardingDraft({ onboardingType: e.client.type as Exclude<ClientType, "formation">, formStep: 1, state })).code;
+    code = (await createOnboardingDraft({ onboardingType, formStep: 1, state })).code;
   }
 
   const { record } = await updateEngagement(e.id, (fresh) => {

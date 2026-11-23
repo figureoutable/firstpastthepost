@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Building2, Check, Copy, CreditCard, Landmark, Loader2, Mail, Save, Search, Send, Ban, Sparkles, User, Users } from "lucide-react";
+import { AlertTriangle, Building2, Check, Copy, CreditCard, Handshake, Landmark, Loader2, Mail, Save, Search, Send, Ban, Sparkles, User, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ClientType, PaymentMethod, PriceListItem } from "@/lib/engagements/types";
-import { BILLING_LABEL } from "@/lib/engagements/types";
+import type { ClientType, LetterDetails, PaymentMethod, PriceListItem } from "@/lib/engagements/types";
+import { BILLING_LABEL, FEE_ROWS_FOR, letterKindsFor } from "@/lib/engagements/types";
 
 const card = "rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:p-6";
 
@@ -18,6 +18,7 @@ const TYPES: { id: ClientType; label: string; Icon: typeof User }[] = [
   { id: "self-assessment", label: "Self Assessment", Icon: User },
   { id: "business", label: "Company", Icon: Building2 },
   { id: "both", label: "Company and Self Assessment", Icon: Users },
+  { id: "partnership", label: "Partnership", Icon: Handshake },
   { id: "formation", label: "Company formation", Icon: Sparkles },
 ];
 
@@ -33,6 +34,15 @@ export interface ClientFormInitial {
   paymentMethod: PaymentMethod;
   cardAmountPence?: number;
   paymentNote?: string;
+  letterDetails?: LetterDetails;
+}
+
+/** A company formation that's now registered: start its letter with what we know. */
+export interface ClientFormPrefill {
+  type: ClientType;
+  name: string;
+  email: string;
+  companyName?: string;
 }
 
 const poundsText = (pence: number) => (pence / 100).toFixed(pence % 100 ? 2 : 0);
@@ -71,20 +81,41 @@ export function NewClientForm({
   examples,
   lookupEnabled,
   initial,
+  prefill,
+  letterNote,
 }: {
   items: PriceListItem[];
   examples: boolean;
   lookupEnabled: boolean;
   /** Set when editing a link the client hasn't signed yet. */
   initial?: ClientFormInitial;
+  prefill?: ClientFormPrefill;
+  /** Shown when new links would get the older built-in letter (test builds before setup). */
+  letterNote?: string;
 }) {
   const router = useRouter();
   const editing = Boolean(initial);
-  const [type, setType] = useState<ClientType>(initial?.type || "business");
-  const [name, setName] = useState(initial?.name || "");
-  const [email, setEmail] = useState(initial?.email || "");
+  const start = initial || prefill;
+  const [type, setType] = useState<ClientType>(start?.type || "business");
+  const [name, setName] = useState(start?.name || "");
+  const [email, setEmail] = useState(start?.email || "");
   const [companyNumber, setCompanyNumber] = useState(initial?.companyNumber || "");
-  const [companyName, setCompanyName] = useState(initial?.companyName || "");
+  const [companyName, setCompanyName] = useState(start?.companyName || "");
+  const d0 = initial?.letterDetails;
+  const [details, setDetails] = useState({
+    dearName: d0?.dearName || "",
+    companyAddress: (d0?.companyAddress || []).join("\n"),
+    yearEnd: d0?.yearEnd || "",
+    vatFirstPeriodEnd: d0?.vatFirstPeriodEnd || "",
+    personalServiceCompany: Boolean(d0?.personalServiceCompany),
+    group: Boolean(d0?.group),
+    saFullName: d0?.saFullName || "",
+    saAddress: (d0?.saAddress || []).join("\n"),
+    mtd: Boolean(d0?.mtd),
+    mtdFirstPeriodEnd: d0?.mtdFirstPeriodEnd || "",
+    partnershipPeriodEnd: d0?.partnershipPeriodEnd || "",
+  });
+  const setDetail = (patch: Partial<typeof details>) => setDetails((prev) => ({ ...prev, ...patch }));
   const [lookup, setLookup] = useState<{ busy: boolean; message: string }>({ busy: false, message: "" });
   const [selected, setSelected] = useState<Record<string, string>>(() =>
     Object.fromEntries((initial?.lines || []).map((l) => [l.serviceId, poundsText(l.pricePence)]))
@@ -100,6 +131,9 @@ export function NewClientForm({
 
   const isCompany = type === "business" || type === "both";
   const isFormation = type === "formation";
+  const isPartnership = type === "partnership";
+  const kinds = letterKindsFor(type);
+  const firstName = name.trim().split(/\s+/)[0] || "";
   // When editing, keep services already on the letter even if they've since been switched off.
   const active = items.filter((i) => i.active || selected[i.id] !== undefined);
 
@@ -118,6 +152,12 @@ export function NewClientForm({
   }, [lines]);
   const grandTotal = totals.monthly + totals.annual + totals.one_off;
 
+  // Services the letters' fee tables have no row for, so the team can see before sending.
+  const notCovered = lines
+    .filter((l) => (l.item.letterRow || "none") !== "none" && !kinds.some((k) => FEE_ROWS_FOR[k].includes(l.item.letterRow as never)))
+    .map((l) => l.item.name);
+  const hasVat = lines.some((l) => l.item.letterRow === "vat");
+
   const toggle = (item: PriceListItem) =>
     setSelected((prev) => {
       const next = { ...prev };
@@ -134,6 +174,11 @@ export function NewClientForm({
       if (!res.ok) throw new Error(data.error || "Lookup failed.");
       setCompanyName(data.name || "");
       if (data.number) setCompanyNumber(data.number);
+      setDetails((prev) => ({
+        ...prev,
+        companyAddress: data.addressLines?.length ? [data.name, ...data.addressLines].filter(Boolean).join("\n") : prev.companyAddress,
+        yearEnd: prev.yearEnd || data.yearEnd || "",
+      }));
       setLookup({ busy: false, message: data.status && data.status !== "active" ? `Note: this company is ${data.status}.` : `Found: ${data.address || data.name}` });
     } catch (err) {
       setLookup({ busy: false, message: err instanceof Error ? err.message : "Lookup failed." });
@@ -156,9 +201,15 @@ export function NewClientForm({
           type,
           name,
           email,
-          companyName: isCompany || isFormation ? companyName : "",
+          companyName: isCompany || isFormation || isPartnership ? companyName : "",
           companyNumber: isCompany ? companyNumber : "",
-          lines: lines.map((l) => ({ serviceId: l.item.id, pricePence: l.pence })),
+          lines: isFormation ? [] : lines.map((l) => ({ serviceId: l.item.id, pricePence: l.pence })),
+          letterDetails: {
+            ...details,
+            companyAddress: details.companyAddress.split("\n"),
+            saAddress: details.saAddress.split("\n"),
+            vatFirstPeriodEnd: hasVat ? details.vatFirstPeriodEnd : "",
+          },
           paymentMethod: method,
           cardAmountPence: method === "card" ? toPence(cardAmount || String(grandTotal / 100)) : undefined,
           paymentNote: note,
@@ -229,6 +280,7 @@ export function NewClientForm({
               setEmail("");
               setCompanyName("");
               setCompanyNumber("");
+              setDetails((prev) => ({ ...prev, dearName: "", companyAddress: "", yearEnd: "", vatFirstPeriodEnd: "", personalServiceCompany: false, group: false, saFullName: "", saAddress: "", mtd: false, mtdFirstPeriodEnd: "", partnershipPeriodEnd: "" }));
               setSelected({});
               setMethod("direct_debit");
               setNote("");
@@ -268,7 +320,7 @@ export function NewClientForm({
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="client-name">{isCompany ? "Contact name (director)" : "Client name"}</Label>
+              <Label htmlFor="client-name">{isCompany ? "Contact name (director)" : isPartnership ? "Contact name (partner)" : "Client name"}</Label>
               <Input id="client-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" autoComplete="off" />
             </div>
             <div className="space-y-2">
@@ -305,13 +357,25 @@ export function NewClientForm({
                 <div className="mt-4 space-y-2">
                   <Label htmlFor="proposed-name">Proposed company name (optional)</Label>
                   <Input id="proposed-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Example Ltd" />
-                  <p className="text-xs text-stone-500">The client signs as themselves, then fills in the company formation form.</p>
+                  <p className="text-xs text-stone-500">
+                    The client only fills in the formation form. Once the company is registered, send its engagement letter from the client&apos;s page.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+            {isPartnership && (
+              <motion.div key="partnership" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="partnership-name">Partnership name</Label>
+                  <Input id="partnership-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Smith & Jones" />
+                  <p className="text-xs text-stone-500">The partner signs the partnership letter, then fills in the Self Assessment form.</p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </Section>
 
+        {!isFormation && (
         <Section n={2} title="Services and fees">
           {examples && (
             <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
@@ -355,8 +419,101 @@ export function NewClientForm({
             })}
           </ul>
         </Section>
+        )}
 
-        <Section n={3} title="How will they pay?">
+        {kinds.length > 0 && (
+          <Section n={3} title="Engagement letter details">
+            {letterNote && <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{letterNote}</p>}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="dear-name">Dear</Label>
+                <Input id="dear-name" value={details.dearName} onChange={(e) => setDetail({ dearName: e.target.value })} placeholder={firstName || "First name"} />
+              </div>
+              {(kinds.includes("company") || kinds.includes("partnership")) && (
+                <div className="space-y-2">
+                  <Label htmlFor="period-end">{kinds.includes("company") ? "First year end we're taking over" : "Accounting period end"}</Label>
+                  <Input
+                    id="period-end"
+                    type="date"
+                    value={kinds.includes("company") ? details.yearEnd : details.partnershipPeriodEnd}
+                    onChange={(e) => setDetail(kinds.includes("company") ? { yearEnd: e.target.value } : { partnershipPeriodEnd: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+
+            {kinds.includes("company") && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="company-address">Company address on the letter</Label>
+                  <textarea
+                    id="company-address"
+                    rows={5}
+                    value={details.companyAddress}
+                    onChange={(e) => setDetail({ companyAddress: e.target.value })}
+                    placeholder={"Example Ltd\n1 High Street\nLondon\nN1 1AA"}
+                    className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-clay-400 focus:ring-2 focus:ring-clay-500/20"
+                  />
+                  <p className="text-xs text-stone-500">One line per part. Filled in by the Companies House lookup.</p>
+                </div>
+                <div className="space-y-3">
+                  {hasVat && (
+                    <div className="space-y-2">
+                      <Label htmlFor="vat-first">First VAT quarter end we&apos;ll do (if known)</Label>
+                      <Input id="vat-first" type="date" value={details.vatFirstPeriodEnd} onChange={(e) => setDetail({ vatFirstPeriodEnd: e.target.value })} />
+                    </div>
+                  )}
+                  <label className="flex items-start gap-2.5 text-sm text-stone-700">
+                    <input type="checkbox" className="mt-0.5 h-4 w-4 accent-clay-600" checked={details.personalServiceCompany} onChange={(e) => setDetail({ personalServiceCompany: e.target.checked })} />
+                    <span>Personal service company<span className="block text-xs text-stone-500">Keeps the IR35 section in the corporation tax schedule.</span></span>
+                  </label>
+                  <label className="flex items-start gap-2.5 text-sm text-stone-700">
+                    <input type="checkbox" className="mt-0.5 h-4 w-4 accent-clay-600" checked={details.group} onChange={(e) => setDetail({ group: e.target.checked })} />
+                    <span>Part of a group<span className="block text-xs text-stone-500">Keeps the groups and consortia section.</span></span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {kinds.includes("sa") && (
+              <div className="mt-4 grid gap-4 border-t border-stone-100 pt-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sa-name">{kinds.includes("company") ? "Self Assessment letter: full name with title" : "Full name with title"}</Label>
+                  <Input id="sa-name" value={details.saFullName} onChange={(e) => setDetail({ saFullName: e.target.value })} placeholder="For example: Mrs Sheena Margo Mary Croston" />
+                  <Label htmlFor="sa-address" className="pt-2">Home address (optional)</Label>
+                  <textarea
+                    id="sa-address"
+                    rows={4}
+                    value={details.saAddress}
+                    onChange={(e) => setDetail({ saAddress: e.target.value })}
+                    placeholder={"2 Low Road\nLeeds\nLS1 1AA"}
+                    className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-clay-400 focus:ring-2 focus:ring-clay-500/20"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="flex items-start gap-2.5 text-sm text-stone-700">
+                    <input type="checkbox" className="mt-0.5 h-4 w-4 accent-clay-600" checked={details.mtd} onChange={(e) => setDetail({ mtd: e.target.checked })} />
+                    <span>In Making Tax Digital for Income Tax<span className="block text-xs text-stone-500">Keeps Part 2FA and the MTD wording in the fee table.</span></span>
+                  </label>
+                  {details.mtd && (
+                    <div className="space-y-2">
+                      <Label htmlFor="mtd-first">First quarterly update period end (if known)</Label>
+                      <Input id="mtd-first" type="date" value={details.mtdFirstPeriodEnd} onChange={(e) => setDetail({ mtdFirstPeriodEnd: e.target.value })} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {notCovered.length > 0 && (
+              <p className="mt-4 flex items-start gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Not in this client&apos;s letter fee table: {notCovered.join(", ")}.
+              </p>
+            )}
+          </Section>
+        )}
+
+        {!isFormation && (
+        <Section n={4} title="How will they pay?">
           <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Payment">
             {PAYMENTS.map(({ id, title, detail, Icon }) => (
               <button
@@ -406,11 +563,14 @@ export function NewClientForm({
             )}
           </AnimatePresence>
         </Section>
+        )}
       </div>
 
       <aside className={cn(card, "space-y-4 lg:sticky lg:top-24")}>
         <h2 className="text-sm font-semibold text-stone-900">Summary</h2>
-        {lines.length === 0 ? (
+        {isFormation ? (
+          <p className="text-sm leading-relaxed text-stone-600">Free when they appoint us as accountants. No letter or payment yet: the client fills in the formation form only.</p>
+        ) : lines.length === 0 ? (
           <p className="text-sm text-stone-500">Tick the services to see the fees.</p>
         ) : (
           <ul className="space-y-2 text-sm">
@@ -426,9 +586,9 @@ export function NewClientForm({
           {totals.monthly > 0 && <p className="flex justify-between"><span className="text-stone-500">Monthly</span><span className="font-semibold tabular-nums">{gbp(totals.monthly)}</span></p>}
           {totals.annual > 0 && <p className="flex justify-between"><span className="text-stone-500">Annual</span><span className="font-semibold tabular-nums">{gbp(totals.annual)}</span></p>}
           {totals.one_off > 0 && <p className="flex justify-between"><span className="text-stone-500">One-off</span><span className="font-semibold tabular-nums">{gbp(totals.one_off)}</span></p>}
-          {grandTotal === 0 && <p className="text-stone-400">{lines.length ? "Free" : "No fees yet"}</p>}
+          {grandTotal === 0 && !isFormation && <p className="text-stone-400">{lines.length ? "Free" : "No fees yet"}</p>}
         </div>
-        {lines.length > 0 && grandTotal === 0 && method !== "none" && (
+        {!isFormation && lines.length > 0 && grandTotal === 0 && method !== "none" && (
           <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs leading-relaxed text-stone-600">
             Everything ticked is free. Choose &ldquo;No payment step&rdquo; unless you want a Direct Debit in place for later work.
           </p>
@@ -478,7 +638,9 @@ export function NewClientForm({
           <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           {editing
             ? "The link stays the same. The client sees the updated letter next time they open it."
-            : "The email comes from joshua@ and the client signs, pays, then adds their details."}
+            : isFormation
+              ? "The email comes from joshua@ and the client fills in the formation form."
+              : "The email comes from joshua@ and the client signs, pays, then adds their details."}
         </p>
       </aside>
     </div>

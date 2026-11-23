@@ -280,3 +280,10 @@ export async function listFiles(
   }
   return [...seen].map(([pathname, uploadedAt]) => ({ pathname, uploadedAt }));
 }
+
+/** The whole file as bytes, or null if it does not exist. */
+export async function readBytes(pathname: string): Promise<Buffer | null> {
+  const file = await readFile(pathname);
+  if (!file) return null;
+  return Buffer.from(await new Response(file.stream).arrayBuffer());
+}

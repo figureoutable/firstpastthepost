@@ -34,7 +34,11 @@ export function onboardingNextSteps(opts: { hasPreviousAccountant?: boolean; let
   return steps;
 }
 
-export function incorporationNextSteps(opts: { letterSigned?: boolean } = {}): NextStep[] {
+/**
+ * letterSigned: the old flow, where a formation link included the letter.
+ * letterAfter: a formation link today. The letter follows once the company is registered.
+ */
+export function incorporationNextSteps(opts: { letterSigned?: boolean; letterAfter?: boolean } = {}): NextStep[] {
   const steps: NextStep[] = [
     {
       title: "We check your details",
@@ -54,6 +58,16 @@ export function incorporationNextSteps(opts: { letterSigned?: boolean } = {}): N
       detail: "Once everything is approved we submit the application and send you the certificate.",
     },
   ];
+  if (opts.letterAfter) {
+    const rest = steps.filter((step) => step.title !== "Sign your engagement letter");
+    return [
+      ...rest,
+      {
+        title: "Sign your engagement letter",
+        detail: "Once your company is registered, we email you our engagement letter to sign, with your company's details filled in.",
+      },
+    ];
+  }
   return opts.letterSigned ? steps.filter((step) => step.title !== "Sign your engagement letter") : steps;
 }
 

@@ -3,6 +3,8 @@ import { withMember } from "@/lib/admin/api";
 import { clientLink, editClient, FlowError, saveLetterToDrive, sendLink, type NewClientInput } from "@/lib/engagements/actions";
 import { getEngagement, logEvent, updateEngagement } from "@/lib/engagements/store";
 
+export const maxDuration = 120;
+
 /** Edit before the client signs. Same link, new letter. */
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withMember(async (member) => {
@@ -39,7 +41,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         const ok = await saveLetterToDrive(id);
         if (!ok) {
           const latest = await getEngagement(id);
-          throw new FlowError(latest?.signature?.drive?.error ? `Google Drive: ${latest.signature.drive.error}` : "Google Drive is not connected yet.", 502);
+          const error = latest?.letters?.find((l) => l.drive?.error)?.drive?.error || latest?.signature?.drive?.error;
+          throw new FlowError(error ? `Google Drive: ${error}` : "Google Drive is not connected yet.", 502);
         }
         return NextResponse.json({ ok: true });
       }

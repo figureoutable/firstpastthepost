@@ -7,7 +7,7 @@ import type { Engagement, FlowStep } from "./types";
 export function currentStep(e: Engagement): FlowStep {
   if (e.status === "cancelled") return "cancelled";
   if (e.status !== "complete" && isExpired(e)) return "expired";
-  if (!e.signature) return "letter";
+  if (!lettersSigned(e)) return "letter";
   if (paymentRequired(e) && !e.payment.completedAt) return "payment";
   if (!e.onboarding?.completedAt) return "onboarding";
   return "done";
@@ -17,13 +17,30 @@ export function isExpired(e: Engagement, now = Date.now()): boolean {
   return Boolean(e.expiresAt && Date.parse(e.expiresAt) < now && !e.onboarding?.completedAt);
 }
 
+/** Company formations have no letter: it comes after the company is set up. */
+export function needsLetter(e: Engagement): boolean {
+  return Boolean(e.letters?.length || e.letter);
+}
+
+export function lettersSigned(e: Engagement): boolean {
+  if (e.letters?.length) return e.letters.every((l) => l.signature);
+  if (e.letter) return Boolean(e.signature);
+  return true;
+}
+
+/** Who signed and when, for the board. Uses the first signature. */
+export function firstSignature(e: Engagement) {
+  return e.letters?.find((l) => l.signature)?.signature || e.signature;
+}
+
 export function paymentRequired(e: Engagement): boolean {
   return e.payment.method !== "none";
 }
 
 /** Steps the client sees, in order. "No payment step" clients simply never see the payment step. */
 export function visibleSteps(e: Engagement): { id: FlowStep; label: string }[] {
-  const steps: { id: FlowStep; label: string }[] = [{ id: "letter", label: "Engagement letter" }];
+  const steps: { id: FlowStep; label: string }[] = [];
+  if (needsLetter(e)) steps.push({ id: "letter", label: (e.letters?.length || 0) > 1 ? "Engagement letters" : "Engagement letter" });
   if (paymentRequired(e)) {
     steps.push({ id: "payment", label: e.payment.method === "card" ? "Payment" : "Direct Debit" });
   }
@@ -36,6 +53,14 @@ export type StageState = "done" | "current" | "waiting" | "skipped" | "problem";
 export interface AmlView {
   state: "not_started" | "in_progress" | "passed" | "flagged";
   label: string;
+}
+
+function letterStage(e: Engagement, step: FlowStep): { state: StageState; label: string } {
+  if (!needsLetter(e)) return { state: "skipped", label: "After formation" };
+  if (lettersSigned(e)) return { state: "done", label: "Signed" };
+  const total = e.letters?.length || 1;
+  const signed = e.letters?.filter((l) => l.signature).length || 0;
+  return { state: step === "letter" ? "current" : "waiting", label: signed ? `${signed} of ${total} signed` : "Not signed" };
 }
 
 /** Plain summary for the status board. */
@@ -73,7 +98,7 @@ export function stageSummary(e: Engagement, aml?: AmlView) {
       step === "expired"
         ? { state: "problem" as StageState, label: "Expired" }
         : { state: (e.firstOpenedAt ? "done" : e.linkSentAt ? "current" : "waiting") as StageState, label: e.firstOpenedAt ? "Opened" : e.linkSentAt ? "Sent" : "Not sent" },
-    letter: { state: (e.signature ? "done" : step === "letter" ? "current" : "waiting") as StageState, label: e.signature ? "Signed" : "Not signed" },
+    letter: letterStage(e, step),
     payment: { state: paymentState, label: paymentLabel },
     onboarding: {
       state: (e.onboarding?.completedAt ? "done" : step === "onboarding" ? "current" : "waiting") as StageState,

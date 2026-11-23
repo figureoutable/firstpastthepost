@@ -14,14 +14,17 @@ const INTERNAL_TO = process.env.NOTIFY_EMAIL || "joshua@tryfigures.com";
 const FROM = process.env.EMAIL_FROM || "Figures Onboarding <onboarding@resend.dev>";
 
 /** Local testing only: with no Resend key, EMAIL_PREVIEW_DIR saves each email as an HTML file instead. */
-async function savePreview(subject: string, html: string) {
+async function savePreview(subject: string, html: string, attachments: EmailAttachment[] = []) {
   const dir = process.env.EMAIL_PREVIEW_DIR;
   if (!dir || process.env.VERCEL) return;
   const { mkdir, writeFile } = await import("node:fs/promises");
   const path = await import("node:path");
   await mkdir(dir, { recursive: true });
-  const name = `${Date.now()}-${subject.replace(/[^a-z0-9]+/gi, "-").slice(0, 60)}.html`;
-  await writeFile(path.join(dir, name), html);
+  const name = `${Date.now()}-${subject.replace(/[^a-z0-9]+/gi, "-").slice(0, 60)}`;
+  await writeFile(path.join(dir, `${name}.html`), html);
+  for (const [i, a] of attachments.entries()) {
+    await writeFile(path.join(dir, `${name}.attachment-${i + 1}-${a.filename.replace(/[^a-z0-9.]+/gi, "-")}`), a.content);
+  }
 }
 
 /** Copied on every client email, so the team has a record of what each client was sent. */
@@ -39,7 +42,7 @@ function subjectFor(subject: string): string {
 export async function sendInternalEmail(subject: string, html: string, options: SendOptions = {}): Promise<boolean> {
   if (!resend) {
     console.warn("[email] RESEND_API_KEY not set; internal email skipped:", subject);
-    await savePreview(subject, html).catch(() => {});
+    await savePreview(subject, html, options.attachments).catch(() => {});
     return false;
   }
   try {
@@ -69,7 +72,7 @@ export async function sendInternalEmail(subject: string, html: string, options: 
 export async function sendClientEmail(to: string, subject: string, html: string, options: SendOptions = {}): Promise<boolean> {
   if (!to) return false;
   if (!resend) {
-    await savePreview(`client ${subject}`, html).catch(() => {});
+    await savePreview(`client ${subject}`, html, options.attachments).catch(() => {});
     return false;
   }
   try {

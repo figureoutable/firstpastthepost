@@ -9,7 +9,11 @@ import { createSign } from "crypto";
  * - Add that service account's email to the "Figures" Shared Drive as a Content manager.
  * - GOOGLE_DRIVE_CLIENTS_FOLDER_ID: the id of the "Clients" folder (the last part of its web address).
  *
- * Only ever creates folders and files. Never edits, moves or deletes anything.
+ * Engagement letters are made here too: the filled Word file is uploaded as a Google Doc
+ * (so it is saved as a Doc, not a Word file) and Google turns it into the PDF the client reads.
+ *
+ * Only ever creates folders and files, and updates the letter Docs it made itself.
+ * Never moves or deletes anything.
  */
 
 type Credentials = { client_email: string; private_key: string };
@@ -84,7 +88,17 @@ function folderName(name: string): string {
   return name.replace(/[\\/]/g, "-").replace(/\s+/g, " ").trim().slice(0, 120) || "Unnamed client";
 }
 
-async function findOrCreateClientFolder(name: string): Promise<string> {
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+export function docUrl(id: string): string {
+  return `https://docs.google.com/document/d/${id}/edit`;
+}
+
+export function folderUrl(id: string): string {
+  return `https://drive.google.com/drive/folders/${id}`;
+}
+
+export async function findOrCreateClientFolder(name: string): Promise<string> {
   const parent = clientsFolderId();
   if (!parent) throw new Error("GOOGLE_DRIVE_CLIENTS_FOLDER_ID is not set");
   const clean = folderName(name);
@@ -124,6 +138,53 @@ async function upload(meta: Record<string, unknown>, body: Uint8Array | string, 
     { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body: payload }
   );
   return result.id;
+}
+
+/**
+ * Saves a filled letter as a Google Doc in the client's folder. When the letter is edited before
+ * signing, the same Doc is updated, so there is only ever one Doc per letter.
+ */
+export async function saveLetterDoc(input: {
+  folderId: string;
+  name: string;
+  docx: Uint8Array;
+  existingDocId?: string;
+}): Promise<string> {
+  if (input.existingDocId) {
+    try {
+      const token = await accessToken();
+      const res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(input.existingDocId)}?uploadType=media&supportsAllDrives=true&fields=id`,
+        { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": DOCX }, body: Buffer.from(input.docx) }
+      );
+      if (res.ok) {
+        await drive(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(input.existingDocId)}?supportsAllDrives=true&fields=id`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: input.name }),
+        });
+        return input.existingDocId;
+      }
+      console.warn("[drive] Could not update the letter Doc, making a new one", res.status, (await res.text()).slice(0, 200));
+    } catch (error) {
+      console.warn("[drive] Could not update the letter Doc, making a new one", error);
+    }
+  }
+  return upload({ name: input.name, parents: [input.folderId], mimeType: "application/vnd.google-apps.document" }, input.docx, DOCX);
+}
+
+/** The Google Doc as a PDF, exactly as Google lays it out. */
+export async function exportPdf(docId: string): Promise<Uint8Array> {
+  const token = await accessToken();
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(docId)}/export?mimeType=application/pdf`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Google Drive export ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return new Uint8Array(await res.arrayBuffer());
+}
+
+export async function savePdf(folderId: string, name: string, pdf: Uint8Array): Promise<string> {
+  return upload({ name, parents: [folderId] }, pdf, "application/pdf");
 }
 
 /** Saves the signed PDF and a Google Doc copy into the client's folder. */

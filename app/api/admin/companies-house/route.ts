@@ -19,9 +19,20 @@ export async function GET(request: Request) {
       company_number?: string;
       company_status?: string;
       registered_office_address?: Record<string, string>;
+      accounts?: { next_made_up_to?: string; next_accounts?: { period_end_on?: string } };
     };
     const a = data.registered_office_address || {};
-    const address = [a.address_line_1, a.address_line_2, a.locality, a.postal_code].filter(Boolean).join(", ");
-    return NextResponse.json({ name: data.company_name, number: data.company_number, status: data.company_status, address });
+    const parts = [a.premises && a.address_line_1 ? `${a.premises} ${a.address_line_1}` : a.premises || a.address_line_1, a.address_line_2, a.locality, a.region, a.postal_code];
+    const addressLines = parts.map((p) => (p || "").trim()).filter(Boolean);
+    // The next accounts due: the first year end we would take over.
+    const yearEnd = data.accounts?.next_accounts?.period_end_on || data.accounts?.next_made_up_to || "";
+    return NextResponse.json({
+      name: data.company_name,
+      number: data.company_number,
+      status: data.company_status,
+      address: addressLines.join(", "),
+      addressLines,
+      yearEnd,
+    });
   });
 }

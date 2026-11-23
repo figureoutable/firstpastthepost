@@ -21,6 +21,7 @@ import { nextStepsEmailHtml, onboardingNextSteps } from "@/lib/next-steps";
 import { FIRM } from "@/lib/figures-config";
 import { adminLink, checkOnboardingAllowed, completeOnboarding, FlowError } from "@/lib/engagements/actions";
 import { getEngagementByToken } from "@/lib/engagements/store";
+import { onboardingTypeFor } from "@/lib/engagements/types";
 import { escapeHtml as esc } from "@/lib/email-html";
 
 function label(key: string): string {
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
             const message = error instanceof FlowError ? error.message : "Please refresh the page.";
             return NextResponse.json({ message }, { status: error instanceof FlowError ? error.status : 409 });
         }
-        if (engagement.client.type !== type) {
+        if (onboardingTypeFor(engagement.client.type) !== type) {
             return NextResponse.json({ message: "Please refresh the page and try again." }, { status: 409 });
         }
         payload.engagementId = engagement.id;

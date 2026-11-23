@@ -10,6 +10,7 @@ import { startAmlCheck } from "@/lib/aml-start";
 import { adminLink, checkOnboardingAllowed, completeOnboarding, FlowError } from "@/lib/engagements/actions";
 import { getSettings } from "@/lib/engagements/settings";
 import { getEngagementByToken } from "@/lib/engagements/store";
+import { needsLetter } from "@/lib/engagements/flow";
 import { incorporationNextSteps, nextStepsEmailHtml } from "@/lib/next-steps";
 import { FIRM } from "@/lib/figures-config";
 
@@ -346,7 +347,7 @@ export async function POST(request: Request) {
       "We've received your company formation request",
       nextStepsEmailHtml(
         `Hi ${escapeHtml(firstName)}, thank you for asking Figures to form ${escapeHtml(`${step2?.name || "your company"} ${step2?.ending || ""}`.trim())}. Here is what happens next.`,
-        incorporationNextSteps({ letterSigned: Boolean(engagement) }),
+        incorporationNextSteps(engagement ? (needsLetter(engagement) ? { letterSigned: true } : { letterAfter: true }) : {}),
         FIRM.contactEmail
       )
     );

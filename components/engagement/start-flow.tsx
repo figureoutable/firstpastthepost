@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Check, CreditCard, FileSignature, Landmark, Loader2, Lock, ShieldCheck, UserRound } from "lucide-react";
+import { AlertCircle, Check, CreditCard, Download, ExternalLink, FileSignature, FileText, Landmark, Loader2, Lock, ShieldCheck, UserRound } from "lucide-react";
 import { Panel } from "@/components/site/site-chrome";
 import { NextStepsList } from "@/components/site/next-steps-list";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,32 @@ export interface StartView {
   email: string;
   steps: { id: FlowStep; label: string }[];
   current: FlowStep;
+  /** The older built-in letter. */
   letter?: { blocks: LetterBlock[]; fingerprint: string };
+  /** The firm's letters, as PDFs. Signed one after the other. */
+  letters?: LetterFile[];
+  /** Name used on an earlier signature, to save typing it again. */
+  signerName: string;
+  /** Letters signed or to sign. 0 for a company formation, whose letter comes later. */
+  signedCount: number;
+  /** Changes when the client moves on, including from one letter to the next. */
+  stepKey: string;
   payment: { method: PaymentMethod; amount?: string; canSimulate: boolean };
   nextSteps: NextStep[];
   contactEmail: string;
   /** A new company: the last step is the formation form, not the onboarding form. */
   formation: boolean;
+}
+
+export interface LetterFile {
+  kind: string;
+  title: string;
+  party: string;
+  pages: number;
+  url: string;
+  fingerprint: string;
+  signed: boolean;
+  onBehalfOf?: string;
 }
 
 const ICONS: Partial<Record<FlowStep, typeof Check>> = { letter: FileSignature, payment: Landmark, onboarding: UserRound };
@@ -76,7 +96,149 @@ function ErrorBox({ message }: { message: string }) {
   );
 }
 
+function LetterPdf({ letter, index, total }: { letter: LetterFile; index: number; total: number }) {
+  return (
+    <Panel className="p-0 sm:p-0">
+      <div className="flex flex-wrap items-center gap-3 border-b border-stone-100 px-5 py-4 sm:px-6">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-50 text-clay-600 ring-1 ring-inset ring-clay-100">
+          <FileText className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          {total > 1 && <p className="text-xs font-semibold uppercase tracking-wider text-clay-700">Letter {index + 1} of {total}</p>}
+          <p className="truncate font-semibold text-stone-900">{letter.title.replace(/^Engagement letter: /, "")}</p>
+          <p className="text-xs text-stone-500">{letter.pages ? `${letter.pages} pages, ` : ""}PDF</p>
+        </div>
+        <div className="flex gap-2">
+          <a
+            href={letter.url}
+            target="_blank"
+            rel="noopener"
+            className="hidden h-9 items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50 lg:inline-flex"
+          >
+            <ExternalLink className="h-4 w-4" /> Open in new tab
+          </a>
+          <a
+            href={`${letter.url}?download=1`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
+            aria-label="Download the letter"
+          >
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+      {/* Phones and tablets open the PDF in their own viewer, which reads better than a small frame. */}
+      <iframe src={`${letter.url}#view=FitH&navpanes=0`} title={letter.title} className="hidden h-[75vh] w-full rounded-b-2xl lg:block" />
+      <div className="px-5 py-5 text-sm text-stone-600 lg:hidden sm:px-6">
+        <a
+          href={letter.url}
+          target="_blank"
+          rel="noopener"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 py-3 font-semibold text-white hover:bg-stone-800"
+        >
+          <FileText className="h-4 w-4" /> Read your engagement letter
+        </a>
+        <p className="mt-3 text-center text-xs text-stone-500">It opens in a new tab. Come back here to sign.</p>
+      </div>
+    </Panel>
+  );
+}
+
+function SignLetters({ view, onSigned }: { view: StartView; onSigned: () => void }) {
+  const letters = view.letters || [];
+  const index = letters.findIndex((l) => !l.signed);
+  const letter = letters[index];
+  const [name, setName] = useState(view.signerName);
+  const [agree, setAgree] = useState(false);
+  const [startNow, setStartNow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!letter) return null;
+  const last = index === letters.length - 1;
+
+  const sign = async () => {
+    setError("");
+    if (name.trim().length < 2) return setError("Type your full name to sign.");
+    if (!agree) return setError("Please tick to confirm you agree.");
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/start/${view.token}/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: letter.kind, name, agree, startNow, fingerprint: letter.fingerprint }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "We could not record your signature. Please try again.");
+      onSigned();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Please try again.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {letters.length > 1 && (
+        <ol className="flex flex-wrap gap-2 text-sm">
+          {letters.map((l, i) => (
+            <li
+              key={l.kind}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1 ring-1 ring-inset",
+                l.signed ? "bg-forest-50 text-forest-700 ring-forest-200" : i === index ? "bg-clay-50 text-clay-800 ring-clay-200" : "bg-white text-stone-500 ring-stone-200"
+              )}
+            >
+              {l.signed ? <Check className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+              {l.title.replace(/^Engagement letter: /, "")}
+            </li>
+          ))}
+        </ol>
+      )}
+      <LetterPdf letter={letter} index={index} total={letters.length} />
+      <Panel className="border-clay-200">
+        <h2 className="text-lg font-semibold text-stone-900">Sign {letters.length > 1 ? "this letter" : "your engagement letter"}</h2>
+        <p className="mt-1 text-sm text-stone-600">
+          Type your full name. This counts as your signature on the Appointment Acceptance, and we&apos;ll email you {letters.length > 1 ? "signed copies" : "a signed copy"}.
+        </p>
+        <div className="mt-5 space-y-2">
+          <Label htmlFor="signer">Full name</Label>
+          <Input id="signer" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Your full name" className="text-base" />
+          <AnimatePresence>
+            {name.trim().length > 1 && (
+              <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="pt-1 font-serif text-3xl italic text-stone-800" aria-hidden>
+                {name}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+        <label className="mt-4 flex items-start gap-3 rounded-xl border border-stone-200 p-3.5 text-sm text-stone-700">
+          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-4 w-4 accent-clay-600" />
+          <span>I have read this engagement letter and agree to it{letter.onBehalfOf ? ` on behalf of ${letter.onBehalfOf}` : ""}.</span>
+        </label>
+        <label className="mt-2 flex items-start gap-3 rounded-xl border border-stone-200 p-3.5 text-sm text-stone-700">
+          <input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} className="mt-0.5 h-4 w-4 accent-clay-600" />
+          <span>
+            Please start work before the 14-day cancellation period ends (optional).
+            <span className="mt-1 block text-xs text-stone-500">
+              Otherwise we start once the 14 days have passed. If you ask us to start and then cancel, you pay for the work done up to then (section 5 of the letter).
+            </span>
+          </span>
+        </label>
+        {error && <div className="mt-4"><ErrorBox message={error} /></div>}
+        <Button type="button" onClick={sign} disabled={busy} className="mt-5 w-full sm:w-auto">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSignature className="h-4 w-4" />} {last ? "Sign engagement letter" : "Sign and go to the next letter"}
+        </Button>
+        <p className="mt-3 text-xs text-stone-500">Signing as {view.email}. We record the date, time and your internet address with your signature.</p>
+      </Panel>
+    </div>
+  );
+}
+
 function LetterStep({ view, onSigned }: { view: StartView; onSigned: () => void }) {
+  if (view.letters?.length) return <SignLetters key={view.stepKey} view={view} onSigned={onSigned} />;
+  return <BuiltInLetterStep view={view} onSigned={onSigned} />;
+}
+
+function BuiltInLetterStep({ view, onSigned }: { view: StartView; onSigned: () => void }) {
   const [name, setName] = useState("");
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -293,7 +455,13 @@ function DoneStep({ view }: { view: StartView }) {
         <Check className="h-8 w-8" strokeWidth={3} />
       </motion.span>
       <h2 className="mt-5 text-2xl font-semibold tracking-tight text-stone-900">You&apos;re all set, {view.firstName}</h2>
-      <p className="mx-auto mt-2 max-w-md text-stone-600">Thank you. We&apos;ve emailed you a copy of your signed engagement letter.</p>
+      <p className="mx-auto mt-2 max-w-md text-stone-600">
+        {view.signedCount > 1
+          ? "Thank you. We've emailed you copies of your signed engagement letters."
+          : view.signedCount === 1
+            ? "Thank you. We've emailed you a copy of your signed engagement letter."
+            : "Thank you. We'll set up your company and send your engagement letter once it's registered."}
+      </p>
       {view.nextSteps.length > 0 && (
         <div className="mx-auto mt-8 max-w-md text-left">
           <p className="mb-4 text-sm font-semibold text-stone-900">What happens next</p>
@@ -319,9 +487,9 @@ export function StartFlow({ view }: { view: StartView }) {
   }, [router, view.token]);
 
   // When the server moves the client on, show the new step.
-  const [shownStep, setShownStep] = useState(view.current);
-  if (shownStep !== view.current) {
-    setShownStep(view.current);
+  const [shownStep, setShownStep] = useState(view.stepKey);
+  if (shownStep !== view.stepKey) {
+    setShownStep(view.stepKey);
     setTransitioning(false);
   }
   useEffect(() => {
@@ -329,7 +497,12 @@ export function StartFlow({ view }: { view: StartView }) {
   }, [shownStep]);
 
   const titles: Partial<Record<FlowStep, { title: string; text: string }>> = {
-    letter: { title: `Welcome, ${view.firstName}`, text: "Please read your engagement letter and sign it at the bottom." },
+    letter:
+      (view.letters?.length || 0) > 1
+        ? { title: `Welcome, ${view.firstName}`, text: "Please read your engagement letters and sign each one." }
+        : view.letters?.length
+          ? { title: `Welcome, ${view.firstName}`, text: "Please read your engagement letter, then sign below." }
+          : { title: `Welcome, ${view.firstName}`, text: "Please read your engagement letter and sign it at the bottom." },
     payment: {
       title: view.payment.method === "card" ? "Make your payment" : "Set up your Direct Debit",
       text: "Thank you for signing. Next, your payment details.",
@@ -357,7 +530,7 @@ export function StartFlow({ view }: { view: StartView }) {
         </Panel>
       ) : (
         <AnimatePresence mode="wait">
-          <motion.div key={view.current} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
+          <motion.div key={view.stepKey} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
             {view.current === "letter" && <LetterStep view={view} onSigned={advance} />}
             {view.current === "payment" && <PaymentStep view={view} onPaid={advance} />}
             {view.current === "onboarding" &&

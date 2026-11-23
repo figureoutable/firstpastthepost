@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { AdminShell, AdminTitle, card } from "@/components/admin/admin-shell";
+import { LetterTemplatesEditor } from "@/components/admin/letter-templates-editor";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { PriceListEditor } from "@/components/admin/price-list-editor";
 import { TeamEditor } from "@/components/admin/team-editor";
 import { requireMember } from "@/lib/admin/session";
 import { getTeam, ownerEmails } from "@/lib/admin/team";
+import { templateMeta } from "@/lib/engagements/letter-templates";
 import { getPriceList } from "@/lib/engagements/price-list";
 import { getSettings } from "@/lib/engagements/settings";
 import { isDriveConfigured } from "@/lib/google-drive";
@@ -30,7 +32,7 @@ function Status({ ok, label, detail }: { ok: boolean; label: string; detail: str
 export default async function SettingsPage() {
   const member = await requireMember();
   if (member.role !== "admin") redirect("/admin");
-  const [priceList, team, options] = await Promise.all([getPriceList(), getTeam(), getSettings()]);
+  const [priceList, team, options, templates] = await Promise.all([getPriceList(), getTeam(), getSettings(), templateMeta()]);
   const gc = isGoCardlessConfigured();
 
   return (
@@ -43,6 +45,10 @@ export default async function SettingsPage() {
           <PriceListEditor items={priceList.items} examples={priceList.examples} />
         </section>
         <div className="space-y-5">
+          <section className={cn(card, "p-5")}>
+            <h2 className="mb-1 text-base font-semibold text-stone-900">Engagement letters</h2>
+            <LetterTemplatesEditor meta={templates} />
+          </section>
           <section className={cn(card, "p-5")}>
             <h2 className="mb-1 text-base font-semibold text-stone-900">Automatic steps</h2>
             <OptionsEditor
@@ -58,7 +64,11 @@ export default async function SettingsPage() {
             <ul className="divide-y divide-stone-100">
               <Status ok={gc} label="GoCardless" detail={gc ? `Connected (${goCardlessEnvironment() === "live" ? "live" : "test mode"})` : "Not connected. Payments can only be simulated on test builds."} />
               <Status ok={isStripeConfigured()} label="Stripe" detail={isStripeConfigured() ? "Connected" : "Not connected"} />
-              <Status ok={isDriveConfigured()} label="Google Drive" detail={isDriveConfigured() ? "Saving letters to Clients folder" : "Not connected. Letters are kept here and emailed."} />
+              <Status
+                ok={isDriveConfigured()}
+                label="Google Drive"
+                detail={isDriveConfigured() ? "Making letters as Google Docs in the Clients folder" : "Not connected. Needed to make the engagement letters."}
+              />
               <Status ok={Boolean(process.env.EMAIL_FROM)} label="Emails from joshua@" detail={process.env.EMAIL_FROM ? process.env.EMAIL_FROM : "Not set. Client emails may not arrive."} />
               <Status ok={Boolean(process.env.COMPANIES_HOUSE_API_KEY)} label="Companies House lookup" detail={process.env.COMPANIES_HOUSE_API_KEY ? "Connected" : "Optional. Not connected."} />
             </ul>

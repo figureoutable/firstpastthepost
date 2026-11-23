@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { AlertTriangle, ArrowLeft, ExternalLink, FileText, Pencil } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ExternalLink, FileText, Pencil, Send } from "lucide-react";
 import { AdminShell, card } from "@/components/admin/admin-shell";
 import { LinkActions, ResolveFlag, RetryDrive } from "@/components/admin/client-actions";
 import { amlState, StagePill } from "@/components/admin/stage-pill";
 import { requireMember } from "@/lib/admin/session";
 import { originFromHeaders } from "@/lib/env";
-import { isDriveConfigured } from "@/lib/google-drive";
+import { docUrl, folderUrl, isDriveConfigured } from "@/lib/google-drive";
 import { amlFor } from "@/lib/engagements/aml";
 import { isExpired, stageSummary } from "@/lib/engagements/flow";
 import { formatPence, linePrice, totalsText } from "@/lib/engagements/letter";
@@ -44,7 +44,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   const h = await headers();
   const link = `${originFromHeaders(h)}/start/${e.token}`;
   const drive = e.signature?.drive;
-  const canEdit = e.status === "open" && !e.signature;
+  const signedAny = Boolean(e.signature || e.letters?.some((l) => l.signature));
+  const canEdit = e.status === "open" && !signedAny;
+  const lettersToFile = (e.letters || []).some((l) => l.signature && !l.drive?.signedPdfFileId);
   const expired = isExpired(e);
   const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
 
@@ -101,7 +103,60 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                   {e.reminderSentAt ? ` · Reminder sent ${when(e.reminderSentAt)}` : ""}
                 </span>
               </Row>
-              <Row label="Engagement letter">
+              <Row label={(e.letters?.length || 0) > 1 ? "Engagement letters" : "Engagement letter"}>
+                {e.letters?.length ? (
+                  <div className="space-y-3">
+                    <StagePill {...s.letter} />
+                    {e.letters.map((l) => {
+                      const base = `/api/admin/clients/${e.id}/letter?kind=${l.kind}`;
+                      return (
+                        <div key={l.kind} className="rounded-xl border border-stone-200 p-3">
+                          <p className="text-sm font-medium text-stone-900">{l.title.replace(/^Engagement letter: /, "")}</p>
+                          <p className="text-xs text-stone-500">
+                            {l.signature
+                              ? `Signed by ${l.signature.name}, ${when(l.signature.signedAt)}. ${l.signature.startNow ? "Asked us to start within the 14-day cancellation period." : "Did not ask us to start within the 14 days."}`
+                              : `Issued ${when(l.issuedAt)}, not signed yet. ${l.pages ? `${l.pages} pages.` : ""}`}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                            {l.signature && (
+                              <a href={`${base}&version=signed`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-clay-700 hover:text-clay-800">
+                                <FileText className="h-4 w-4" /> Signed PDF
+                              </a>
+                            )}
+                            <a href={`${base}&version=issued`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-stone-600 hover:text-stone-900">
+                              <FileText className="h-3.5 w-3.5" /> {l.signature ? "Letter as issued" : "View letter"}
+                            </a>
+                            {l.drive?.docFileId && (
+                              <a href={docUrl(l.drive.docFileId)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-stone-600 hover:text-stone-900">
+                                <ExternalLink className="h-3.5 w-3.5" /> Google Doc
+                              </a>
+                            )}
+                            {l.drive?.folderId && (
+                              <a href={folderUrl(l.drive.folderId)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-stone-600 hover:text-stone-900">
+                                <ExternalLink className="h-3.5 w-3.5" /> Client folder
+                              </a>
+                            )}
+                            {l.renderedBy === "libreoffice" && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800">Local test copy</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {lettersToFile && isDriveConfigured() && <RetryDrive id={e.id} />}
+                  </div>
+                ) : !e.letter ? (
+                  <div className="space-y-2">
+                    <StagePill {...s.letter} />
+                    <p className="text-xs text-stone-500">The letter is sent once the company is registered, with the details from Companies House.</p>
+                    {e.status === "complete" && (
+                      <Link
+                        href={`/admin/new?from=${e.id}`}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-clay-500 px-3 text-sm font-semibold text-white hover:bg-clay-600"
+                      >
+                        <Send className="h-4 w-4" /> Send engagement letter
+                      </Link>
+                    )}
+                  </div>
+                ) : (
                 <div className="space-y-2">
                   <div>
                     <StagePill {...s.letter} />
@@ -123,6 +178,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                   )}
                   {e.signature && !drive?.folderId && isDriveConfigured() && <RetryDrive id={e.id} />}
                 </div>
+                )}
               </Row>
               <Row label="Payment">
                 <div className="space-y-1">
@@ -178,7 +234,11 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 ))}
               </tbody>
             </table>
-            <p className="mt-3 text-sm font-semibold text-stone-900">Total: {totalsText(e.lines).join(", ") || "Free"}</p>
+            {e.client.type === "formation" && e.lines.length === 0 ? (
+              <p className="text-sm text-stone-600">Company formation: free when they appoint us as accountants.</p>
+            ) : (
+              <p className="mt-3 text-sm font-semibold text-stone-900">Total: {totalsText(e.lines).join(", ") || "Free"}</p>
+            )}
           </section>
         </div>
 

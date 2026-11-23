@@ -1,5 +1,6 @@
 import { escapeHtml } from "@/lib/email-html";
 import { FIRM } from "@/lib/figures-config";
+import { needsLetter } from "./flow";
 import { totalsText } from "./letter";
 import { PAYMENT_METHOD_LABEL, type Engagement } from "./types";
 
@@ -21,8 +22,10 @@ function firstName(name: string): string {
 }
 
 function stepsText(e: Engagement): string {
+  if (!needsLetter(e)) return "tell us about the company you'd like to set up";
   const payment = e.payment.method === "direct_debit" ? "set up your Direct Debit, " : e.payment.method === "card" ? "make your payment, " : "";
-  return `sign your engagement letter, ${payment}then add your details and ID`;
+  const letter = (e.letters?.length || 1) > 1 ? "sign your engagement letters" : "sign your engagement letter";
+  return `${letter}, ${payment}then add your details and ID`;
 }
 
 /** The link email. Under 100 words. */
@@ -50,11 +53,12 @@ export function reminderEmail(e: Engagement, url: string): { subject: string; ht
 }
 
 export function signedCopyEmail(e: Engagement): { subject: string; html: string } {
+  const several = (e.letters?.length || 1) > 1;
   return {
-    subject: "Your signed engagement letter",
+    subject: several ? "Your signed engagement letters" : "Your signed engagement letter",
     html: wrap(`
       <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Hi ${firstName(e.client.name)},</p>
-      <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Thank you for signing. Your engagement letter is attached for your records.</p>
+      <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Thank you for signing. Your engagement ${several ? "letters are" : "letter is"} attached for your records.</p>
       <p style="font-size:15px;margin:20px 0 0;">Josh</p>`),
   };
 }
@@ -79,7 +83,7 @@ function summaryTable(e: Engagement, adminUrl: string): string {
       ${row("Client", escapeHtml(e.client.name))}
       ${e.client.companyName ? row("Company", escapeHtml(`${e.client.companyName}${e.client.companyNumber ? ` (${e.client.companyNumber})` : ""}`)) : ""}
       ${row("Email", escapeHtml(e.client.email))}
-      ${row("Services", escapeHtml(e.lines.map((l) => l.name).join(", ")))}
+      ${row("Services", escapeHtml(e.lines.map((l) => l.name).join(", ") || (e.client.type === "formation" ? "Company formation" : "None")))}
       ${row("Fees", escapeHtml(totalsText(e.lines).join(", ") || "Free"))}
       ${row("Payment", escapeHtml(PAYMENT_METHOD_LABEL[e.payment.method]))}
     </table>

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { PageShell, Panel } from "@/components/site/site-chrome";
 import { StartFlow, type StartView } from "@/components/engagement/start-flow";
 import { canSimulatePayment, markOpened } from "@/lib/engagements/actions";
-import { currentStep, visibleSteps } from "@/lib/engagements/flow";
+import { currentStep, firstSignature, needsLetter, visibleSteps } from "@/lib/engagements/flow";
 import { formatPence } from "@/lib/engagements/letter";
 import { getEngagementByToken } from "@/lib/engagements/store";
 import { LINK_LIFETIME_DAYS } from "@/lib/engagements/types";
@@ -52,13 +52,29 @@ export default async function StartPage({ params }: { params: Promise<{ token: s
     email: e.client.email,
     steps: visibleSteps(e),
     current: step,
-    letter: step === "letter" ? { blocks: e.letter.blocks, fingerprint: e.letter.fingerprint } : undefined,
+    letter: step === "letter" && !e.letters?.length && e.letter ? { blocks: e.letter.blocks, fingerprint: e.letter.fingerprint } : undefined,
+    letters:
+      step === "letter" && e.letters?.length
+        ? e.letters.map((l) => ({
+            kind: l.kind,
+            title: l.title,
+            party: l.party,
+            pages: l.pages,
+            url: `/api/start/${token}/letters/${l.kind}`,
+            fingerprint: l.fingerprint,
+            signed: Boolean(l.signature),
+            onBehalfOf: l.kind === "sa" ? undefined : l.party,
+          }))
+        : undefined,
+    signerName: firstSignature(e)?.name || "",
+    signedCount: e.letters?.length || (e.letter ? 1 : 0),
+    stepKey: step === "letter" && e.letters?.length ? `letter:${e.letters.find((l) => !l.signature)?.kind}` : step,
     payment: {
       method: e.payment.method,
       amount: e.payment.method === "card" ? formatPence(e.cardAmountPence || 0) : undefined,
       canSimulate: canSimulatePayment(e.payment.method),
     },
-    nextSteps: step !== "done" ? [] : e.client.type === "formation" ? incorporationNextSteps({ letterSigned: true }) : onboardingNextSteps({ letterSigned: true }),
+    nextSteps: step !== "done" ? [] : e.client.type === "formation" ? incorporationNextSteps(needsLetter(e) ? { letterSigned: true } : { letterAfter: true }) : onboardingNextSteps({ letterSigned: true }),
     contactEmail: FIRM.contactEmail,
     formation: e.client.type === "formation",
   };

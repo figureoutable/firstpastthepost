@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Billing, PriceListItem } from "@/lib/engagements/types";
+import { LETTER_ROW_OPTIONS, type Billing, type PriceListItem } from "@/lib/engagements/types";
 import { cn } from "@/lib/utils";
 
 type Row = Omit<PriceListItem, "pricePence"> & { price: string };
@@ -32,7 +32,15 @@ export function PriceListEditor({ items, examples }: { items: PriceListItem[]; e
       const payload = rows.map((r) => {
         const n = Number(r.price.replace(/[£,\s]/g, ""));
         if (!Number.isFinite(n) || n < 0) throw new Error(`Check the price for "${r.name || "a service"}".`);
-        return { id: r.id.startsWith("example-") ? undefined : r.id, name: r.name, description: r.description, billing: r.billing, pricePence: Math.round(n * 100), active: r.active };
+        return {
+          id: r.id.startsWith("example-") ? undefined : r.id,
+          name: r.name,
+          description: r.description,
+          billing: r.billing,
+          pricePence: Math.round(n * 100),
+          active: r.active,
+          letterRow: r.letterRow || "none",
+        };
       });
       const res = await fetch("/api/admin/settings/price-list", {
         method: "PUT",
@@ -62,7 +70,17 @@ export function PriceListEditor({ items, examples }: { items: PriceListItem[]; e
           <div key={r.id} className={cn("grid gap-2 rounded-xl border border-stone-200 p-3 sm:grid-cols-[1fr_130px_120px_auto]", !r.active && "opacity-60")}>
             <div className="space-y-2">
               <input aria-label="Service name" className={cn(input, "font-medium")} value={r.name} onChange={(e) => update(i, { name: e.target.value })} placeholder="Service name" />
-              <input aria-label="Description" className={cn(input, "text-stone-600")} value={r.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Short description (shown on the letter)" />
+              <input aria-label="Description" className={cn(input, "text-stone-600")} value={r.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Short description (for the team)" />
+              <label className="flex items-center gap-2 text-xs text-stone-500">
+                <span className="shrink-0">Letter fee table</span>
+                <select aria-label="Engagement letter fee row" className={cn(input, "h-8 text-xs")} value={r.letterRow || "none"} onChange={(e) => update(i, { letterRow: e.target.value as Row["letterRow"] })}>
+                  {LETTER_ROW_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <select aria-label="Billed" className={input} value={r.billing} onChange={(e) => update(i, { billing: e.target.value as Billing })}>
               <option value="monthly">Monthly</option>
@@ -88,7 +106,7 @@ export function PriceListEditor({ items, examples }: { items: PriceListItem[]; e
         <Button
           type="button"
           variant="outline"
-          onClick={() => setRows((prev) => [...prev, { id: `new-${Date.now()}`, name: "", description: "", billing: "monthly", price: "0", active: true }])}
+          onClick={() => setRows((prev) => [...prev, { id: `new-${Date.now()}`, name: "", description: "", billing: "monthly", price: "0", active: true, letterRow: "none" }])}
         >
           <Plus className="h-4 w-4" /> Add service
         </Button>
@@ -98,7 +116,9 @@ export function PriceListEditor({ items, examples }: { items: PriceListItem[]; e
         </Button>
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       </div>
-      <p className="text-xs text-stone-500">Changes only affect new links. Letters already sent keep the prices they were issued with.</p>
+      <p className="text-xs text-stone-500">
+        Changes only affect new links. Letters already sent keep the prices they were issued with. The letter shows each fee for a year: monthly prices are multiplied by 12.
+      </p>
     </div>
   );
 }
